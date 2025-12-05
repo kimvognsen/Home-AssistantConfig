@@ -57,6 +57,8 @@ core.*
 zigbee2mqtt/
 pyscript/
 deps/
+python_scripts
+
 
 #############################################
 # BambuLab (ignore large print files)

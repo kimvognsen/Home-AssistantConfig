@@ -1,0 +1,1985 @@
+- id: '1636898356549'
+  alias: Failed HA Addon z-wave
+  description: ''
+  trigger:
+  - type: not_running
+    platform: device
+    device_id: 9102cd483e3197eb55261c7a6e600c5a
+    entity_id: binary_sensor.z_wave_js_running
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 1
+      seconds: 0
+      milliseconds: 0
+  condition: []
+  action:
+  - service: notify.persistent_notification
+    data:
+      message: Z-wave addon er stoppet
+  mode: single
+- id: '1636992870421'
+  alias: Alarm - Røgalarm i Brygge har registreret røg - tænd alt Lys
+  description: ''
+  triggers:
+  - entity_id:
+    - binary_sensor.smoke_detector_smoke_detected_bryggers
+    to: detected
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 30
+    from: clear
+    trigger: state
+  conditions:
+  - condition: sun
+    before: sunrise
+    after: sunset
+  actions:
+  - data: {}
+    target:
+      area_id:
+      - carport
+      - bryggers
+      - bryggers
+      - drengenes_sovevaerelse
+      - drengevaerelse
+      - entre
+      - hall
+      - gang
+      - sovevaerelse
+      - stuen
+    action: light.turn_on
+  mode: single
+- id: '1662313982766'
+  alias: Tænd Sonos når Apple TV tændes
+  description: ''
+  triggers:
+  - entity_id: media_player.apple_tv_stuen
+    to:
+    - playing
+    - paused
+    - idle
+    for: 00:00:05
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: switch.sonos_stuen
+    state: 'off'
+  actions:
+  - target:
+      entity_id: switch.sonos_stuen
+    action: switch.turn_on
+  mode: single
+- id: '1662316936786'
+  alias: Sluk Sonos når Apple TV slukkes
+  triggers:
+  - entity_id:
+    - media_player.apple_tv_stuen
+    to:
+    - 'off'
+    - standby
+    - idle
+    for:
+      hours: 1
+      minutes: 0
+      seconds: 0
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: switch.sonos_stuen
+    state: 'on'
+  actions:
+  - target:
+      entity_id: switch.sonos_stuen
+    action: switch.turn_off
+    data: {}
+  mode: single
+- id: '1662547055870'
+  alias: Low battery level detection & notification for all battery sensors
+  description: ''
+  use_blueprint:
+    path: sbyx/low-battery-level-detection-notification-for-all-battery-sensors.yaml
+    input:
+      threshold: 10
+      exclude:
+        entity_id:
+        - sensor.gittes_iphone_battery_level
+        - sensor.kims_iphone_battery_level
+      actions:
+      - data:
+          message: The battery of the sensor(s) {{sensors}} is low.
+        action: notify.ios_kims_iphone
+- id: '1665324363600'
+  alias: Lav en Watchman rapport
+  description: ''
+  trigger: []
+  condition: []
+  action:
+  - service: watchman.report
+    data: {}
+  mode: single
+- id: '1678915730328'
+  alias: Light - Hus nummer tænd i 2 minutter
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.hue_outdoor_sensor_indkoersel_bevaegelse
+    to: 'on'
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: light.smart_plug_hus_nr_20
+        state: 'off'
+      sequence:
+      - target:
+          entity_id: light.smart_plug_hus_nr_20
+        action: light.turn_on
+      - delay: 00:02:00
+      - target:
+          entity_id: light.smart_plug_hus_nr_20
+        action: light.turn_off
+  mode: single
+  max_exceeded: silent
+- id: '1693767642039'
+  alias: Light Sluk LED strip i brygger
+  description: ''
+  trigger:
+  - platform: time
+    at: input_datetime.sluk_lyset_i_bryggers_kl
+  condition:
+  - condition: state
+    entity_id: input_boolean.party_mode
+    state: 'off'
+  action:
+  - service: light.turn_off
+    data: {}
+    target:
+      entity_id: light.ledvance_led_strips
+  mode: single
+- id: '1693768175380'
+  alias: Light - Bryggers - Turn on LED strip at sunset
+  description: Tænd LED Strip i bryggers
+  trigger:
+  - platform: sun
+    event: sunset
+    offset: 0
+  condition: []
+  action:
+  - service: scene.turn_on
+    target:
+      entity_id: scene.daemp_lys
+    metadata: {}
+  mode: single
+- id: '1703609086578'
+  alias: Notifikation - Badeværelsevindue åben
+  description: ''
+  triggers:
+  - entity_id:
+    - binary_sensor.vindue_sensor_badevaerelse_contact
+    to: 'on'
+    for:
+      hours: 0
+      minutes: 10
+      seconds: 0
+    trigger: state
+  conditions:
+  - type: is_temperature
+    condition: device
+    device_id: a8d161cb0a5dbed34b609ab54a41fdeb
+    entity_id: 670da4205b361f10931cb7ec450dd691
+    domain: sensor
+    below: 20
+  - condition: state
+    entity_id: climate.termostat_badevaerelse
+    state: heat
+  actions:
+  - data:
+      message: Badeværelse vindue åben!
+    action: notify.ios_kims_iphone
+  mode: single
+- id: '1708269464965'
+  alias: Notification - Energy sensor svar ikke
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.energiforbrug_total
+    to: unavailable
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  condition: []
+  action:
+  - service: notify.mobile_app_kims_iphone
+    metadata: {}
+    data:
+      message: Energi sensor er nede
+  mode: single
+- id: '1729323586250'
+  alias: Notifikation - print error
+  description: ''
+  triggers:
+  - device_id: 292e934d775b86be8ccbd940953d4b0c
+    domain: bambu_lab
+    type: event_printer_error
+    trigger: device
+  conditions: []
+  actions:
+  - action: notify.ios_kims_iphone
+    data:
+      message: Print error P1S
+  mode: single
+- id: '1731934062538'
+  alias: 'Termostat kontor: Skru ned ved høj temperatur'
+  description: Skruer ned for termostaten, når temperaturen bliver over 22 grader
+    C.
+  triggers:
+  - entity_id: sensor.weather_kontor_temperature
+    above: 22
+    trigger: numeric_state
+  actions:
+  - action: climate.set_temperature
+    metadata: {}
+    data:
+      temperature: 7
+      hvac_mode: 'off'
+    target:
+      device_id:
+      - 82c3836f54d9973287756058247bb98a
+  mode: single
+- id: '1731934117016'
+  alias: 'Termostat Kontor: Skru op ved lav temperatur'
+  description: Skruer op for termostaten, når temperaturen falder under 20 grader
+    C.
+  triggers:
+  - entity_id: sensor.weather_kontor_temperature
+    below: 20
+    trigger: numeric_state
+  actions:
+  - action: climate.set_temperature
+    metadata: {}
+    data:
+      temperature: 21
+      hvac_mode: heat
+    target:
+      device_id:
+      - 82c3836f54d9973287756058247bb98a
+  mode: single
+- id: '1732022408135'
+  alias: Tænd lyskæde på terrassen
+  description: Tænd ved bevægelse, sluk 5 min efter seneste bevægelse
+  triggers:
+  - entity_id: binary_sensor.hue_outdoor_sensor_terrasse_bevaegelse
+    to: 'on'
+    trigger: state
+  conditions:
+  - condition: sun
+    after: sunset
+    before: sunrise
+  - condition: state
+    entity_id: input_boolean.party_mode
+    state: 'off'
+  - condition: state
+    entity_id: input_boolean.hold_lyset_tand_pa_terrasse
+    state: 'off'
+  actions:
+  - target:
+      entity_id: light.ikea_inspelning_smart_plug_terrrasse_lyskaede
+    action: light.turn_on
+    data: {}
+  - wait_for_trigger:
+    - entity_id: binary_sensor.hue_outdoor_sensor_terrasse_bevaegelse
+      to: 'off'
+      for: 00:05:00
+      trigger: state
+  - target:
+      entity_id: light.ikea_inspelning_smart_plug_terrrasse_lyskaede
+    action: light.turn_off
+  mode: restart
+- id: '1733677471139'
+  alias: Light - Tænd julelys
+  description: Med Ledvance outdoor plug 1
+  triggers:
+  - trigger: sun
+    event: sunset
+    offset: 0
+  conditions: []
+  actions:
+  - type: turn_on
+    device_id: ce0a2aa9c8c9ccadeba2d66be02094f2
+    entity_id: b47725c76aaaed632aa5a2809858fb5d
+    domain: switch
+  mode: single
+- id: '1733677539523'
+  alias: Light - Sluk julelys
+  description: Med Ledvance outdoor plug 1
+  triggers:
+  - trigger: time
+    at: '22:00:00'
+  conditions: []
+  actions:
+  - type: turn_off
+    device_id: ce0a2aa9c8c9ccadeba2d66be02094f2
+    entity_id: b47725c76aaaed632aa5a2809858fb5d
+    domain: switch
+    metadata:
+      secondary: false
+  mode: single
+- id: '1733677869675'
+  alias: Light - julelys sluk om morgen
+  description: Med Ledvance outdoor plug 1
+  triggers:
+  - trigger: sun
+    event: sunrise
+    offset: 0
+  conditions: []
+  actions:
+  - type: turn_off
+    device_id: ce0a2aa9c8c9ccadeba2d66be02094f2
+    entity_id: b47725c76aaaed632aa5a2809858fb5d
+    domain: switch
+  mode: single
+- id: '1733677971157'
+  alias: Light - julelys tænd om morgen
+  description: Med Ledvance outdoor plug 1
+  triggers:
+  - trigger: time
+    at: 06:30:00
+  conditions: []
+  actions:
+  - type: turn_on
+    device_id: ce0a2aa9c8c9ccadeba2d66be02094f2
+    entity_id: b47725c76aaaed632aa5a2809858fb5d
+    domain: switch
+  mode: single
+- id: '1733750817436'
+  alias: 'Termostat badeværelse: Skru ned ved høj temperatur'
+  description: Skruer ned for termostaten, når temperaturen bliver over 22 grader
+    C.
+  triggers:
+  - entity_id:
+    - climate.better_thermostat_i_badevaerelse
+    above: 22
+    trigger: numeric_state
+  conditions: []
+  actions:
+  - action: climate.set_temperature
+    metadata: {}
+    data:
+      temperature: 7
+      hvac_mode: 'off'
+    target:
+      device_id:
+      - 17434a01f12d30983442c1c39b0479d5
+  mode: single
+- id: '1733750928988'
+  alias: 'Termostat badeværelse: Skru op ved lav temperatur'
+  description: Skruer op for termostaten, når temperaturen falder under 20,5 grader
+    C.
+  triggers:
+  - entity_id:
+    - sensor.weather_kontor_temperature
+    below: 20.5
+    trigger: numeric_state
+  conditions: []
+  actions:
+  - action: climate.set_temperature
+    metadata: {}
+    data:
+      temperature: 21.5
+      hvac_mode: heat
+    target:
+      device_id:
+      - 17434a01f12d30983442c1c39b0479d5
+  mode: single
+- id: '1735118266847'
+  alias: Notifikation - Soveværelsevindue åben
+  description: ''
+  triggers:
+  - entity_id:
+    - binary_sensor.vinduesensor_sovevaerelse_contact
+    to: 'on'
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.home_alone
+    state: 'on'
+  actions:
+  - data:
+      message: soveværelse vindue åben!
+    action: notify.ios_kims_iphone
+  mode: single
+- id: '1735130963725'
+  alias: Notifikatione nogen i Hall
+  description: ''
+  triggers:
+  - entity_id:
+    - binary_sensor.motion_sensor_hall
+    to: 'on'
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.home_alone
+    state: 'on'
+  actions:
+  - data:
+      message: Nogen i Hall!
+    action: notify.ios_kims_iphone
+  mode: single
+- id: '1735131092178'
+  alias: Notifikation Motion i Stuen
+  description: ''
+  triggers:
+  - entity_id:
+    - binary_sensor.dorsensor_stuen
+    to: 'on'
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.home_alone
+    state: 'on'
+  actions:
+  - data:
+      message: Nogen i Stuen!
+    action: notify.ios_kims_iphone
+  mode: single
+- id: '1735481014976'
+  alias: Notifikation - Rotter på loftet NØ
+  description: ''
+  triggers:
+  - type: occupied
+    device_id: 21c0cd4917ae42c2516451db0d9c5fa4
+    entity_id: bd9b720dedca6bb88453eb8a892c5a38
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: notify.ios_kims_iphone
+    metadata: {}
+    data:
+      message: Rotte på loftet
+  mode: single
+- id: '1735481499498'
+  alias: Rotte Increment Motion Counter NV
+  description: Increments the motion counter each time motion is detected
+  triggers:
+  - type: occupied
+    device_id: 9ed4c0570dcc0eef4211190b37d8323e
+    entity_id: 2f9c9553717c40b59e51e8a461a236ec
+    domain: binary_sensor
+    trigger: device
+  actions:
+  - action: counter.increment
+    metadata: {}
+    data: {}
+    target:
+      entity_id: counter.rotter_pa_loftet_taeller
+  mode: single
+- id: '1736094486977'
+  alias: Dørklokke
+  description: Ringer på dør og den spille på google nimi nest højtaleren og sender
+    et billede
+  triggers:
+  - domain: mqtt
+    device_id: 1a40b65ef078881ec684c1a8eeb938e2
+    type: action
+    subtype: single
+    trigger: device
+  conditions: []
+  actions:
+  - data:
+      media:
+        media_content_id: http://10.0.10.61:8123/local/media/doorbell-1.mp3
+        media_content_type: audio/mp3
+        metadata: {}
+    target:
+      entity_id: media_player.nest_mini_bryggers
+    action: media_player.play_media
+  - data: {}
+    action: script.sendt_picture
+  - data:
+      message: Det ringer på døren
+      title: Ringklokke
+    action: notify.ios_parents
+  mode: single
+- id: '1736174880498'
+  alias: Notifikation - Rotter på loftet SØ
+  description: ''
+  triggers:
+  - type: occupied
+    device_id: 7f4dac74d228d4193fda70d4c7e89f72
+    entity_id: 30640ea2e15a5be304851e0ff6fbb78a
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: notify.ios_kims_iphone
+    metadata: {}
+    data:
+      message: Rotte på loftet SØ
+  mode: single
+- id: '1736174952584'
+  alias: Notifikation  - Rotter på loftet SV
+  description: ''
+  triggers:
+  - type: occupied
+    device_id: ca95c909928bead832b89a09537d0687
+    entity_id: 3d959aeb709dcc923d09c4d9b33cde93
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: notify.ios_kims_iphone
+    metadata: {}
+    data:
+      message: Rotte på loftet SV
+  mode: single
+- id: '1736177157893'
+  alias: Rotte Increment Motion Counter NØ
+  description: Increments the motion counter each time motion is detected
+  triggers:
+  - type: occupied
+    device_id: 21c0cd4917ae42c2516451db0d9c5fa4
+    entity_id: bd9b720dedca6bb88453eb8a892c5a38
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: counter.increment
+    metadata: {}
+    data: {}
+    target:
+      entity_id: counter.rotter_pa_loftet_taeller
+  mode: single
+- id: '1736616222747'
+  alias: Rotte Increment Motion Counter SV
+  description: Increments the motion counter each time motion is detected
+  triggers:
+  - type: occupied
+    device_id: ca95c909928bead832b89a09537d0687
+    entity_id: 3d959aeb709dcc923d09c4d9b33cde93
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: counter.increment
+    metadata: {}
+    data: {}
+    target:
+      entity_id: counter.rotter_pa_loftet_taeller
+  mode: single
+- id: '1736616257247'
+  alias: Rotte Increment Motion Counter SØ
+  description: Increments the motion counter each time motion is detected
+  triggers:
+  - type: occupied
+    device_id: 7f4dac74d228d4193fda70d4c7e89f72
+    entity_id: 30640ea2e15a5be304851e0ff6fbb78a
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: counter.increment
+    metadata: {}
+    data: {}
+    target:
+      entity_id: counter.rotter_pa_loftet_taeller
+  mode: single
+- id: '1736616322273'
+  alias: Notifikation - Rotter på loftet NV
+  description: ''
+  triggers:
+  - type: occupied
+    device_id: 9ed4c0570dcc0eef4211190b37d8323e
+    entity_id: 2f9c9553717c40b59e51e8a461a236ec
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: notify.ios_kims_iphone
+    metadata: {}
+    data:
+      message: Rotte på loftet NV
+  mode: single
+- id: '1738836937234'
+  alias: 'Termostat soveværelse: Skru ned ved høj temperatur'
+  description: Skruer ned for termostaten, når temperaturen bliver over 22 grader
+    C.
+  triggers:
+  - entity_id:
+    - sensor.weather_sovevaerelse_temperature
+    above: 22
+    trigger: numeric_state
+  conditions: []
+  actions:
+  - action: climate.set_temperature
+    metadata: {}
+    data:
+      temperature: 7
+      hvac_mode: 'off'
+    target:
+      entity_id: climate.termostat_sovevaerelse
+  mode: single
+- id: '1738837033604'
+  alias: 'Termostat soveværelse: Skru op ved lav temperatur'
+  description: Skruer op for termostaten, når temperaturen falder under 20,5 grader
+    C.
+  triggers:
+  - entity_id:
+    - sensor.weather_sovevaerelse_temperature
+    below: 20.8
+    trigger: numeric_state
+  conditions: []
+  actions:
+  - action: climate.set_temperature
+    metadata: {}
+    data:
+      temperature: 22
+      hvac_mode: heat
+    target:
+      entity_id: climate.termostat_sovevaerelse
+  mode: single
+- id: '1738837379254'
+  alias: 'Termostat Jonatans værelse: Skru ned ved høj temperatur'
+  description: Skruer ned for termostaten, når temperaturen bliver over 24 grader
+    C.
+  triggers:
+  - entity_id:
+    - sensor.weather_jonatans_vaerelse_temperature
+    above: 24
+    trigger: numeric_state
+  conditions: []
+  actions:
+  - action: climate.set_temperature
+    metadata: {}
+    data:
+      hvac_mode: 'off'
+    target:
+      entity_id: climate.termostat_jonatans_vaerelse
+  mode: single
+- id: '1738837465178'
+  alias: 'Termostat Jonatans værelse: Skru op ved lav temperatur'
+  description: Skruer op for termostaten, når temperaturen falder under 21 grader
+    C.
+  triggers:
+  - entity_id:
+    - sensor.weather_jonatans_vaerelse_temperature
+    below: 21
+    trigger: numeric_state
+  conditions: []
+  actions:
+  - action: climate.set_temperature
+    metadata: {}
+    data:
+      temperature: 22.5
+      hvac_mode: heat
+    target:
+      entity_id: climate.termostat_jonatans_vaerelse
+  mode: single
+- id: '1738837639489'
+  alias: 'Termostat Matias værelse: Skru ned ved høj temperatur'
+  description: Skruer ned for termostaten, når temperaturen bliver over 24 grader
+    C.
+  triggers:
+  - entity_id:
+    - sensor.weather_matias_vaerelse_temperature
+    above: 24
+    trigger: numeric_state
+  conditions: []
+  actions:
+  - action: climate.set_temperature
+    metadata: {}
+    data:
+      temperature: 7
+      hvac_mode: 'off'
+    target:
+      device_id:
+      - 8efb8546695668208b56b63248c43555
+  mode: single
+- id: '1738837784439'
+  alias: 'Termostat Matias værelse: Skru op ved lav temperatur'
+  description: Skruer op for termostaten, når temperaturen falder under 22 grader
+    C.
+  triggers:
+  - entity_id:
+    - sensor.weather_matias_vaerelse_temperature
+    below: 22
+    trigger: numeric_state
+  conditions: []
+  actions:
+  - action: climate.set_temperature
+    metadata: {}
+    data:
+      temperature: 22
+      hvac_mode: heat
+    target:
+      device_id:
+      - 8efb8546695668208b56b63248c43555
+  mode: single
+- id: '1744098462432'
+  alias: Knap - Start Bob
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 3f21fd66c91a75522bdc7756f248e057
+    type: action
+    subtype: brightness_stop
+    trigger: device
+  conditions: []
+  actions:
+  - action: lawn_mower.start_mowing
+    target:
+      entity_id: lawn_mower.bob
+    data: {}
+  mode: single
+- id: '1744099320740'
+  alias: Knap- Pause Bob
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 3f21fd66c91a75522bdc7756f248e057
+    type: action
+    subtype: 'on'
+    trigger: device
+  conditions: []
+  actions:
+  - action: lawn_mower.pause
+    target:
+      entity_id: lawn_mower.bob
+    data: {}
+  mode: single
+- id: '1745937356771'
+  alias: Notifikation - vand ved vaskemaskinen
+  description: ''
+  triggers:
+  - type: moist
+    device_id: 901da4ebff64a10648d3f88659eb0676
+    entity_id: 1952f1acd23e9f75d9cbda7c4d0b05c7
+    domain: binary_sensor
+    trigger: device
+  conditions: []
+  actions:
+  - action: notify.mobile_app_kims_iphone
+    metadata: {}
+    data:
+      message: Der er vand ved vaskemaskinen, ring til Svend
+      title: Der er vand ved vaskemaskinen
+  mode: single
+- id: '1748094150587'
+  alias: Notifikatione nogen i Bryggers
+  description: ''
+  triggers:
+  - entity_id:
+    - binary_sensor.contact_sensor_950f_door_open
+    to: 'on'
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.home_alone
+    state: 'on'
+  actions:
+  - data:
+      message: Nogen i bryggers!
+    action: notify.ios_kims_iphone
+  mode: single
+- id: '1750161337108'
+  alias: Update OpenUV
+  triggers:
+  - trigger: time_pattern
+    minutes: /30
+  conditions:
+  - condition: sun
+    after: sunrise
+    before: sunset
+    before_offset: +00:45:00
+  - condition: template
+    value_template: "{{\n  state_attr('automation.update_openuv', 'last_triggered')
+      == None\n  or (\n    now() - state_attr('automation.update_openuv', 'last_triggered')\n
+      \ ) >= timedelta(hours = 1, minutes = 30)\n}}"
+  actions:
+  - action: homeassistant.update_entity
+    target:
+      entity_id:
+      - binary_sensor.openuv_protection_window
+      - sensor.openuv_current_uv_level
+    data: {}
+- id: '1751112500748'
+  alias: Opdater pollen “tidligere” værdier
+  description: ''
+  triggers:
+  - at: 06:00:00
+    trigger: time
+  actions:
+  - data:
+      entity_id: input_number.birke_pollen_tidligere
+      value: '{{ states(''sensor.birke_pollen_seneste'') | float(0) }}'
+    action: input_number.set_value
+  - data:
+      entity_id: input_number.bynke_pollen_tidligere
+      value: '{{ states(''sensor.bynke_pollen_seneste'') | float(0) }}'
+    action: input_number.set_value
+  - data:
+      entity_id: input_number.el_pollen_tidligere
+      value: '{{ states(''sensor.el_pollen_seneste'') | float(0) }}'
+    action: input_number.set_value
+  - data:
+      entity_id: input_number.elm_pollen_tidligere
+      value: '{{ states(''sensor.elm_pollen_seneste'') | float(0) }}'
+    action: input_number.set_value
+  - data:
+      entity_id: input_number.alternaria_pollen_tidligere
+      value: '{{ states(''sensor.alternaria_seneste'') | float(0) }}'
+    action: input_number.set_value
+  - data:
+      entity_id: input_number.cladosporium_pollen_tidligere
+      value: '{{ states(''sensor.cladosporium_seneste'') | float(0) }}'
+    action: input_number.set_value
+  - data:
+      entity_id: input_number.graes_pollen_tidligere
+      value: '{{ states(''sensor.graes_pollen_seneste'') | float(0) }}'
+    action: input_number.set_value
+  - data:
+      entity_id: input_number.hassel_pollen_tidligere
+      value: '{{ states(''sensor.hassel_pollen_seneste'') | float(0) }}'
+    action: input_number.set_value
+  mode: single
+- id: '1751114820174'
+  alias: Opdater tidligere UV-indeks
+  description: Gem trigger.from_state så man kan sammenligne
+  triggers:
+  - entity_id: sensor.openuv_current_uv_index
+    trigger: state
+  actions:
+  - data:
+      entity_id: input_number.uv_index_tidligere
+      value: '{{ trigger.from_state.state | float(0) }}'
+    action: input_number.set_value
+  mode: single
+- id: '1751886897930'
+  alias: Notifikation – valgte rum
+  description: Sender notifikation når en valgt sensor trigges og home_alone = on
+  triggers:
+  - entity_id:
+    - binary_sensor.dorsensor_stuen
+    - binary_sensor.motion_sensor_hall
+    - binary_sensor.hue_outdoor_motion_sensor_hovedindgang_bevaegelse
+    - binary_sensor.contact_sensor_950f_motion_detected
+    - binary_sensor.hue_outdoor_sensor_indkoersel_bevaegelse
+    - binary_sensor.hue_outdoor_sensor_terrasse_bevaegelse
+    - binary_sensor.motion_sensor_entre_occupancy
+    - binary_sensor.dor_sensor_vaerksted_contact
+    - binary_sensor.dor_sensor_entre_contact
+    - binary_sensor.contact_sensor_950f_door_open
+    - binary_sensor.vindue_sensor_badevaerelse_contact
+    - binary_sensor.vinduesensor_sovevaerelse_contact
+    - binary_sensor.vindue_sensor_jonatans_vaerelse_contact
+    - binary_sensor.vinduesensor_matias_vaerelse_contact
+    to: 'on'
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.home_alone
+    state: 'on'
+  - condition: template
+    value_template: "{% set map = {\n  'binary_sensor.dorsensor_stuen':        'input_boolean.stuen_motion',\n
+      \ 'binary_sensor.motion_sensor_hall':         'input_boolean.hall_motion',\n
+      \ 'binary_sensor.hue_outdoor_motion_sensor_hovedindgang_bevaegelse': 'input_boolean.hovedindgang_motion',\n
+      \ 'binary_sensor.contact_sensor_950f_motion_detected':            'input_boolean.bryggers_motion',\n
+      \ 'binary_sensor.hue_outdoor_sensor_indkoersel_bevaegelse':      'input_boolean.indkoersel_motion',\n
+      \ 'binary_sensor.hue_outdoor_sensor_terrasse_bevaegelse':        'input_boolean.terrasse_motion',\n
+      \ 'binary_sensor.motion_sensor_entre_occupancy':         'input_boolean.entre_motion',\n
+      \ 'binary_sensor.motion_sensor_vaerksted_occupancy':            'input_boolean.vaerksted_motion',\n
+      \ 'binary_sensor.dor_sensor_vaerksted_contact':        'input_boolean.stuen_dor',\n
+      \ '':   'input_boolean.entre_dor',\n  'binary_sensor.contact_sensor_950f_door_open':
+      'input_boolean.bryggers_dor',\n  'binary_sensor.dor_sensor_vaerksted_contact':
+      \       'input_boolean.vaerksteds_dor',\n  'binary_sensor.vindue_sensor_badevaerelse_contact':
+      \       'input_boolean.badevaerelses_vindue',\n  'binary_sensor.vinduesensor_sovevaerelse_contact':
+      \       'input_boolean.sovevaerelses_vindue',\n  'binary_sensor.vindue_sensor_jonatans_vaerelse_contact':
+      \       'input_boolean.jonatan_vindue',\n  'binary_sensor.vinduesensor_matias_vaerelse_contact':
+      \       'input_boolean.matias_vindue'\n} %} {{ is_state(map[trigger.entity_id],
+      'on') }}\n"
+  actions:
+  - data:
+      title: "\U0001F6A8 Bevægelse / Dør åben"
+      message: "{% set names = {\n  'binary_sensor.dorsensor_stuen':        'Stuen
+        (bevægelse)',\n  'binary_sensor.motion_sensor_hall':         'Hall (bevægelse)',\n
+        \ 'binary_sensor.hue_outdoor_motion_sensor_hovedindgang_bevaegelse': 'Hovedindgang
+        (bevægelse)',\n  'binary_sensor.contact_sensor_950f_motion_detected':            'Bryggers
+        (bevægelse)',\n  'binary_sensor.hue_outdoor_sensor_indkoersel_bevaegelse':
+        \     'Indkørsel (bevægelse)',\n  'binary_sensor.hue_outdoor_sensor_terrasse_bevaegelse':
+        \       'Terrasse (bevægelse)',\n  'binary_sensor.motion_sensor_entre_occupancy':
+        \        'Entre (bevægelse)',\n  'binary_sensor.motion_sensor_vaerksted_occupancy':
+        \           'Værksted (bevægelse)',\n  'binary_sensor.dor_sensor_vaerksted_contact':
+        \       'Stuen (dør)',\n  'binary_sensor.dor_sensor_entre_contact':   'Entre
+        (dør)',\n  'binary_sensor.contact_sensor_950f_door_open': 'Bryggers (dør)',\n
+        \ 'binary_sensor.dor_sensor_vaerksted_contact':        'Værksted (dør)',\n
+        \ 'binary_sensor.vindue_sensor_badevaerelse_contact':        'Badeværelse
+        (vindue)',\n  'binary_sensor.vinduesensor_sovevaerelse_contact':        'Soveværelse
+        (vindue)',\n  'binary_sensor.vindue_sensor_jonatans_vaerelse_contact':        'Jonatan
+        (vindue)',\n  'binary_sensor.vinduesensor_matias_vaerelse_contact':        'Matias
+        (vindue)'\n} %} Nogen i {{ names[trigger.entity_id] }}!\n"
+    action: notify.ios_kims_iphone
+  mode: single
+- id: '1752061213091'
+  alias: Notifikation – valgte rum - test
+  description: Sender notifikation når valgt sensor trigges og home_alone = on
+  triggers:
+  - entity_id:
+    - binary_sensor.dorsensor_stuen
+    - binary_sensor.motion_sensor_hall
+    - binary_sensor.contact_sensor_950f_motion_detected
+    to: 'on'
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.home_alone
+    state: 'on'
+  - condition: template
+    value_template: "{%- set helpers = {\n   'binary_sensor.dorsensor_stuen': 'input_boolean.stuen_motion',\n
+      \  'binary_sensor.motion_sensor_hall':  'input_boolean.hall_motion',\n   'binary_sensor.contact_sensor_950f_motion_detected':
+      'input_boolean.bryggers_motion',\n} -%} {% set helper = helpers.get(trigger.entity_id)
+      %} {{ helper is not none and is_state(helper, 'on') }}\n"
+  actions:
+  - data:
+      title: "\U0001F6A8 Alarm! Sensor aktiveret"
+      message: "{%- set names = {\n   'binary_sensor.dorsensor_stuen': 'Stuen (bevægelse)',\n
+        \  'binary_sensor.motion_sensor_hall':  'Hall (bevægelse)',\n   'binary_sensor.contact_sensor_950f_motion_detected':
+        'Bryggers (bevægelse)',\n} -%} Nogen i {{ names[trigger.entity_id] }}!\n"
+    action: notify.ios_kims_iphone
+  mode: single
+- id: '1755523928868'
+  alias: Tænd lys i underskab
+  description: Tænd lys i underskab i køkkenet
+  triggers:
+  - entity_id: binary_sensor.motion_sensor_hjorneskab_occupancy
+    from:
+    to: 'on'
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 1
+    trigger: state
+  actions:
+  - action: light.turn_on
+    target:
+      entity_id:
+      - light.driver_hjorneskab
+    data: {}
+  - delay:
+      hours: 0
+      minutes: 2
+      seconds: 0
+      milliseconds: 0
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id:
+      - light.driver_hjorneskab
+  mode: restart
+- id: '1756835681360'
+  alias: Notifikation - UPS - På batteri (OB)
+  description: Send push når UPS skifter til batteridrift.
+  triggers:
+  - trigger: state
+    entity_id: sensor.ups_status
+  conditions:
+  - condition: template
+    value_template: '{{ ''OB'' in trigger.to_state.state and ''OL'' in (trigger.from_state.state
+      if trigger.from_state else '''') }}'
+  actions:
+  - action: notify.ios_kims_iphone
+    data:
+      title: 'UPS: På batteri'
+      message: 'Strømsvigt detekteret. Status={{ states(''sensor.ups_status'') }},
+        Spænding in={{ states(''sensor.ups_input_voltage'')|default(''n/a'') }}, Batteri={{
+        states(''sensor.ups_battery_charge'')|int(default=0) }}%.
+
+        '
+  - action: persistent_notification.create
+    data:
+      title: UPS på batteri
+      message: UPS er gået på batteri. Tjek tavle/gruppe.
+  mode: single
+- id: '1756835916727'
+  alias: Notifikation - UPS - Lavt batteri (<=30%)
+  description: ''
+  triggers:
+  - trigger: numeric_state
+    entity_id: sensor.ups_battery_charge
+    below: 30
+  conditions:
+  - condition: template
+    value_template: '{{ ''OB'' in states(''sensor.ups_status'') }}'
+  actions:
+  - action: notify.ios_kims_iphone
+    data:
+      title: 'UPS: Lavt batteri'
+      message: 'Batteri {{ states(''sensor.ups_battery_charge'')|int }}%, est. runtime
+        {{ states(''sensor.ups_battery_runtime'')|int }} sek.
+
+        '
+  - action: persistent_notification.create
+    data:
+      title: UPS lavt batteri
+      message: 'UPS batteri under 30% mens på batteri (OB).
+
+        '
+  mode: single
+- id: '1756836012898'
+  alias: Notifikation - UPS - Strømmen tilbage (OL)
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id: sensor.ups_status
+  conditions:
+  - condition: template
+    value_template: "{{ 'OL' in trigger.to_state.state and\n   trigger.from_state
+      is not none and 'OB' in trigger.from_state.state }}\n"
+  actions:
+  - action: notify.ios_kims_iphone
+    data:
+      title: 'UPS: Netstrøm tilbage'
+      message: 'Status={{ states(''sensor.ups_status'') }}, Batteri={{ states(''sensor.ups_battery_charge'')|int
+        }}%.
+
+        '
+  mode: single
+- id: 9b087526-27e9-4473-b69c-a94bb421a7f3
+  alias: Carport – sluk lyskæde på tidspunkt fra input_datetime
+  description: Slukker lyskæde i carport på brugerdefineret tidspunkt, hvis party_mode
+    er off
+  triggers:
+  - at: input_datetime.sluk_lyskaede_i_carport
+    trigger: time
+  conditions:
+  - condition: state
+    entity_id: input_boolean.party_mode
+    state: 'off'
+  actions:
+  - target:
+      entity_id: light.hue_smart_plug_lyskaede
+    action: light.turn_off
+  mode: single
+- id: 9b087526-27e9-4473-b69c-a94bb421a7f3345245354
+  alias: Carport AI lys i lyskæde, hvis vi ikke er hjemme
+  description: 'Tænder ved solnedgang uanset tilstedeværelse. Auto-sluk efter input_datetime
+    hvis ikke party_mode, ikke manual_override, og enten begge er hjemme, eller holiday*
+    er on, eller 15 min efter første hjemkomst der sker efter sluktid.
+
+    '
+  triggers:
+  - event: sunset
+    trigger: sun
+  - entity_id:
+    - person.kim_vognsen
+    - person.gitte_vognsen
+    - input_boolean.party_mode
+    - input_boolean.holiday_mode
+    - input_boolean.holiday_all_mode
+    - input_datetime.sluk_lyskaede_i_carport
+    - input_boolean.manual_override_carport_lyskaede
+    trigger: state
+  - at: input_datetime.sluk_lyskaede_i_carport
+    trigger: time
+  - minutes: /10
+    trigger: time_pattern
+  - event: start
+    trigger: homeassistant
+  conditions: []
+  actions:
+  - variables:
+      sluk_ts: '{{ as_timestamp(today_at(states(''input_datetime.sluk_lyskaede_i_carport'')))
+        }}
+
+        '
+      now_ts: '{{ as_timestamp(now()) }}
+
+        '
+      party_on: '{{ is_state(''input_boolean.party_mode'',''on'') }}
+
+        '
+      holiday_on: "{{ is_state('input_boolean.holiday_mode','on') or\n   is_state('input_boolean.holiday_all_mode','on')
+        }}\n"
+      manual_override_on: '{{ is_state(''input_boolean.manual_override_carport_lyskaede'',''on'')
+        }}
+
+        '
+      kim_home: '{{ is_state(''person.kim_vognsen'',''home'') }}
+
+        '
+      gitte_home: '{{ is_state(''person.gitte_vognsen'',''home'') }}
+
+        '
+      both_home: '{{ kim_home and gitte_home }}
+
+        '
+      kim_home_since: '{{ as_timestamp(states.person.kim_vognsen.last_changed) if
+        kim_home else 0 }}
+
+        '
+      gitte_home_since: '{{ as_timestamp(states.person.gitte_vognsen.last_changed)
+        if gitte_home else 0 }}
+
+        '
+      latest_arrival_after_sluktid: "{% set arrivals = [\n  kim_home_since if kim_home
+        and kim_home_since > sluk_ts else 0,\n  gitte_home_since if gitte_home and
+        gitte_home_since > sluk_ts else 0\n] %} {{ (arrivals | max) if (arrivals |
+        max) > 0 else none }}\n"
+      allow_by_arrival_plus_15: "{{ latest_arrival_after_sluktid is not none and\n
+        \  now_ts >= (latest_arrival_after_sluktid + 15*60) }}\n"
+  - choose:
+    - alias: 'Manual override: tænd efter solnedgang'
+      conditions:
+      - condition: template
+        value_template: '{{ manual_override_on }}'
+      - condition: state
+        entity_id: sun.sun
+        state: below_horizon
+      sequence:
+      - target:
+          entity_id: light.hue_smart_plug_lyskaede
+        action: light.turn_on
+        data: {}
+    - alias: Tænd ved solnedgang
+      conditions:
+      - condition: state
+        entity_id: sun.sun
+        state: below_horizon
+      sequence:
+      - target:
+          entity_id: light.hue_smart_plug_lyskaede
+        action: light.turn_on
+        data: {}
+    - alias: Sluk efter input_datetime (+15 min v. away), ikke i party/manual override
+      conditions:
+      - condition: template
+        value_template: '{{ not party_on }}'
+      - condition: template
+        value_template: '{{ not manual_override_on }}'
+      - condition: template
+        value_template: '{{ now_ts >= sluk_ts }}'
+      - condition: or
+        conditions:
+        - condition: template
+          value_template: '{{ both_home }}'
+        - condition: template
+          value_template: '{{ holiday_on }}'
+        - condition: template
+          value_template: '{{ allow_by_arrival_plus_15 }}'
+      sequence:
+      - target:
+          entity_id: light.hue_smart_plug_lyskaede
+        action: light.turn_off
+        data: {}
+  mode: single
+- id: 7c7aae7e4dc04540b98fd4f44a91d6b7
+  alias: Entrelys tænd efter motion
+  description: Tænd lys med motion og sluk efter 2 minutter uden bevægelse
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.motion_sensor_entre_occupancy
+    to: 'on'
+  actions:
+  - target:
+      entity_id: light.hue_aurelle_panel_entre
+    data:
+      brightness_pct: 80
+    action: light.turn_on
+  - wait_for_trigger:
+    - trigger: state
+      entity_id:
+      - binary_sensor.motion_sensor_entre_occupancy
+      to: 'off'
+      for:
+        hours: 0
+        minutes: 2
+        seconds: 0
+  - target:
+      entity_id: light.hue_aurelle_panel_entre
+    action: light.turn_off
+  mode: restart
+- id: '1759348911677'
+  alias: Ikea on-off kontakt til driver på kontor
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 626f1642ec8fb21107d84a41f927e6bd
+    type: action
+    subtype: 'on'
+    trigger: device
+  conditions: []
+  actions:
+  - data:
+      brightness_pct: 78
+    target:
+      entity_id:
+      - light.driver_kontor
+    action: light.turn_on
+- id: '1759349182637'
+  alias: Ikea on-off kontrakt kontor driver
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 626f1642ec8fb21107d84a41f927e6bd
+    type: action
+    subtype: 'off'
+    trigger: device
+  conditions: []
+  actions:
+  - action: light.turn_off
+    target:
+      entity_id:
+      - light.driver_kontor
+    data: {}
+  mode: single
+- id: '1759414799250'
+  alias: Knap tænd - rød der er mad
+  description: afspiller lyd og sætter lys til rød i drengeværelse
+  triggers:
+  - domain: mqtt
+    device_id: 1436d77aa3641f283ebde84206eb74fb
+    type: action
+    subtype: brightness_move_up
+    trigger: device
+  conditions: []
+  actions:
+  - data:
+      media:
+        media_content_id: http://10.0.10.61:8123/local/media/its-dinner-time-u70.mp3
+        media_content_type: audio/mp3
+        metadata: {}
+    target:
+      entity_id:
+      - media_player.nest_mini_drengevaerelse
+      - media_player.nest_mini_bryggers
+    action: media_player.play_media
+  - action: scene.turn_on
+    target:
+      entity_id: scene.alarm_rod
+  - delay:
+      hours: 0
+      minutes: 10
+      seconds: 0
+      milliseconds: 0
+  - action: scene.turn_on
+    target:
+      entity_id: scene.normal_lys_i_drengevaerelse_version_2
+  mode: restart
+- id: '1759414893377'
+  alias: Knap lang tænd - grøn lys og mad om 5 minutter
+  description: Tænder grøn lys i lampen og spiller "Der er mad om 5"
+  triggers:
+  - domain: mqtt
+    device_id: 1436d77aa3641f283ebde84206eb74fb
+    type: action
+    subtype: 'on'
+    trigger: device
+  conditions: []
+  actions:
+  - data:
+      media:
+        media_content_id: http://10.0.10.61:8123/local/media/just-a-minute-suppers-not-quite-ready-youll-just-have-time-to-wash.mp3
+        media_content_type: audio/mp3
+        metadata: {}
+    target:
+      entity_id:
+      - media_player.nest_mini_drengevaerelse
+      - media_player.nest_mini_bryggers
+    action: media_player.play_media
+  - action: scene.turn_on
+    target:
+      entity_id: scene.5_minutter_til_mad
+  - delay:
+      hours: 0
+      minutes: 12
+      seconds: 0
+      milliseconds: 0
+  - action: scene.turn_on
+    target:
+      entity_id: scene.normal_lys_i_drengevaerelse_version_2
+  mode: restart
+- id: '1759415019754'
+  alias: Knap sluk - normal lys i drengeværelse
+  description: Knap sluk - normal lys i drengeværelse
+  triggers:
+  - domain: mqtt
+    device_id: 1436d77aa3641f283ebde84206eb74fb
+    type: action
+    subtype: 'off'
+    trigger: device
+  conditions: []
+  actions:
+  - action: scene.turn_on
+    target:
+      entity_id: scene.normal_lys_i_drengevaerelse_version_2
+  mode: restart
+- id: '1759587289473'
+  alias: Alarm - Temperature lav i badeværelse
+  description: Temperaturen er lav (under 19 grader) i badeværelse tjek at vinduet
+    er lukket
+  triggers:
+  - entity_id:
+    - sensor.weather_badevaerelse_temperature
+    below: '19'
+    trigger: numeric_state
+  conditions:
+  - type: is_temperature
+    condition: device
+    device_id: a8d161cb0a5dbed34b609ab54a41fdeb
+    entity_id: 670da4205b361f10931cb7ec450dd691
+    domain: sensor
+    below: 19
+  actions:
+  - data:
+      media:
+        media_content_id: http://10.0.10.61:8123/local/media/close_the_windows.mp3
+        media_content_type: audio/mp3
+        metadata: {}
+    target:
+      entity_id:
+      - media_player.nest_mini_drengevaerelse
+      - media_player.nest_mini_bryggers
+    action: media_player.play_media
+  - data:
+      message: Temperature er lav i badeværelse, tjek om vinduet er lukket
+    action: notify.ios_parents
+  mode: single
+- id: f5911802-aec2-48a0-a89d-d6fa9334b4bd
+  alias: Afhentning af Mad og Restaffald
+  description: Alarmer om at der afhentes Mad og Rest affald i morgen
+  triggers:
+  - at: '17:00:00'
+    trigger: time
+  conditions:
+  - condition: template
+    value_template: '{{ state_attr(''sensor.mad_og_restaffald'', ''days_until_collection'')
+      | int == 1 }}'
+  actions:
+  - data:
+      message: Der bliver afhentet Mad og Rest affald i morgen
+    action: notify.ios_parents
+  mode: single
+- id: '1759657155824'
+  alias: Terrasse – sluk hvis blæse-lås aktiveres
+  description: ''
+  triggers:
+  - entity_id: input_boolean.hold_lyset_tand_pa_terrasse
+    to: 'on'
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: light.ikea_inspelning_smart_plug_terrrasse_lyskaede
+    state: 'on'
+  actions:
+  - target:
+      entity_id: light.ikea_inspelning_smart_plug_terrrasse_lyskaede
+    action: light.turn_off
+  mode: single
+- id: '1759945714262'
+  alias: Værksted - Tænd radiator ved lav temperatur (16)
+  description: ''
+  triggers:
+  - entity_id:
+    - sensor.weather_vaerksted_temperature
+    below: 16
+    trigger: numeric_state
+  actions:
+  - target:
+      device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
+    data: {}
+    enabled: true
+    action: climate.turn_on
+- id: '1760367613982'
+  alias: Notigikation - Kim er hjemme notifikation til Gitte
+  description: Notifikation på Gittes telefon om at Kim er hjemme
+  triggers:
+  - entity_id:
+    - device_tracker.kim_iphone_cloud3
+    to: home
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 30
+    trigger: state
+    from: not_home
+  conditions: []
+  actions:
+  - data:
+      message: Kim er hjemme
+    action: notify.mobile_app_gittes_iphone
+  - data:
+      message: Kim er hjemme
+    action: notify.mobile_app_kims_iphone
+  mode: single
+- id: '1760426419385'
+  alias: Udendørs – sluk når party mode bliver OFF
+  description: Slukker kun de udendørs lys der reelt er tændt, når party_mode går
+    OFF
+  triggers:
+  - entity_id: input_boolean.party_mode
+    from: 'on'
+    to: 'off'
+    trigger: state
+  conditions:
+  - condition: template
+    value_template: '{{ to_turn_off | length > 0 }}'
+  actions:
+  - target:
+      entity_id: '{{ to_turn_off }}'
+    action: light.turn_off
+  mode: single
+  variables:
+    lights:
+    - light.hue_smart_plug_lyskaede
+    - light.ikea_inspelning_smart_plug_terrrasse_lyskaede
+    to_turn_off: "{{ expand(lights)\n   | selectattr('state','eq','on')\n   | map(attribute='entity_id')
+      | list }}\n"
+- id: 2d25e8a3ccd59
+  alias: Carport  Tænd lys i lyskæde
+  description: Tænd lys ved solnedgang
+  triggers:
+  - event: sunset
+    offset: '0'
+    trigger: sun
+  actions:
+  - target:
+      entity_id: light.hue_smart_plug_lyskaede
+    action: light.turn_on
+  mode: single
+- id: '1760428920752'
+  alias: Carport – tænd 06:30 hvis mørkt, sluk ved solopgang
+  description: Én automation der tænder 06:30 før solopgang og slukker ved solopgang
+  triggers:
+  - at: 06:30
+    id: kl0630
+    trigger: time
+  - event: sunrise
+    id: sunrise
+    trigger: sun
+    offset: -00:15
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: kl0630
+      - condition: sun
+        before: sunrise
+      sequence:
+      - target:
+          entity_id: light.hue_smart_plug_lyskaede
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: sunrise
+      sequence:
+      - target:
+          entity_id: light.hue_smart_plug_lyskaede
+        action: light.turn_off
+  mode: single
+- id: '1760430838905'
+  alias: Lys Hall dæmp efter party mode
+  description: ''
+  triggers:
+  - entity_id:
+    - input_boolean.party_mode
+    from: 'on'
+    to: 'off'
+    trigger: state
+  conditions:
+  - condition: time
+    after: 01:00:00
+  actions:
+  - target:
+      entity_id: scene.daempet_lys_i_hall
+    metadata: {}
+    action: scene.turn_on
+  mode: single
+- id: '1760431333359'
+  alias: Hall, tænd lys til kl. 7 i hverdage
+  description: ''
+  triggers:
+  - at: 07:00:00
+    trigger: time
+  conditions:
+  - condition: and
+    conditions:
+    - condition: sun
+      before: sunrise
+      before_offset: 00:15:00
+    - condition: time
+      weekday:
+      - mon
+      - tue
+      - wed
+      - thu
+      - fri
+  actions:
+  - action: scene.turn_on
+    target:
+      entity_id: scene.normal_lys_i_hall
+  mode: single
+- id: '1760431429942'
+  alias: Hall, tænd lys i weekenden til kl. 9
+  description: ''
+  triggers:
+  - at: 09:00:00
+    trigger: time
+  conditions:
+  - condition: and
+    conditions:
+    - condition: sun
+      before: sunrise
+      before_offset: 00:15:00
+    - condition: time
+      weekday:
+      - sat
+      - sun
+  actions:
+  - action: scene.turn_on
+    target:
+      entity_id: scene.normal_lys_i_hall
+  mode: single
+- id: '1760431719975'
+  alias: Hall, sluk lyset ved solnedgang
+  description: Sluk lyset i Hall ved solopgang
+  triggers:
+  - event: sunrise
+    offset: +01:00:00
+    trigger: sun
+  conditions:
+  - condition: state
+    entity_id: input_boolean.party_mode
+    state: 'off'
+  actions:
+  - target:
+      entity_id: light.bordlampe_i_hall
+    action: light.turn_off
+  mode: restart
+- id: '1760431777358'
+  alias: Hall, tænd lyset ved solnedgang
+  description: Tænd lyset i Hall ved solnedgang
+  triggers:
+  - event: sunset
+    offset: -01:00:00
+    trigger: sun
+  conditions: []
+  actions:
+  - action: scene.turn_on
+    target:
+      entity_id: scene.normal_lys_i_hall
+  mode: restart
+- id: '1760435080742'
+  alias: Afhentning af Metal og Glas
+  description: Alarmer om at der afhentes Metal og Glas i morgen
+  triggers:
+  - at: '17:00:00'
+    trigger: time
+  conditions:
+  - condition: template
+    value_template: '{{ state_attr(''sensor.metal_affald'', ''days_until_collection'')
+      | int == 1 }}'
+  actions:
+  - data:
+      message: Der bliver afhentet Metal og Glas affald i morgen
+    action: notify.ios_parents
+  mode: single
+- id: '1760435231477'
+  alias: Afhentning af Pap
+  description: Alarmer om at der afhentes pap i morgen
+  triggers:
+  - at: '17:00:00'
+    trigger: time
+  conditions:
+  - condition: template
+    value_template: '{{ state_attr(''sensor.pap_affald'', ''days_until_collection'')
+      | int == 1 }}'
+  actions:
+  - data:
+      message: Der bliver afhentet Pap affald i morgen
+    action: notify.ios_parents
+  mode: single
+- id: '1760435377940'
+  alias: Afhentning af Papir/Plastik og MDK 2
+  description: Alarmer om at der afhentes Papir/plastik og MDK i morgen 2
+  triggers:
+  - at: '19:30:00'
+    trigger: time
+  conditions:
+  - condition: template
+    value_template: '{{ state_attr(''sensor.papir_plast_og_mdk_affald'', ''days_until_collection'')
+      | int == 1 }}'
+  actions:
+  - data:
+      message: Der bliver afhentet Papir/plastik og MDK affald i morgen 2
+    action: notify.ios_parents
+  mode: single
+- id: '1760435520814'
+  alias: Bestil afhentning af storskrald
+  description: 'Alarmer - Bestil afhentes storskrald '
+  triggers:
+  - at: '17:00:00'
+    trigger: time
+  conditions:
+  - condition: template
+    value_template: '{{ state_attr(''sensor.storskrald_affald'', ''days_until_collection'')
+      | int == 1 }}'
+  actions:
+  - data:
+      message: Bestil afhenting af storskrald
+    action: notify.mobile_app_kims_iphone
+  mode: single
+- id: '1760435546795'
+  alias: Afhentning af storskrald
+  description: Alarmer om at der afhentes storskrald i morgen
+  triggers:
+  - at: '17:00:00'
+    trigger: time
+  conditions:
+  - condition: template
+    value_template: '{{ state_attr(''sensor.storskrald_affald'', ''days_until_collection'')
+      | int == 1 }}'
+  actions:
+  - data:
+      message: Der bliver hentet storskrald i morgen
+    action: notify.ios_parents
+  mode: single
+- id: '1760435914804'
+  alias: Dørklokke, Ringklokke på Matias værelse
+  description: Afspiller "dørklokke", hvis det ringer på døren
+  triggers:
+  - domain: mqtt
+    device_id: 1a40b65ef078881ec684c1a8eeb938e2
+    type: action
+    subtype: single
+    trigger: device
+  conditions: []
+  actions:
+  - data:
+      media:
+        media_content_id: http://10.0.10.61:8123/local/media/doorbell-1.mp3
+        media_content_type: audio/mp3
+        metadata: {}
+    target:
+      entity_id: media_player.nest_mini_drengevaerelse
+    action: media_player.play_media
+  mode: restart
+- id: '1760436049739'
+  alias: Stuen, Sluk lyset ved solopgang
+  description: Sluk lyset i stuen ved solopgang
+  triggers:
+  - event: sunrise
+    offset: '0'
+    trigger: sun
+  conditions: []
+  actions:
+  - target:
+      entity_id: light.rund_lampe
+    action: light.turn_off
+  mode: single
+- id: '1760436117723'
+  alias: Stuen, Tænd lyset ved solnedgang
+  description: Tænd lyset i stuen ved solnedgang
+  triggers:
+  - event: sunset
+    offset: -01:00:00
+    trigger: sun
+  conditions: []
+  actions:
+  - data:
+      brightness_pct: 78
+    target:
+      entity_id: light.rund_lampe
+    action: light.turn_on
+  mode: single
+- id: '1760436314179'
+  alias: Hovedindgang - tænd og sluk lys ved bevægelse
+  description: Blueprint - Motion-activated Light with sun condition
+  triggers:
+  - entity_id: binary_sensor.hue_outdoor_motion_sensor_hovedindgang_bevaegelse
+    from: 'off'
+    to: 'on'
+    trigger: state
+  conditions:
+  - condition: or
+    conditions:
+    - condition: sun
+      after: sunset
+      after_offset: 45
+    - condition: sun
+      before: sunrise
+      before_offset: 45
+  actions:
+  - target:
+      entity_id: light.hue_outdoor_hoveddor
+    action: light.turn_on
+  - wait_for_trigger:
+      entity_id: binary_sensor.hue_outdoor_motion_sensor_hovedindgang_bevaegelse
+      from: 'on'
+      to: 'off'
+      trigger: state
+  - delay: 120
+  - target:
+      entity_id: light.hue_outdoor_hoveddor
+    action: light.turn_off
+  mode: restart
+  max_exceeded: silent
+- id: '1760530858428'
+  alias: Notifikation - Gitte er hjemme notifikation til Kim
+  description: Notigikation - Gitte er hjemme notifikation til Kim
+  triggers:
+  - entity_id:
+    - person.gitte_vognsen
+    to: home
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 30
+    trigger: state
+    from: not_home
+  conditions: []
+  actions:
+  - data:
+      message: Gitte er hjemme  ❤️
+    action: notify.mobile_app_kims_iphone
+  mode: single
+- id: '1760539435834'
+  alias: Hall – dæmp lys kl. 01:00 hvis party mode er OFF
+  description: Aktiver scenen "dæmpet lys i hall" kl. 01:00, men kun hvis party mode
+    er slået fra
+  triggers:
+  - at: 01:00:00
+    trigger: time
+  conditions:
+  - condition: state
+    entity_id: input_boolean.party_mode
+    state: 'off'
+  actions:
+  - target:
+      entity_id: scene.daempet_lys_i_hall
+    action: scene.turn_on
+  mode: single
+- id: '1761047627981'
+  alias: HA memory warning
+  description: ''
+  triggers:
+  - entity_id: sensor.memory_use_percent
+    above: 90
+    trigger: numeric_state
+  actions:
+  - data:
+      message: ⚠️ Home Assistant RAM >90 %, check Recorder or integration load
+    action: notify.mobile_app_kims_iphone
+- id: '1762870981459'
+  alias: Værksted- Tænd radiator ved lav temperatur (12)
+  description: ''
+  triggers:
+  - entity_id:
+    - sensor.weather_vaerksted_temperature
+    below: 12
+    trigger: numeric_state
+  conditions:
+  - condition: state
+    entity_id: climate.el_radiator_i_varksted
+    state: 'off'
+  actions:
+  - target:
+      device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
+    data: {}
+    enabled: true
+    action: climate.turn_on
+  - data:
+      message: Temperaturen er under 12 grader. Tændt for radiator værksted
+    action: notify.ios_kims_iphone
+  mode: single
+- id: '1762871213693'
+  alias: Værksted - Sæt normal temperatur for radiator kl. 20:10 hvis nødvendigt
+  description: Sætter el-radiatoren i værkstedet til normal temperatur kl. 20:10,
+    hvis temperaturen er under 17 grader.
+  triggers:
+  - at: '20:10:00'
+    trigger: time
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.weather_vaerksted_temperature
+    below: 17
+  actions:
+  - target:
+      device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
+    action: climate.turn_on
+    data: {}
+  mode: single
+- id: '1762871296966'
+  alias: Værksted - Sluk radiator ved høj temperatur i værksted (19)
+  description: ''
+  triggers:
+  - entity_id:
+    - sensor.weather_vaerksted_temperature
+    above: 19
+    trigger: numeric_state
+  conditions:
+  - condition: state
+    entity_id: climate.el_radiator_i_varksted
+    state: heat
+  actions:
+  - target:
+      device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
+    data: {}
+    enabled: true
+    action: climate.turn_off
+  mode: single
+- id: '1762871468597'
+  alias: Værksted - Sluk radiator ved høj temperatur (20)
+  description: ''
+  triggers:
+  - entity_id:
+    - sensor.weather_vaerksted_temperature
+    above: 20
+    trigger: numeric_state
+  conditions:
+  - condition: state
+    entity_id: climate.el_radiator_i_varksted
+    state: heat
+  actions:
+  - target:
+      device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
+    data: {}
+    enabled: true
+    action: climate.turn_off
+  - data:
+      message: Temperaturen er over 19 grader. Slukker radiator værksted
+    action: notify.ios_kims_iphone
+  mode: single
+- id: '1762871655826'
+  alias: Værksted - Sæt lav temperatur for radiator kl. 17
+  description: Sætter el-radiatoren i værkstedet til lav temperatur kl. 17:00.
+  triggers:
+  - at: '17:00:00'
+    trigger: time
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.weather_vaerksted_temperature
+    above: 17
+  actions:
+  - target:
+      device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
+    action: climate.turn_off
+  mode: single
+- id: '1763670897368'
+  alias: Værksted – Temperaturstyring radiator (AI) mellem 17-19 grader
+  description: ''
+  triggers:
+  - trigger: numeric_state
+    entity_id: sensor.weather_vaerksted_temperature
+    below: 17
+  - trigger: numeric_state
+    entity_id: sensor.weather_vaerksted_temperature
+    above: 19
+  conditions:
+  - condition: time
+    after: '20:00:00'
+    before: '17:00:00'
+  actions:
+  - choose:
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.weather_vaerksted_temperature
+        below: 17
+      sequence:
+      - action: climate.turn_on
+        target:
+          device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.weather_vaerksted_temperature
+        above: 19
+      sequence:
+      - action: climate.turn_off
+        target:
+          device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
+  mode: restart
+- id: '1763671657692'
+  alias: Værksted – Pris pause radiator 17–20 (AI)
+  description: ''
+  triggers:
+  - trigger: time
+    at: '17:00:00'
+  actions:
+  - action: climate.turn_off
+    target:
+      device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
+  mode: single
+- id: '1763671710261'
+  alias: Værksted – Genstart varme efter pris-pause (AI)
+  description: ''
+  triggers:
+  - trigger: time
+    at: '20:00:00'
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.weather_vaerksted_temperature
+    below: 17
+  actions:
+  - action: climate.turn_on
+    target:
+      device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
+  mode: single
+- id: '1763971396570'
+  alias: Stuen - Advarsel, luften er beskidt, åbne havedøren (VOC)
+  description: ''
+  triggers:
+  - trigger: numeric_state
+    entity_id:
+    - sensor.ikea_vindstyrka_voc_index
+    for:
+      hours: 0
+      minutes: 10
+      seconds: 0
+    above: 450
+  conditions: []
+  actions:
+  - action: notify.ios_parents
+    metadata: {}
+    data:
+      message: Advarsel, luften er forurenet, åbne vinduer!
+  mode: single
+- id: '1763973437978'
+  alias: Stuen - Advarsel, luften er beskidt, åbne havedør! (PM2.5)
+  description: ''
+  triggers:
+  - trigger: numeric_state
+    entity_id:
+    - sensor.ikea_vindstyrka_pm25
+    for:
+      hours: 0
+      minutes: 10
+      seconds: 0
+    above: 15
+  conditions: []
+  actions:
+  - action: notify.ios_parents
+    metadata: {}
+    data:
+      message: Advarsel, luften er forurenet, åbne vinduer! (PM2.5)
+  mode: single

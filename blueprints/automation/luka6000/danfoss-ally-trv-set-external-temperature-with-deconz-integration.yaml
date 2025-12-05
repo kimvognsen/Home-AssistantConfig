@@ -1,0 +1,33 @@
+blueprint:
+  name: Danfoss Ally TRV set external temperature
+  description: Set external measured temperature to Danfoss Ally TRV
+  domain: automation
+  input:
+    danfoss_trv:
+      name: Danfoss TRV
+      description: This is Danfoss Ally climate TRV entity
+      selector:
+        entity:
+          domain: climate
+    temperature_sensor:
+      name: Temperature sensor
+      description: This sensor act as external temperature sensor for your Ally
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+  source_url: https://community.home-assistant.io/t/danfoss-ally-trv-set-external-temperature-with-deconz-integration/296842
+trigger:
+- platform: state
+  entity_id: !input 'temperature_sensor'
+condition:
+- condition: numeric_state
+  entity_id: !input 'temperature_sensor'
+  above: '0'
+action:
+- service: deconz.configure
+  data:
+    entity: !input 'danfoss_trv'
+    field: /config
+    data: '{ "externalsensortemp": {{(trigger.to_state.state|float*100)|int}} }'
+mode: single

@@ -1,0 +1,10 @@
+---
+#
+#
+#
+#
+platform: template
+sensors:
+  show_uv_graph:
+    friendly_name: "UV max over grænseværdi"
+    value_template: "{{ states('sensor.openuv_max_uv_index') | float(0) > states('sensor.uv_sun') | float(0) }}"

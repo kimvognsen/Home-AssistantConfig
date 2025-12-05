@@ -1,0 +1,17 @@
+---
+#
+# powercalc
+# https://github.com/bramstroker/homeassistant-powercalc?fbclid=IwAR21AFY74VNcPiFC8oGo6AYU33zpqbm-zEUO1mqS-39XJY0UOvkTtZsU28w
+#
+# samsung køleskab
+#
+# 30,02283105022831
+# 263kWh pr. år.
+# 
+powercalc:
+  sensors:
+    - entity_id: sensor.dummy
+      unique_id: badfb302-94b4-45d8-ac1c-411b53c3b210
+      name: Samsung Fryser
+      fixed:
+        power: "{{states('input_number.samsung_fryser_watt')}}"

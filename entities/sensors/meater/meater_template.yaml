@@ -1,0 +1,113 @@
+---
+# sensor group: Meater temperatur
+#
+# https://community.home-assistant.io/t/meater-through-the-api/264292
+#
+#
+platform: template
+sensors:
+  meattemp:
+    friendly_name: Kerne temperatur
+    value_template: >
+      {% set dev = state_attr('sensor.meater', 'data') %}
+      {% if dev is defined and dev.devices is defined and dev.devices | length > 0 %}
+        {{ dev.devices[0]["temperature"]["internal"] }}
+      {% else %}
+        unknown
+      {% endif %}
+    icon_template: mdi:food-steak
+
+  ambient:
+    friendly_name: Napolion Temperatur
+    value_template: >
+      {% set dev = state_attr('sensor.meater', 'data') %}
+      {% if dev is defined and dev.devices is defined and dev.devices | length > 0 %}
+        {{ dev.devices[0]["temperature"]["ambient"] }}
+      {% else %}
+        unknown
+      {% endif %}
+    icon_template: mdi:grill
+
+  cook_id:
+    friendly_name: Meater ID
+    value_template: >
+      {% set dev = state_attr('sensor.meater', 'data') %}
+      {% if dev is defined and dev.devices is defined and dev.devices | length > 0 %}
+        {{ dev.devices[0]["cook"]["id"] }}
+      {% else %}
+        unknown
+      {% endif %}
+
+  cook_name:
+    friendly_name: Meater - Kød valg
+    icon_template: mdi:chef-hat
+    value_template: >
+      {% set dev = state_attr('sensor.meater', 'data') %}
+      {% if dev is defined and dev.devices is defined and dev.devices | length > 0 %}
+        {{ dev.devices[0]["cook"]["name"] }}
+      {% else %}
+        unknown
+      {% endif %}
+
+  cook_state:
+    friendly_name: Meater Kød - State
+    value_template: >
+      {% set dev = state_attr('sensor.meater', 'data') %}
+      {% if dev is defined and dev.devices is defined and dev.devices | length > 0 %}
+        {{ dev.devices[0]["cook"]["state"] }}
+      {% else %}
+        unknown
+      {% endif %}
+
+  cook_temperature_target:
+    friendly_name: Meater - Kød temperatur mål
+    value_template: >
+      {% set dev = state_attr('sensor.meater', 'data') %}
+      {% if dev is defined and dev.devices is defined and dev.devices | length > 0 %}
+        {{ dev.devices[0]["cook"]["temperature"]["target"] }}
+      {% else %}
+        unknown
+      {% endif %}
+
+  cook_temperature_peak:
+    friendly_name: Meater - Kød temperatur Peak
+    value_template: >
+      {% set dev = state_attr('sensor.meater', 'data') %}
+      {% if dev is defined and dev.devices is defined and dev.devices | length > 0 %}
+        {{ dev.devices[0]["cook"]["temperature"]["peak"] }}
+      {% else %}
+        unknown
+      {% endif %}
+
+  cook_time_elapsed:
+    friendly_name: Meater - Forvente tid
+    value_template: >
+      {% set dev = state_attr('sensor.meater', 'data') %}
+      {% if dev is defined and dev.devices is defined and dev.devices | length > 0 %}
+        {{ dev.devices[0]["cook"]["time"]["elapsed"] }}
+      {% else %}
+        unknown
+      {% endif %}
+    icon_template: mdi:timer-sand
+
+  cook_time_remaining:
+    friendly_name: Meater - Tilbered tid tilbage
+    value_template: >
+      {% set dev = state_attr('sensor.meater', 'data') %}
+      {% if dev is defined and dev.devices is defined and dev.devices | length > 0 %}
+        {{ dev.devices[0]["cook"]["time"]["remaining"] }}
+      {% else %}
+        unknown
+      {% endif %}
+    icon_template: mdi:timer-sand
+
+  updated_at:
+    friendly_name: Meater - Sidst opdateret
+    value_template: >
+      {% set dev = state_attr('sensor.meater', 'data') %}
+      {% if dev is defined and dev.devices is defined and dev.devices | length > 0 %}
+        {{ dev.devices[0]["updated_at"] }}
+      {% else %}
+        unknown
+      {% endif %}
+    icon_template: mdi:update

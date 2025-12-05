@@ -1,0 +1,16 @@
+---
+# sensor group: Seas strøm
+#
+#
+#
+#
+# 
+#
+#Frient  tal
+platform: statistics
+entity_id: sensor.energiforbrug_total
+name: Frient Seas Monthly Statistics
+state_characteristic: mean
+sampling_size: 50
+max_age:
+    days: 30

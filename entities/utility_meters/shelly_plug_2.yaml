@@ -1,0 +1,31 @@
+---
+#
+#
+#
+#
+# jonatans computer Shelly plug 
+jonatans_hourly_energy:
+  source: sensor.shelly_plug_2_energy
+  unique_id: 'jonatans_hourly_energy'
+  name: Jonatans Hourly Energy
+  cycle: hourly
+jonatans_daily_energy:
+  source: sensor.shelly_plug_2_energy
+  unique_id: 'jonatans_daily_energy'
+  name: Jonatans Daily Energy
+  cycle: daily
+jonatans_weekly_energy:
+  source: sensor.shelly_plug_2_energy
+  unique_id: 'jonatans_weekly_energy'
+  name: Jonatans Weekly Energy
+  cycle: weekly
+jonatans_monthly_energy:
+  source: sensor.shelly_plug_2_energy
+  unique_id: 'jonatans_monthly_energy'
+  name: Jonatans Monthly Energy
+  cycle: monthly
+jonatans_yearly_energy:
+  source: sensor.shelly_plug_2_energy
+  unique_id: 'jonatans_yearly_energy'
+  name: Jonatans Yearly Energy
+  cycle: yearly

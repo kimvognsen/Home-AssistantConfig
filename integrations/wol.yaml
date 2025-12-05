@@ -1,0 +1,6 @@
+---
+#
+# wake on lan
+# https://www.home-assistant.io/integrations/wake_on_lan/
+# 
+wake_on_lan:

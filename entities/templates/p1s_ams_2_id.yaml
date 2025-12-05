@@ -1,0 +1,15 @@
+---
+#
+# lave binary sensor til alm sensor
+#
+- sensor:
+    - name: "P1S AMS 2 ID"
+      unique_id: p1s_01p00a452601054_ams_2_id
+      state: >
+        {% if is_state('binary_sensor.p1s_01p00a452601054_ams_2_aktiv', 'on') %}
+          1
+        {% else %}
+          0
+        {% endif %}
+#      unit_of_measurement: "O"
+#      device_class: "power"

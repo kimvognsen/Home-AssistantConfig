@@ -1,0 +1,56 @@
+---
+#
+#
+# temperatur on NUC
+#
+#
+#
+# Proxmos sensor
+#- sensor:
+#    name: 'Proxmox SSD'
+#    command: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i /config/.ssh/id_rsa root@10.0.10.63 df | grep pve-root | awk '{printf ("%.0f\n",$3*100/($3+$4))}'
+#    unit_of_measurement: '%'
+
+#- sensor:
+#    name: 'Proxmox RAM'
+#    command: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i /config/.ssh/id_rsa root@10.0.10.63 free -m | grep Mem | awk '{printf ("%.0f\n",$3*100/$2)}'
+#    unit_of_measurement: '%'
+
+#####
+# Number line
+#- sensor:
+#    name: "Number of Lines of Code (YAML)"
+#    command: " find /config/ -name '*.yaml' | xargs cat | wc -l"
+
+- sensor:
+    name: "Number of Lines of Code (YAML)"
+    command: >
+      sh -c "find /config -type f -name '*.yaml' -print0 |
+             xargs -0 wc -l 2>/dev/null |
+             tail -n1 | awk '{print $1}'"
+    scan_interval: 3600        # én gang i timen er rigeligt
+    command_timeout: 10
+    value_template: "{{ (value | int(0)) }}"
+
+
+# NUC CPU Temp
+#- sensor:
+#    name: 'Proxmox CPU Temp'
+#    command: "ssh -i /config/.ssh/id_rsa -o StrictHostKeyChecking=no root@10.0.10.63 -t 'cat /sys/class/thermal/thermal_zone2/temp'"
+#    unit_of_measurement: '°C'
+#    scan_interval: 300
+#    value_template: '{{ (value | multiply(0.001)) | round(0) }}'
+
+# NUC temperatur - Dobbel?
+#- sensor:
+#    name: 'Proxmox CPU'
+#    command: ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i /config/.ssh/id_rsa root@10.0.10.63 top -d 0.5 -b -n2 | grep "Cpu(s)"|tail -n 1 | awk '{printf ("%.0f\n",$2 + $4)}'
+#    unit_of_measurement: '%'
+
+#- sensor:
+#    name: "OWM UV Forecast"
+#    command: "curl -s 'https://api.openweathermap.org/data/2.5/uvi/forecast?lat=55.6761&lon=12.5683&appid=29bb5dad9f3726e541e4d710fe27e549&cnt=8' | python3 -c \"import sys, json; d=json.load(sys.stdin); print(json.dumps({'dummy': d}))\""
+#    scan_interval: 1800
+#    value_template: "OK"
+#    json_attributes:
+#      - dummy

@@ -1,0 +1,15 @@
+---
+#
+# powercalc
+# https://github.com/bramstroker/homeassistant-powercalc?fbclid=IwAR21AFY74VNcPiFC8oGo6AYU33zpqbm-zEUO1mqS-39XJY0UOvkTtZsU28w
+#
+# Broadlink RM4 Mini 
+#
+# https://www.powerplanetonline.com/en/broadlink-rm4-mini-google-home-alexa-en
+# 
+powercalc:
+  sensors:
+    - entity_id: remote.brodlink_4_mini_remote
+      unique_id: 5ecde2a5-2c9e-4661-be58-b17fc3babc0b
+      fixed:
+        power: 0.69

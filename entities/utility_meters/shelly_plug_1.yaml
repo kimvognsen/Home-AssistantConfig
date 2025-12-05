@@ -1,0 +1,31 @@
+---
+#
+#
+#
+#
+# kims computer Shelly plug 
+kims_hourly_energy:
+  source: sensor.shelly_plug_1_energy
+  unique_id: 'kims_hourly_energy'
+  name: Kims computer Hourly Energy
+  cycle: hourly
+kims_daily_energy:
+  source: sensor.shelly_plug_1_energy
+  unique_id: 'kims_daily_energy'
+  name: Kims computer Daily Energy
+  cycle: daily
+kims_weekly_energy:
+  source: sensor.shelly_plug_1_energy
+  unique_id: 'kims_weekly_energy'
+  name: Kims computer Weekly Energy
+  cycle: weekly
+kims_monthly_energy:
+  source: sensor.shelly_plug_1_energy
+  unique_id: 'kims_monthly_energy'
+  name: Kims computer Monthly Energy
+  cycle: monthly
+kims_yearly_energy:
+  unique_id: 'kims_yearly_energy'
+  source: sensor.shelly_plug_1_energy
+  name: Kims computer Yearly Energy
+  cycle: yearly

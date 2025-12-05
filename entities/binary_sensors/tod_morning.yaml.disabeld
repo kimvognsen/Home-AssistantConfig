@@ -1,0 +1,11 @@
+---
+#
+# https://community.home-assistant.io/t/lovelace-conditional-card-based-on-time/76534/2
+#
+#
+# Kan laves direkte via UI:
+# Indstillinger → Enheder & tjenester → Tilføj integration → Time of Day
+platform: tod
+name: Morgen
+after: '06:00'
+before: '09:00'

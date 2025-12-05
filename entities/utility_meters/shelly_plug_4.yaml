@@ -1,0 +1,31 @@
+---
+#
+#
+#
+#
+# rackskab computer Shelly plug 
+rackskab_hourly_energy:
+  source: sensor.shelly_plug_4_energy
+  unique_id: 'rackskab_hourly_energy'
+  name: Rackskab Hourly Energy
+  cycle: hourly
+rackskab_daily_energy:
+  source: sensor.shelly_plug_4_energy
+  unique_id: 'rackskab_daily_energ'
+  name: Rackskab Daily Energy
+  cycle: daily
+rackskab_weekly_energy:
+  source: sensor.shelly_plug_4_energy
+  unique_id: 'rackskab_weekly_energy'
+  name: Rackskab Weekly Energy
+  cycle: weekly
+rackskab_monthly_energy:
+  source: sensor.shelly_plug_4_energy
+  unique_id: 'rackskab_monthly_energy'
+  name: Rackskab Monthly Energy
+  cycle: monthly
+rackskab_yearly_energy:
+  source: sensor.shelly_plug_4_energy
+  unique_id: 'rackskab_yearly_energy'
+  name: Rackskab Yearly Energy
+  cycle: yearly

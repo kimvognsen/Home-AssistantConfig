@@ -1,0 +1,13 @@
+---
+# lux
+##########################################################################################
+# Package to use for automating based on Lux levels
+# MtHvdB 20180413
+##########################################################################################
+# 
+lux_low_active_hall:
+  name: Lux Low Active Hall
+  icon: >
+    if (state === 'on') return 'mdi:bell'; else return 'mdi:bell-off';
+    rgb_color: "if (state === 'on') return [251, 210, 41]; else return [54, 95, 140];"
+  

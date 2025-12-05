@@ -1,0 +1,46 @@
+---
+#
+#
+# https://github.com/MTrab/energidataservice/wiki/Displaying-prices-in-Apexchart-card
+#
+#
+  - sensor:
+      - name: Historic Energy Price Percentiles
+        unique_id: historic_energy_price_percentiles
+        state: OK
+        attributes:
+          25th: "{{ states('sensor.average_energy_price_last_30d_mean') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * -0.63 }}"
+          50th: "{{ states('sensor.average_energy_price_last_30d_mean') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 0 }}"
+          75th: "{{ states('sensor.average_energy_price_last_30d_mean') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 0.57 }}"
+          90th: "{{ states('sensor.average_energy_price_last_30d_mean') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 1.29 }}"
+          95th: "{{ states('sensor.average_energy_price_last_30d_mean') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 1.65 }}"
+          99th: "{{ states('sensor.average_energy_price_last_30d_mean') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 2.33 }}"
+          100th: "{{ states('sensor.average_energy_price_last_30d_mean') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 3.9 }}"
+
+      - name: "EDS pris (DKK/kWh)"
+        unique_id: eds_price_dkk_per_kwh
+        state: "{{ states('sensor.energi_data_service') | float(0) }}"
+        unit_of_measurement: "DKK/kWh"
+        device_class: monetary
+#        state_class: measurement
+        availability: >
+          {{ states('sensor.energi_data_service') not in ['unknown','unavailable',''] }}
+      
+      - name: "El-omkostning (rate)"
+        unique_id: el_omkostning_rate
+        state: >  
+          {{ (states('sensor.frient_energiforbrug_total_power')|float(0) / 1000)
+             * (states('sensor.energi_data_service')|float(0)) }}
+        unit_of_measurement: "DKK/h"
+        device_class: monetary
+#        state_class: measurement
+        availability: >
+          {{ states('sensor.frient_energiforbrug_total_power') not in ['unknown','unavailable','']
+            and states('sensor.energi_data_service') not in ['unknown','unavailable',''] }}
+
+      - name: "El - dagspris (estimat)"
+        unique_id: el_dagspris_estimat
+        unit_of_measurement: "DKK"
+        state: >
+          {{ (states('sensor.daily_energy')|float(0))
+             * (state_attr('sensor.energi_data_service','today_mean')|float(0)) | round(2) }}

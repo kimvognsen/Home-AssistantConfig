@@ -1,0 +1,24 @@
+---
+#
+# https://community.home-assistant.io/t/struggling-with-automation-to-turn-lamp-on-with-lux-sensor-level/259401/13
+#
+#
+id: '524591f6-5431-4517-a565-4c4731c7517a'
+alias: Light - Livingroom turn-on light if lux is below 40
+description: 'Tænd lyset om dagen i stuen, hvis lysstyren er lav'
+trigger:
+  - platform: state
+    entity_id: sensor.lumi_lumi_motion_ac02_illuminance
+condition:
+  - condition: template
+    value_template: '{{ trigger.to_state.state | int <40 }}'
+  - condition: state
+    entity_id: sun.sun
+    state: above_horizon
+action:
+  - service: light.turn_on
+#    data:
+#      brightness_pct: 72
+    target:
+      entity_id: light.color_temperature_light_25
+mode: restart

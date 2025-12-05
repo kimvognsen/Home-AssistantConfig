@@ -1,0 +1,9 @@
+---
+#
+#
+# HASH PowerCals
+#
+# https://github.com/bramstroker/homeassistant-powercalc?fbclid=IwAR23FKKHRS8_X4G-iiIqfWh5SO4gBnqa_KrtSQiZ8lESno0BqnewYdU2cCo#hacs
+# 
+powercalc:
+#    enable_autodiscovery: false

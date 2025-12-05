@@ -1,0 +1,30 @@
+---
+#
+#
+#
+#
+# Vaskemaskine vandforbrug
+vaskemaskine_vandforbrug_daily_water_consumption:
+  source: sensor.currentwaterconsumption
+  unique_id: 'vaskemaskine_vandforbrug_daily_water_consumption'
+  name: Vaskemaskine vandforbrug daglig vandforbrug
+  cycle: daily
+  delta_values: true
+vaskemaskine_vandforbrug_weekly_water_consumption:
+  source: sensor.currentwaterconsumption
+  unique_id: 'vaskemaskine_vandforbrug_weekly_water_consumption'
+  name: Vaskemaskine vandforbrug ugenlig vandforbrug
+  cycle: weekly
+  delta_values: true
+vaskemaskine_vandforbrug_monthly_water_consumption:
+  source: sensor.currentwaterconsumption
+  unique_id: 'vaskemaskine_vandforbrug_monthly_water_consumption'
+  name: Vaskemaskine vandforbrug måndelig vandforbrug
+  cycle: monthly
+  delta_values: true
+vaskemaskine_vandforbrug_yearly_water_consumption:
+  source: sensor.currentwaterconsumption
+  unique_id: 'vaskemaskine_vandforbrug_yearly_water_consumption'
+  name: Vaskemaskine vandforbrug årlig vandforbrug
+  cycle: yearly
+  delta_values: true

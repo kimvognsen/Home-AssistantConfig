@@ -1,0 +1,45 @@
+---
+#
+# 10/11-2025
+  # denne er disabled, da jeg ikke kan finde sensor own_uv_forcast. var måske en del af command line hvor man henter den med api, men virke hvsi ikke mere 
+#
+#
+- sensor:
+    - name: "UV i dag"
+      unit_of_measurement: "UV"
+      state_class: measurement
+      availability: >
+        {% set data = state_attr('sensor.owm_uv_forecast', 'dummy') %}
+        {{ data is iterable and (data|length) > 0
+            and (data[0] is defined)
+            and (data[0].value is defined)
+            and (data[0].value is number) }}
+      state: >
+        {% set data = state_attr('sensor.owm_uv_forecast', 'dummy') %}
+        {{ (data[0].value | float(0)) if data is iterable and (data|length)>0 and (data[0] is defined) and (data[0].value is defined) else 0 }}
+
+    - name: "UV i morgen"
+      unit_of_measurement: "UV"
+      state_class: measurement
+      availability: >
+        {% set data = state_attr('sensor.owm_uv_forecast', 'dummy') %}
+        {{ data is iterable and (data|length) > 1
+            and (data[1] is defined)
+            and (data[1].value is defined)
+            and (data[1].value is number) }}
+      state: >
+        {% set data = state_attr('sensor.owm_uv_forecast', 'dummy') %}
+        {{ (data[1].value | float(0)) if data is iterable and (data|length)>1 and (data[1] is defined) and (data[1].value is defined) else 0 }}
+
+    - name: "UV om 2 dage"
+      unit_of_measurement: "UV"
+      state_class: measurement
+      availability: >
+        {% set data = state_attr('sensor.owm_uv_forecast', 'dummy') %}
+        {{ data is iterable and (data|length) > 2
+            and (data[2] is defined)
+            and (data[2].value is defined)
+            and (data[2].value is number) }}
+      state: >
+        {% set data = state_attr('sensor.owm_uv_forecast', 'dummy') %}
+        {{ (data[2].value | float(0)) if data is iterable and (data|length)>2 and (data[2] is defined) and (data[2].value is defined) else 0 }}

@@ -1,0 +1,44 @@
+---
+#
+#
+#
+platform: template
+sensors:
+  billigste_benzin_95:
+    friendly_name: "Billigste benzin 95"
+    unique_id: 'billigste_benzin_95'
+    unit_of_measurement: "kr/l"
+    device_class: monetary
+    value_template: >
+      {% set prices = [
+        states('sensor.fuel_ingo_95') | float(default=999),
+        states('sensor.fuel_f24_95') | float(default=999),
+        states('sensor.fuel_circlek_95') | float(default=999),
+        states('sensor.fuel_unox_95') | float(default=999),
+        states('sensor.fuel_q8_95') | float(default=999),
+        states('sensor.fuel_ok_95') | float(default=999),
+        states('sensor.fuel_shell_95') | float(default=999)
+      ] %}
+      {% set min_p = prices | min %}
+      {{ min_p if min_p != 999 else none }}
+    attribute_templates:
+      cheapest_chain: >
+        {% set sensors = {
+          'INGO': states('sensor.fuel_ingo_95') | float(default=999),
+          'F24': states('sensor.fuel_f24_95') | float(default=999),
+          'Circle K': states('sensor.fuel_circlek_95') | float(default=999),
+          'Uno-X': states('sensor.fuel_unox_95') | float(default=999),
+          'Q8': states('sensor.fuel_q8_95') | float(default=999),
+          'OK': states('sensor.fuel_ok_95') | float(default=999),
+          'Shell': states('sensor.fuel_shell_95') | float(default=999)
+        } %}
+        {% set min_p = sensors.values() | min %}
+        {% if min_p == 999 %}
+          unknown
+        {% else %}
+          {% for chain, price in sensors.items() %}
+            {% if price == min_p %}
+              {{ chain }}
+            {% endif %}
+          {% endfor %}
+        {% endif %}

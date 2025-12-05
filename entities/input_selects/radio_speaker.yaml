@@ -1,0 +1,18 @@
+# Radio Speaker 
+#
+# forsæg på at lave radio kanaler på HA
+# inspiratioin fundet her: https://www.youtube.com/watch?v=Pt1kneqidBM&t=918s&ab_channel=BeardedTinker
+#
+radio_speaker:
+  name: 'Vælg Speaker:'
+  options:
+    - 'Køkken'
+    - 'Stuen'
+    - 'Bryggers'
+    - 'Drengeværelse'
+    - 'Apple TV 4K'
+    - 'JBL speaker'
+    - 'Chromecast stuen'
+  initial: 'Køkken'
+  icon: mdi:speaker-wireless
+

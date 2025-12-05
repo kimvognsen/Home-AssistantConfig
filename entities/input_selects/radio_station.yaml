@@ -1,0 +1,15 @@
+---
+# Radio Stationer
+#
+# forsæg på at lave radio kanaler på HA
+# inspiratioin fundet her: https://www.youtube.com/watch?v=Pt1kneqidBM&t=918s&ab_channel=BeardedTinker
+#
+radio_station:
+  name: 'Vælg Radio Station'
+  options: 
+    - 'DR 4'
+    - 'DR 3'
+    - 'My Rock'
+    - 'Planet Rock'
+  initial: 'DR 4'
+  icon: mdi:radio>

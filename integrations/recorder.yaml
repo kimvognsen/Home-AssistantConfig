@@ -1,0 +1,86 @@
+---
+# The recorder component is storing details in a database which
+# then are handled by the history component.
+#
+# https://www.home-assistant.io/integrations/recorder/
+#
+# 
+recorder:
+  db_url: !secret maridb_url
+
+  # Hvor længe almindelig historik gemmes
+  purge_keep_days: 30
+  auto_purge: true
+
+  # Hvor tit HA skriver til databasen (sekunder)
+  commit_interval: 30
+
+  # 1) Det vi overhovedet vil gemme noget for
+  include:
+    domains:
+      - sensor
+      - binary_sensor
+      - climate
+      - light
+      - switch
+      - person
+      - energy
+      - automation        # valgfrit – kan fjernes hvis du ikke bruger automations-historik
+
+  # 2) Ting vi _aldrig_ gider historik på
+  exclude:
+# Domains kan indsættes, hvis vi laver op på include exclude
+    #    domains:
+#      - updater
+#      - persistent_notification
+#      - camera
+#      - media_player      # Fylder typisk meget
+#      - timer
+#      - webrtc
+#      - calendar          
+
+    entities:
+      # Hastigt opdaterende
+      - sensor.speedtest_ping
+      - sensor.speedtest_download
+      - sensor.speedtest_upload
+      - sensor.esphome_online
+      - binary_sensor.zigbee2mqtt_bridge_connection_state
+      - sensor.processor_use_percent
+      - sensor.memory_use_percent
+
+    entity_globs:
+      # Generelle støj-sensorer
+      - sensor.*_rssi
+      - sensor.*_signal
+      - sensor.*_linkquality
+      - sensor.*_wifi*
+      - sensor.*_uptime
+      - binary_sensor.*_online
+      - binary_sensor.*_update_available
+      - sensor.*uv*       # diverse UV sensor
+
+      # Shelly – vi vil have power/energy, men ikke alle diagnoser
+      - sensor.shelly*_rssi
+      - sensor.shelly*_wifi*
+      - sensor.shelly*_uptime
+      - sensor.shelly*_temperature
+      - sensor.shelly*_device_temperature
+      - sensor.shelly*_voltage
+      - sensor.shelly*_current
+      - sensor.tuya_*_voltage
+      - sensor.tuya_*_current
+      - sensor.ikea_inspelning*current
+      - sensor.ikea_inspelning*voltage
+
+      # Integrationer du har nævnt som “nice to have / støj”
+      - sensor.icloud3_*         # iCloud3 ekstra-sensorer
+      - sensor.bambu_*          # Bambu Lab
+      - sensor.h2d*
+      - sensor.p1s*
+      - sensor.openuv*          # OpenUV (bruges primært sommer)
+      - sensor.*_debug*         # generelt mønster, hvis noget hedder debug
+      - sensor.adguard*         # Adgarud
+      - sensor.*pollen*         # Pollen tal
+      - sensor.disk*            # diverse diske og mit NAS Diskstation
+      - sensor.thecloud*        # NAS TheCloud

@@ -1,0 +1,19 @@
+---
+# sensor group: postkasse - ikke i brug endnu og virker efter at den er flyttet fra con...
+#
+# https://www.home-assistant.io/integrations/light.group/
+#
+#
+#kim: postkasse sensor
+platform: template
+sensors:
+  mailbox_last_triggered_formatted:
+    friendly_name: Mailbox Last triggered
+    value_template: >-
+      {% if (
+          (( as_timestamp(now()) | timestamp_custom("%m%d")) | int) - ((as_timestamp(states("input_datetime.post_sidst_regiestreret")) | timestamp_custom("%m%d")) | int)
+          ) == 0 %}
+        {{ as_timestamp(states("input_datetime.post_sidst_regiestreret")) | timestamp_custom("%H:%M") }}
+      {% else %}
+        none
+      {% endif %}

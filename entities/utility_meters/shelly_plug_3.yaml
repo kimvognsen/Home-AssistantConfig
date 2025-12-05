@@ -1,0 +1,31 @@
+---
+#
+#
+#
+#
+# matias computer Shelly plug 
+matias_hourly_energy:
+  source: sensor.shelly_plug_3_energy
+  unique_id: 'matias_hourly_energy'
+  name: Matias Hourly Energy
+  cycle: hourly
+matias_daily_energy:
+  source: sensor.shelly_plug_3_energy
+  unique_id: 'matias_daily_energy'
+  name: Matias Daily Energy
+  cycle: daily
+matias_weekly_energy:
+  source: sensor.shelly_plug_3_energy
+  unique_id: 'matias_weekly_energy'
+  name: Matias Weekly Energy
+  cycle: weekly
+matias_monthly_energy:
+  source: sensor.shelly_plug_3_energy
+  unique_id: 'matias_monthly_energy'
+  name: Matias Monthly Energy
+  cycle: monthly
+matias_yearly_energy:
+  source: sensor.shelly_plug_3_energy
+  unique_id: 'matias_yearly_energy'
+  name: Matias Yearly Energy
+  cycle: yearly

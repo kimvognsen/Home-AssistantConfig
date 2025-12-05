@@ -1,0 +1,10 @@
+---
+#
+# kan måske bruges til at styre lux level
+low_lux:
+  name: Low Lux
+  icon: mdi:gauge
+#    initial: 40
+  min: 0
+  max: 200
+  step: 5

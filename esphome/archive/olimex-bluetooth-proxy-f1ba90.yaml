@@ -1,0 +1,12 @@
+substitutions:
+  name: olimex-bluetooth-proxy-f1ba90
+  friendly_name: Bryggers ESP Bluetooth Proxy
+packages:
+  esphome.bluetooth-proxy: github://esphome/bluetooth-proxies/olimex-esp32-poe-iso.yaml@main
+esphome:
+  name: ${name}
+  name_add_mac_suffix: false
+  friendly_name: ${friendly_name}
+api:
+  encryption:
+    key: snMuZ0Py2ZIVlIXVLvpP4EadxsFEyIuKWkb4J6Au11U=

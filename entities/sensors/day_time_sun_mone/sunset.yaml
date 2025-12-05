@@ -1,0 +1,46 @@
+---
+# sensor group: sunset i Lovelace 
+#
+# https://www.home-assistant.io/integrations/light.group/
+#
+# Ddenne bruges i manin
+platform: template
+sensors:
+  nextsunrise:
+    unique_id: '64c98fdf-e737-4399-85fe-6e9242ed4f08'
+    friendly_name: 'Næste solopgang'
+    icon_template: mdi:weather-sunset-up
+    unit_of_measurement: ' '
+    value_template: >
+      {{ as_timestamp(states.sun.sun.attributes.next_rising) | timestamp_custom('%H.%M') }}
+  nextsunset:
+    unique_id: '6aae8f6e-25be-451d-953b-2edcf8b29d53'
+    friendly_name: 'Næste solnedgang'
+    icon_template: mdi:weather-sunset-down
+    unit_of_measurement: ' '
+    value_template: >
+      {{ as_timestamp(states.sun.sun.attributes.next_setting) | timestamp_custom('%H.%M') }}
+  next_dawn:
+    unique_id: 'd425f7bb-4c2f-4902-9382-2c839d4b660a'
+    friendly_name: "Næste daggry"
+    value_template: >
+      {{ as_timestamp(states.sun.sun.attributes.next_dawn) | timestamp_custom('%H:%M')}}
+      
+  next_dusk:
+    unique_id: '377785fe-f38c-4132-b939-e7e0cd0619f4'
+    friendly_name: "Næste Twilight"
+    value_template: >
+      {{ as_timestamp(states.sun.sun.attributes.next_dusk) | timestamp_custom('%H:%M')}}
+
+  next_midnight:
+    unique_id: '146b3db9-5a09-4f8f-8812-d9dfcc6827e6'
+    friendly_name: "Næste midnat"
+    value_template: >
+      {{ as_timestamp(states.sun.sun.attributes.next_midnight) | timestamp_custom('%H:%M')}}
+
+  next_noon:
+    unique_id: '682290b8-8b05-4eaa-8959-c1d04e2a1579'
+    friendly_name: "Næste middag"
+    value_template: >
+      {{ as_timestamp(states.sun.sun.attributes.next_noon) | timestamp_custom('%H:%M')}}
+

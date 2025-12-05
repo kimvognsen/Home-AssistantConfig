@@ -1,0 +1,12 @@
+---
+#
+#
+# https://github.com/JamesMcCarthy79/Home-Assistant-Config/blob/master/config/packages/power_consumption/power_consumption.yaml
+#
+platform: history_stats
+name: TT1 frient total history stats
+entity_id: sensor.frient_energiforbrug_total_power
+state: 'on'
+type: time
+start: '{{ now().replace(hour=0).replace(minute=0).replace(second=0) }}'
+end: '{{ now() }}'

@@ -1,0 +1,33 @@
+- sensor:
+#    - name: "Energiforbrug Total (justeret)"
+#      unique_id: energiforbrug_total_justeret
+#      unit_of_measurement: "kWh"
+#      device_class: energy
+#      state_class: total_increasing
+#      state: >
+#        {{ states('sensor.frient_energiforbrug_total_power') | float(0) + 28072.7 }}
+
+#    - name: "Energiforbrug Total"
+#      unique_id: energiforbrug_total_alias_v1
+#      unit_of_measurement: "kWh"
+#      device_class: energy
+#      state_class: total_increasing
+#      state: >
+#        {{ states('sensor.frient_energiforbrug_total_power') | float(0) }}
+
+#nye efter at komme over i Z2M, dem ovenover kan måske slettes
+    - name: "Energiforbrug Total (justeret)"
+      unique_id: energiforbrug_total_justeret_v2
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      state: >
+        {{ states('sensor.frient_energiforbrug_total_energy') | float(0) + 28072.7 }}
+
+    - name: "Energiforbrug Total"
+      unique_id: energiforbrug_total_v2
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      state: >
+        {{ states('sensor.frient_energiforbrug_total_energy') | float(0) }}

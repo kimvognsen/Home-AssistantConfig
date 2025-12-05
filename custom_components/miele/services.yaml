@@ -1,0 +1,101 @@
+# Services descriptions for Miele
+
+process_action:
+  target:
+    device:
+      integration: "miele"
+
+  fields:
+    action:
+      # Field name as shown in UI
+      # name: Action
+      # description: processAction
+      required: true
+      advanced: false
+      # Example value that can be passed for this field
+      example: "start"
+      # The default field value
+      default: ""
+      # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
+      selector:
+        select:
+          options:
+            - "start"
+            - "stop"
+            - "pause"
+            - "start_superfreezing"
+            - "stop_superfreezing"
+            - "start_supercooling"
+            - "stop_supercooling"
+          translation_key: process_action_options
+
+generic_action:
+  target:
+    device:
+      integration: "miele"
+  fields:
+    processAction:
+      example: 1
+      description: Set processAction
+      name: processAction
+    light:
+      description: Set light on or off
+      example: 1
+      name: light
+    startTime:
+      description: Set start time
+      example: "[1, 30]"
+      name: startTime
+    ventilationStep:
+      description: Select ventilation step
+      example: 1
+      name: ventilationStep
+    programId:
+      description: Set program
+      example: 24
+      name: programId
+    targetTemperature:
+      description: Set target temperature
+      example: '[{ "zone": 1, "value": 5 }]'
+      name: targetTemperature
+    deviceName:
+      description: Rename device
+      example: "A new name"
+      name: deviceName
+    powerOn:
+      description: Power on appliance
+      example: true
+      name: powerOn
+    powerOff:
+      description: Power off appliance
+      example: true
+      name: powerOff
+    colors:
+      example: "blue"
+      description: Set color of ambient light
+      name: colors
+    modes:
+      description: Set mode
+      example: 1
+      name: modes
+
+raw:
+  name: Execute raw action
+  description: Execute service with minmal validation.
+  fields:
+    serialno:
+      example: "123456"
+    extra:
+      example: '{ "targetTemperature": [{"zone": 1, "value": -18 }] }'
+
+set_program:
+  name: Set program
+  description: Set and start program with optional parameters.
+  target:
+    device:
+      integration: "miele"
+  fields:
+    programId:
+      description: Set program Id
+      example: 24
+      name: programId

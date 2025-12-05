@@ -1,0 +1,24 @@
+---
+# Styr TV og Apple TV med HA
+#
+#
+# Inspiration er fundet her https://leonardosmarthomemakers.com/how-to-create-a-home-assistant-dashboard-media-edition/#Picture_Card
+alias: Select Spotify
+sequence:
+  - service: remote.send_command
+    target:
+      entity_id: remote.apple_tv_stuen
+    data:
+      delay_secs: 1.5
+      command:
+        - top_menu
+        - home
+        - down
+        - right
+        - right
+        - right
+        - select
+  - service: input_select.select_option
+    entity_id: input_select.media_cabinet
+    data:
+      option: "Apple TV"

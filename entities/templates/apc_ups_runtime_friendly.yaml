@@ -1,0 +1,12 @@
+---
+#
+#
+# inspirret herfra  https://community.home-assistant.io/t/convert-seconds-to-days-hours-minutes/23152/25
+#
+#
+- sensor:
+    - name: APC Ups Time Remaining
+      unique_id: apc_ups_time_remaining
+      state: >
+        {% set s = states('sensor.ups_battery_runtime')|int %}
+        {{ '%02d:%02d' % ((s/3600)|int, (s%3600)/60) }}

@@ -1,0 +1,6 @@
+binary_sensor.smoke_detector*:
+  entity_picture: /local/images/lovelace/smoke_alarm_fibaro.png
+
+binary_sensor.fibare_smoke_detector*:
+  entity_picture: /local/images/lovelace/smoke_alarm_fibaro.png
+  

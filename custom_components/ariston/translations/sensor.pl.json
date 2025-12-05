@@ -1,0 +1,22 @@
+{
+    "state": {
+        "_": {
+            "Always active": "Zawsze aktywny",
+            "Available": "Dostępny",
+            "Disabled": "Wyłączony",
+            "Heating only": "Tylko ogrzewanie",
+            "imperial": "Imperialny",
+            "intelligent": "Inteligentny",
+            "Manual": "Ręczny",
+            "metric": "Metryczny",
+            "OFF": "Wyłączony",
+            "Offline": "Offline",
+            "Time program": "Programowany",
+            "Summer": "Lato",
+            "Time Based": "Czasowa",
+            "Winter": "Zima",
+            "cooling": "Chłodzenie",
+            "antifreeze": "Płyn przeciw zamarzaniu"
+        }
+    }
+}

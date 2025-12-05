@@ -1,0 +1,64 @@
+- sensor:
+    # --- DOOR ---
+
+    # Antal dør-sensorer (array-længde)
+    - name: Door sensors status count
+      unique_id: door_sensors_status_count
+      availability: >
+        {{ states('sensor.door_sensors_status_array') not in ['unknown','unavailable','none',''] }}
+      state: >
+        {% set arr = (states('sensor.door_sensors_status_array') | default('[]')) | from_json %}
+        {{ arr | list | length }}
+
+    # Antal "ON" døre (sum af 1'ere)
+    - name: Door sensors status on
+      unique_id: door_sensors_status_on
+      availability: >
+        {{ states('sensor.door_sensors_status_array') not in ['unknown','unavailable','none',''] }}
+      state: >
+        {% set arr = (states('sensor.door_sensors_status_array') | default('[]')) | from_json %}
+        {{ arr | map('float') | sum | round(0) }}
+
+    # Procent "ON" døre
+    - name: Door sensors status percent
+      unique_id: door_sensors_status_percent
+      unit_of_measurement: '%'
+      availability: >
+        {{ (states('sensor.door_sensors_status_count')|float(0)) > 0
+           and states('sensor.door_sensors_status_on') not in ['unknown','unavailable','none',''] }}
+      state: >
+        {% set on  = states('sensor.door_sensors_status_on')|float(0) %}
+        {% set cnt = states('sensor.door_sensors_status_count')|float(0) %}
+        {{ (on / cnt * 100) | round(1) if cnt > 0 else 0 }}
+
+    # --- WINDOWS ---
+
+    # Antal vindues-sensorer (array-længde)
+    - name: Windows sensors status count
+      unique_id: windows_sensors_status_count
+      availability: >
+        {{ states('sensor.windows_sensors_status_array') not in ['unknown','unavailable','none',''] }}
+      state: >
+        {% set arr = (states('sensor.windows_sensors_status_array') | default('[]')) | from_json %}
+        {{ arr | list | length }}
+
+    # Antal "ON" vinduer (sum af 1'ere)
+    - name: Windows sensors status on
+      unique_id: windows_sensors_status_on
+      availability: >
+        {{ states('sensor.windows_sensors_status_array') not in ['unknown','unavailable','none',''] }}
+      state: >
+        {% set arr = (states('sensor.windows_sensors_status_array') | default('[]')) | from_json %}
+        {{ arr | map('float') | sum | round(0) }}
+
+    # Procent "ON" vinduer
+    - name: Windows sensors status percent
+      unique_id: windows_sensors_status_percent
+      unit_of_measurement: '%'
+      availability: >
+        {{ (states('sensor.windows_sensors_status_count')|float(0)) > 0
+           and states('sensor.windows_sensors_status_on') not in ['unknown','unavailable','none',''] }}
+      state: >
+        {% set on  = states('sensor.windows_sensors_status_on')|float(0) %}
+        {% set cnt = states('sensor.windows_sensors_status_count')|float(0) %}
+        {{ (on / cnt * 100) | round(1) if cnt > 0 else 0 }}

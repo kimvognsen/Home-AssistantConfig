@@ -1,0 +1,14 @@
+---
+#
+#
+#####
+# Counter that tracks total number of entities
+#
+#####
+
+platform: template
+sensors:
+  count_entities:
+    friendly_name: 'Number of Entities'
+    value_template: >
+      {{ states | length }}

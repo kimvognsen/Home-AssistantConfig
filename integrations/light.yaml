@@ -1,0 +1,6 @@
+# Denne komponent giver adgang tik at styre diverse lys.
+# Denne bliver startet op af light configurations.
+#
+# https://www.home-assistant.io/integrations/light/
+#
+light: !include_dir_list ../entities/lights

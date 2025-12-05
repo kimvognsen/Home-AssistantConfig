@@ -1,0 +1,15 @@
+---
+# sensor group: Meater temperatur
+#
+# https://community.home-assistant.io/t/meater-through-the-api/264292
+#
+#
+
+platform: rest
+name: meater
+json_attributes:
+  - data
+resource: https://public-api.cloud.meater.com/v1/devices/
+headers:
+  Authorization: !secret meater
+value_template: "Ok"

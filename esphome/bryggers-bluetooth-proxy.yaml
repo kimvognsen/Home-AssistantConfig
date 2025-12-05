@@ -1,0 +1,46 @@
+esphome:
+  name: bryggers-bluetooth-proxy
+  friendly_name: Bryggers Bluetooth Proxy
+  name_add_mac_suffix: false
+
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "zQN3W1zHxCw3rNqWBnn9KtfHO4dbfa4SQgB1bDwZm6o="
+
+ota:
+  - platform: esphome
+    password: "487c6fcb79a67a2c529a02c96aed7c39"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Bryggers-Bluetooth-Proxy"
+    password: "oum8QyUwPNVj"
+
+captive_portal:
+
+
+logger:
+  level: INFO
+
+
+esp32_ble_tracker:
+  scan_parameters:
+    active: true
+    interval: 211ms
+    window: 120ms
+
+bluetooth_proxy:
+  active: true
+

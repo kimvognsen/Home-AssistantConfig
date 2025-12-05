@@ -1,0 +1,32 @@
+esphome:
+  name: time-travler
+  friendly_name: Time Travler
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "jUEn3TIg+ovUt1lK4Jvv8oqhZEuyQAZRE9PDwTiyu2c="
+
+ota:
+  - platform: esphome
+    password: "43d2274ed6fa807c3972b3c3c291295b"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Time-Travler Fallback Hotspot"
+    password: "NxKPe1C25ufG"
+
+captive_portal:
+    

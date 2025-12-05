@@ -1,0 +1,11 @@
+---
+#
+# lave binary sensor til alm sensor
+#
+- binary_sensor:
+    - name: Røgalarm Værksted
+      unique_id: smoke_sensor_workshop
+      state: "{{ states('binary_sensor.lumi_lumi_sensor_smoke_acn03') }}"
+      device_class: smoke
+      attributes:
+        entity_picture: /local/images/lovelace/smoke_alarm_fibaro.png

@@ -1,0 +1,26 @@
+---
+#
+#
+#
+#
+
+sensor.z_wave_online:
+  entity_picture: /local/images/lovelace/z-wave.png
+  friendly_name: Z-Wave
+
+sensor.sonoff_online:
+  entity_picture: /local/images/lovelace/sonoff.png
+  friendly_name: Sonoff
+
+sensor.hue_online:
+  entity_picture: /local/images/lovelace/philips-hue.png
+  friendly_name: Hue
+
+sensor.broadlink_rm4_online:
+  entity_picture: /local/images/lovelace/broadlink_rm4.jpg
+  friendly_name: Broadlink
+
+sensor.esphome_online:
+  entity_picture: /local/images/lovelace/esphome.png
+  friendly_name: EspHome
+

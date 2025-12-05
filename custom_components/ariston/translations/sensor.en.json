@@ -1,0 +1,22 @@
+{
+    "state": {
+        "_": {
+            "Always active": "Always active",
+            "Available": "Available",
+            "Disabled": "Disabled",
+            "Heating only": "Heating only",
+            "imperial": "Imperial",
+            "intelligent": "Intelligent",
+            "Manual": "Manual",
+            "metric": "Metric",
+            "OFF": "Off",
+            "Offline": "Offline",
+            "Time program": "Time program",
+            "Summer": "Summer",
+            "Time Based": "Time based",
+            "Winter": "Winter",
+            "cooling": "Cooling",
+            "antifreeze": "Antifreeze"
+        }
+    }
+}

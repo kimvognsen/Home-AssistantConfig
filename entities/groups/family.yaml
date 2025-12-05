@@ -1,0 +1,15 @@
+---
+#
+#
+# sæt familie
+#
+family:
+  name: family
+  entities:
+    - person.kim_vognsen
+    - person.gitte_vognsen
+
+
+arriving:
+  name: Arriving
+  entities: []

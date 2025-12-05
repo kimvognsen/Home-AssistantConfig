@@ -1,0 +1,31 @@
+---
+#
+#
+# virker ikke da shelly sensor er disabled, så man ikke kommer til at slukke for printeren
+#
+# 3D printer Shelly plug 
+3dprinter_hourly_energy:
+  source: sensor.dobbelt_udtag_energimaler_power
+  unique_id: 'dobbelt_udtag_energimaler_power_hourly_energy'
+  name: Terrasse lys v2 Hourly Energy
+  cycle: hourly
+3dprinter_daily_energy:
+  source: sensor.dobbelt_udtag_energimaler_power
+  unique_id: 'dobbelt_udtag_energimaler_power_daily_energy'
+  name: Terrasse lys v2 Daily Energy
+  cycle: daily
+3dprinter_weekly_energy:
+  source: sensor.dobbelt_udtag_energimaler_power
+  unique_id: 'dobbelt_udtag_energimaler_power_weekly_energy'
+  name: Terrasse lys v2 Weekly Energy
+  cycle: weekly
+3dprinter_monthly_energy:
+  source: sensor.dobbelt_udtag_energimaler_power
+  unique_id: 'dobbelt_udtag_energimaler_power_monthly_energy'
+  name: Terrasse lys v2 Monthly Energy
+  cycle: monthly
+3dprinter_yearly_energy:
+  source: sensor.dobbelt_udtag_energimaler_power
+  unique_id: 'dobbelt_udtag_energimaler_power_yearly_energy'
+  name: Terrasse lys v2 Yearly Energy
+  cycle: yearly

@@ -1,0 +1,26 @@
+  alias: Send billede til mobil når det ringer på døren
+  sequence:
+  - service: camera.snapshot
+    target:
+      entity_id: camera.reolink_rlc_1224a
+    data:
+      filename: /config/www/snapshot/snapshot_thecloud_ip_kamera_indkorsels.jpg
+  - delay:
+      seconds: 5
+  - service: notify.mobile_app_kims_iphone
+    data:
+      message: Det ringer på døren
+      data:
+        attachment:
+          url: https://mffvcqkaw2uttwo2741nezi2wfrce993.ui.nabu.casa/local/snapshot/snapshot_thecloud_ip_kamera_indkorsels.jpg
+        content-type: jpg
+        hide-thumbnail: false
+  - service: notify.mobile_app_gittes_iphone
+    data:
+      message: Det ringer på døren
+      data:
+        attachment:
+          url: https://mffvcqkaw2uttwo2741nezi2wfrce993.ui.nabu.casa/local/snapshot/snapshot_thecloud_ip_kamera_indkorsels.jpg
+        content-type: jpg
+        hide-thumbnail: false
+  mode: single

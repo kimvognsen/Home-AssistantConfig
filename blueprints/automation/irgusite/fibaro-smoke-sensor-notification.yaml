@@ -1,0 +1,116 @@
+blueprint:
+  name: Fibaro Smoke alarm
+  description: Sends a notification via the notification engine if there is an alarm
+  domain: automation
+  input:
+    smoke_sensor:
+      name: Fire sensor
+      description: The smoke sensor that will be used to detect fire
+      selector:
+        entity:
+          device_class: smoke
+    smoke_sensor_tamper:
+      name: Tamper sensor
+      description: Select a tamper sensor to be alerted when the sensor is removed
+        from it's place
+      selector:
+        entity:
+          device_class: safety
+    smoke_sensor_test:
+      name: Capteur de test
+      description: Select a test sensor to be alerted when the sensor is tested
+      selector:
+        entity:
+          device_class: problem
+    notif_engine_script:
+      name: Notification engine script
+      selector:
+        entity:
+          domain: script
+    critical_notif_engine_script:
+      name: Critical notification engine script
+      selector:
+        entity:
+          domain: script
+    script_if_fire:
+      name: Script to execute when an alarm is sent
+      selector:
+        entity:
+          domain: script
+    message_content:
+      name: Notification message
+      description: Message to send when there is fire
+      default: 'Un incendie est détecté: Vérifiez les informations et appelez le 144'
+    message_content_tamper:
+      name: Notification message
+      description: Message to send when a sensor is removed
+      default: Un capteur incendie à été enlevé
+    message_content_test:
+      name: Notification message
+      description: Message to send when a sensor is tested
+      default: Le capteur incendie à été testé
+    message_content_default:
+      name: Notification message
+      description: Default message if something triggers but we don't know what for
+        a reason
+      default: Il s'est passé quelques chose, vérifiez!
+    sensor_page_url:
+      name: Lovelace sensor page
+      description: Lovelace page to link to
+      default: /lovelace/main
+  source_url: https://community.home-assistant.io/t/fibaro-smoke-sensor-notification/310909
+trigger:
+- platform: state
+  entity_id: !input 'smoke_sensor'
+  to: 'on'
+- platform: state
+  entity_id: !input 'smoke_sensor_tamper'
+  to: 'on'
+- platform: state
+  entity_id: !input 'smoke_sensor_test'
+  to: 'on'
+condition: []
+action:
+- choose:
+  - conditions:
+    - condition: state
+      entity_id: !input 'smoke_sensor'
+      state: 'on'
+    sequence:
+    - service: !input 'script_if_fire'
+    - service: script.notification_engine_critical
+      data:
+        who: family_app
+        title: Smoke alarm!
+        message: !input 'message_content'
+        url: !input 'sensor_page_url'
+  - conditions:
+    - condition: state
+      entity_id: !input 'smoke_sensor_tamper'
+      state: 'on'
+    sequence:
+    - service: script.notification_engine
+      data:
+        who: family_app
+        title: Smoke sensor removed!
+        message: !input 'message_content_tamper'
+        url: !input 'sensor_page_url'
+  - conditions:
+    - condition: state
+      entity_id: !input 'smoke_sensor_test'
+      state: 'on'
+    sequence:
+    - service: script.notification_engine
+      data:
+        who: family_app
+        title: Smoke sensor tested!
+        message: !input 'message_content_test'
+        url: !input 'sensor_page_url'
+  default:
+  - service: !input 'script_if_fire'
+  - service: script.notification_engine_critical
+    data:
+      who: family_app
+      title: Smoke alarm (undefined)!
+      message: !input 'message_content_default'
+      url: !input 'sensor_page_url'

@@ -1,0 +1,44 @@
+---
+# sensor group: sunset i Lovelace 
+#
+# https://www.home-assistant.io/integrations/light.group/
+#
+#
+platform: template
+sensors:
+  wind_speed_kmh:
+    unique_id: '930bbe41-9a57-4469-bd4a-f2fa7af51319'
+    friendly_name: 'Vind hastighed kms'
+    icon_template: mdi:weather-windy
+    unit_of_measurement: 'kmh'
+    value_template: "{{ state_attr('weather.hasselhaven','wind_speed') }}"
+
+  wind_speed_ms_long:
+    unique_id: 'f8113061-5c8b-4a3e-a4f3-c3831982769c'
+    friendly_name: 'Vind hastighed m/s long format'
+    icon_template: mdi:weather-windy
+    unit_of_measurement: 'm/s'
+    value_template: "{{ state_attr('weather.hasselhaven','wind_speed') | float/3.6 | round(2)  }}"
+
+  wind_speed_ms:
+    unique_id: 'f3d17c85-0b96-4f16-a804-db120108f738'
+    friendly_name: 'Vind hastighed m/s'
+    icon_template: mdi:weather-windy
+    unit_of_measurement: 'm/s'
+    value_template: "{{ states('sensor.wind_speed_ms_long') | round(2)  }}"
+
+  #Wind Chill   https://www.weather.gov/media/epz/wxcalc/windChill.pdf
+  # https://community.home-assistant.io/t/wind-chill/150201/40	
+
+  # kommer med fejl på "N/A" Value error
+#  wind_chill:
+#    friendly_name: 'Kuldeindeks (Wind Chill)'
+#    unit_of_measurement: '°C'
+#    icon_template: mdi:weather-windy
+#    value_template: >
+#      {% if states('sensor.temperature_2') | float < 10 and states('sensor.wind_speed_ms_long') | float > 1.34 %}
+#        {{(13.12 + (0.6215 * (states('sensor.temperature_2') | float)) - (11.37 * (states('sensor.wind_speed_ms_long') | float * 3.6)**0.16)
+#        + (0.3965 * (states('sensor.temperature_2') | float) * (states('sensor.wind_speed_ms_long') | float *3.6)**0.16)) | round(1) }}
+#      {% else %}
+#        N/A
+#      {% endif %}

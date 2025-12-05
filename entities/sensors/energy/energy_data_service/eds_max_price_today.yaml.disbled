@@ -1,0 +1,13 @@
+---
+#
+#
+# 
+#
+# sensor til at fortælle om der er data til lovelace card.
+platform: template
+sensors:
+  eds_max_price_today:
+    friendly_name: "Højeste el-pris i dag"
+    unit_of_measurement: "Kr."
+    value_template: >
+      {{ state_attr('sensor.energi_data_service', 'today_max').price }}

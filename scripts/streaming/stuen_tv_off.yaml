@@ -1,0 +1,20 @@
+---
+# Styr TV og Apple TV med HA
+#
+#
+# Inspiration er fundet her https://leonardosmarthomemakers.com/how-to-create-a-home-assistant-dashboard-media-edition/#Picture_Card
+alias: Turn-off TV with AppleTV
+sequence:
+- service: remote.send_command
+  data:
+    command: home_hold
+  target:
+    entity_id: remote.apple_tv_stuen
+- delay: 00:00:03
+- service: remote.send_command
+  data:
+    command: select
+  target:
+    entity_id: remote.apple_tv_stuen
+mode: single
+icon: mdi:television

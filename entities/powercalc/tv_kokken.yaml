@@ -1,0 +1,21 @@
+---
+#
+# powercalc
+# https://github.com/bramstroker/homeassistant-powercalc?fbclid=IwAR21AFY74VNcPiFC8oGo6AYU33zpqbm-zEUO1mqS-39XJY0UOvkTtZsU28w
+#
+#
+#         Apple TV 4K	 Sony 22"
+#
+
+# Standby	0,36	        0,35
+# Watt	  2,73	  	    32,0
+# Philips 65OLED806 og Apple TV 4K
+powercalc:
+  sensors:
+    - entity_id: media_player.apple_tv_kokken
+      unique_id: 9f0b6220-5149-477f-9b5b-cd6b4251ba2f
+      fixed:
+        states_power:
+          playing: 34.73
+#         paused: 2.25
+          idle: 0.71

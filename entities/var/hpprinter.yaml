@@ -1,0 +1,53 @@
+# HACS integration "variable" til fejl med hp printer
+#
+#
+# et forsøg på at minimere nogle af fejlene i Log, da HP printer ikke er lavet til HA
+#
+hpblack:
+  tracked_entity_id: sensor.hp_laserjet_10_series_black_ink
+  value_template: >-
+    {% if is_state("sensor.hp_laserjet_10_series_black_ink" , "unavailable")  %}
+      {{ states("var.hpblack") }}
+    {% else %}
+      {{ states("sensor.hp_laserjet_10_series_black_ink") }}
+    {% endif %} 
+  friendly_name: "hpblack"
+  unit_of_measurement: "%"
+hpcyan:
+  tracked_entity_id: sensor.hp_laserjet_10_series_cyan_ink
+  value_template: >-
+    {% if is_state("sensor.hp_laserjet_10_series_cyan_ink" , "unavailable")  %}
+      {{ states("var.hpcyan") }}
+    {% else %}
+      {{ states("sensor.hp_laserjet_10_series_cyan_ink") }}
+    {% endif %} 
+  friendly_name: "hpcyan"
+  unit_of_measurement: "%"
+hpmagenta:
+  tracked_entity_id: sensor.hp_laserjet_10_series_magenta_ink
+  value_template: >-
+    {% if is_state("sensor.hp_laserjet_10_series_magenta_ink" , "unavailable")  %}
+      {{ states("var.hpmagenta") }}
+    {% else %}
+      {{ states("sensor.hp_laserjet_10_series_magenta_ink") }}
+    {% endif %} 
+  friendly_name: "hpmagenta"
+  unit_of_measurement: "%"
+hpyellow:
+  tracked_entity_id: sensor.hp_laserjet_10_series_yellow_ink
+  value_template: >-
+    {% if is_state("sensor.hp_laserjet_10_series_yellow_ink" , "unavailable")  %}
+      {{ states("var.hpyellow") }}
+    {% else %}
+      {{ states("sensor.hp_laserjet_10_series_yellow_ink") }}
+    {% endif %} 
+  friendly_name: "hpyellow"
+  unit_of_measurement: "%"
+hpblack_1:
+  tracked_entity_id: sensor.hp_laserjet_10_series_black_ink
+  value_template: >-
+    {% if is_state("sensor.hp_laserjet_10_series_black_ink" , "Unavailable")  %}
+    {{ states("var.hpblack_1") }}
+    {% else %}
+      {{ states("sensor.hp_laserjet_10_series_black_ink") }}
+    {% endif %}

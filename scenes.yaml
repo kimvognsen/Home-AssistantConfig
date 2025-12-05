@@ -1,0 +1,248 @@
+- id: '1619812011970'
+  name: Der er mad - Rød
+  entities:
+    light.loftlampe_jonatans_vaerelse:
+      effect_list:
+      - 'off'
+      - colorloop
+      supported_color_modes:
+      - xy
+      friendly_name: Loftlampe Jonatans værelse
+      supported_features: 44
+      effect: 'off'
+      color_mode: xy
+      brightness: 145
+      hs_color:
+      - 0
+      - 100
+      rgb_color:
+      - 255
+      - 0
+      - 0
+      xy_color:
+      - 0.701
+      - 0.299
+      off_with_transition: false
+      off_brightness:
+      state: 'on'
+    light.papirlampe_matias_vaerelse:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      min_mireds: 153
+      max_mireds: 500
+      effect_list:
+      - 'off'
+      - colorloop
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect: 'off'
+      color_mode: xy
+      brightness: 148
+      color_temp_kelvin:
+      color_temp:
+      hs_color:
+      - 1.912
+      - 98.431
+      rgb_color:
+      - 255
+      - 12
+      - 4
+      xy_color:
+      - 0.699
+      - 0.3
+      off_with_transition: false
+      off_brightness:
+      friendly_name: Papirlampe Matias værelse
+      supported_features: 44
+      state: 'on'
+  icon: mdi:food
+  metadata: {}
+- id: '1619814469797'
+  name: 5 minutter til mad
+  entities:
+    light.loftlampe_jonatans_vaerelse:
+      effect_list:
+      - 'off'
+      - colorloop
+      supported_color_modes:
+      - xy
+      friendly_name: Loftlampe Jonatans værelse
+      supported_features: 44
+      effect: 'off'
+      color_mode: xy
+      brightness: 204
+      hs_color:
+      - 120
+      - 100
+      rgb_color:
+      - 0
+      - 255
+      - 0
+      xy_color:
+      - 0.172
+      - 0.747
+      off_with_transition: false
+      off_brightness:
+      state: 'on'
+    light.papirlampe_matias_vaerelse:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      min_mireds: 153
+      max_mireds: 500
+      effect_list:
+      - 'off'
+      - colorloop
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect: 'off'
+      color_mode: xy
+      brightness: 204
+      color_temp_kelvin:
+      color_temp:
+      hs_color:
+      - 119.744
+      - 91.765
+      rgb_color:
+      - 22
+      - 255
+      - 21
+      xy_color:
+      - 0.176
+      - 0.737
+      off_with_transition: false
+      off_brightness:
+      friendly_name: Papirlampe Matias værelse
+      supported_features: 44
+      state: 'on'
+  icon: mdi:food
+  metadata: {}
+- id: '1619814758691'
+  name: Normal lys i drengeværelse
+  entities:
+    light.loftlampe_jonatans_vaerelse:
+      effect_list:
+      - 'off'
+      - colorloop
+      supported_color_modes:
+      - xy
+      friendly_name: Loftlampe Jonatans værelse
+      supported_features: 44
+      effect: 'off'
+      color_mode: xy
+      brightness: 219
+      hs_color:
+      - 38.222
+      - 52.941
+      rgb_color:
+      - 255
+      - 206
+      - 120
+      xy_color:
+      - 0.458
+      - 0.41
+      off_with_transition: false
+      off_brightness:
+      state: 'on'
+    light.papirlampe_matias_vaerelse:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
+      min_mireds: 153
+      max_mireds: 500
+      effect_list:
+      - 'off'
+      - colorloop
+      supported_color_modes:
+      - color_temp
+      - xy
+      effect: 'off'
+      color_mode: color_temp
+      brightness: 196
+      color_temp_kelvin: 2304
+      color_temp: 434
+      hs_color:
+      - 29.444
+      - 80.129
+      rgb_color:
+      - 255
+      - 151
+      - 51
+      xy_color:
+      - 0.567
+      - 0.389
+      off_with_transition: false
+      off_brightness:
+      friendly_name: Papirlampe Matias værelse
+      supported_features: 44
+      state: 'on'
+  icon: mdi:ceiling-light
+  metadata: {}
+- id: '1623234332258'
+  name: Normal lys i Hall
+  entities:
+    light.bordlampe_i_hall:
+      supported_color_modes:
+      - brightness
+      friendly_name: Bordlampe i Hall
+      supported_features: 40
+      is_deconz_group: false
+      color_mode: brightness
+      brightness: 156
+      state: 'on'
+  icon: mdi:lamp
+- id: '1623234385778'
+  name: 'Dæmpet lys i Hall '
+  entities:
+    light.bordlampe_i_hall:
+      supported_color_modes:
+      - brightness
+      friendly_name: Bordlampe i Hall
+      supported_features: 40
+      is_deconz_group: false
+      color_mode: brightness
+      brightness: 5
+      state: 'on'
+  icon: mdi:weather-night
+  metadata: {}
+- id: '1693766970301'
+  name: Dæmpe LED lys i Bryggers
+  entities:
+    light.ledvance_led_strips:
+      min_color_temp_kelvin: 2702
+      max_color_temp_kelvin: 6535
+      min_mireds: 153
+      max_mireds: 370
+      effect_list:
+      - Night
+      - Read
+      - Meeting
+      - Leasure
+      - Soft
+      - Rainbow
+      - Shine
+      - Beautiful
+      supported_color_modes:
+      - color_temp
+      - hs
+      color_mode: color_temp
+      raw_state: true
+      icon: phu:light-strip
+      friendly_name: Ledvance LED Strips
+      supported_features: 23
+      brightness: 3
+      hs_color:
+      - 28.373
+      - 65.405
+      rgb_color:
+      - 255
+      - 167
+      - 88
+      xy_color:
+      - 0.524
+      - 0.388
+      color_temp_kelvin: 2710
+      color_temp: 369
+      state: 'on'
+  metadata: {}
+  icon: mdi:led-strip-variant

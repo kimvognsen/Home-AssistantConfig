@@ -1,0 +1,29 @@
+{
+  "domain": "miele",
+  "name": "Miele",
+  "codeowners": [
+    "@astrandb"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "application_credentials",
+    "http"
+  ],
+  "documentation": "https://github.com/astrandb/miele",
+  "homekit": {},
+  "integration_type": "hub",
+  "iot_class": "cloud_push",
+  "issue_tracker": "https://github.com/astrandb/miele/issues",
+  "loggers": [
+    "pymiele"
+  ],
+  "requirements": [
+    "flatdict==4.0.1",
+    "pymiele==0.2.0"
+  ],
+  "ssdp": [],
+  "version": "2025.5.0",
+  "zeroconf": [
+    "_mieleathome._tcp.local."
+  ]
+}

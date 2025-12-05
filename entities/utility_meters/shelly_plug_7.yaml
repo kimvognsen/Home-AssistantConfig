@@ -1,0 +1,31 @@
+---
+#
+#
+#
+#
+# varksted-radiator computer Shelly plug 
+varksted_radiator_hourly_energy:
+  source: sensor.shelly_plug_7_energy
+  unique_id: 'varksted_radiator_hourly_energy'
+  name: Værksted-radiator Hourly Energy
+  cycle: hourly
+varksted_radiator_daily_energy:
+  source: sensor.shelly_plug_7_energy
+  unique_id: 'varksted_radiator_daily_energ'
+  name: Værksted-radiator Daily Energy
+  cycle: daily
+varksted_radiator_weekly_energy:
+  source: sensor.shelly_plug_7_energy
+  unique_id: 'varksted_radiator_weekly_energy'
+  name: Værksted-radiator Weekly Energy
+  cycle: weekly
+varksted_radiator_monthly_energy:
+  source: sensor.shelly_plug_7_energy
+  unique_id: 'varksted_radiator_monthly_energy'
+  name: Værksted-radiator Monthly Energy
+  cycle: monthly
+varksted_radiator_yearly_energy:
+  source: sensor.shelly_plug_7_energy
+  unique_id: 'varksted_radiator_yearly_energy'
+  name: Værksted-radiator Yearly Energy
+  cycle: yearly

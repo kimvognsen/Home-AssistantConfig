@@ -1,0 +1,6 @@
+---
+#
+# https://community.home-assistant.io/t/allow-integration-template-in-packages/305865/19
+#
+#
+template: !include_dir_merge_list ../entities/templates

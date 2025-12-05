@@ -1,0 +1,32 @@
+---
+#
+#
+#
+#
+#
+#####
+# Sensor Template - strømrpris med to decimaler
+#####
+#- sensor:
+#    - unique_id: vandforbrug på vaskemaskine_i_dag_2
+#      name: Aktuel vandforbrug på vaskemaskine
+#      icon: mdi:water
+#      #unit_of_measurement: m³
+#      unit_of_measurement: L
+#      state_class: total_increasing
+#      device_class: water
+#      state: "{{ states('sensor.currentwaterconsumption') |round(2) }}"
+
+
+
+- sensor:
+    - unique_id: vandforbrug_pa_vaskemaskine_i_dag_2   # undgå mellemrum/æøå i unique_id
+      name: Aktuel vandforbrug på vaskemaskine
+      state: "{{ states('sensor.currentwaterconsumption') | float(0) | round(2) }}"
+      unit_of_measurement: L
+      device_class: water
+      state_class: total_increasing
+      icon: mdi:water
+      availability: >
+        {{ states('sensor.currentwaterconsumption') not in ['unknown','unavailable',''] }}
+

@@ -1,0 +1,78 @@
+---
+#
+#
+#  orginal!
+#
+#
+#####
+# Sensor Template - Frient Long Term Statistics
+#####
+#  - sensor:
+#    - unique_id: frient_long_term_statistics
+#      name: Frient Long Term Statistics
+#      unit_of_measurement: kWh
+#      state: "{{ states('sensor.energiforbrug_total') }}"
+#      attributes: 
+#        device_class: energy
+#        state_class: measurement
+#        last_reset: "{{ state_attr('sensor.energiforbrug_total', 'metering_date') }}"
+
+# - sensor:
+#    - unique_id: frient_total_power
+#      name: "Frient Total Power Real Time"
+#      unit_of_measurement: "W"
+#      state: "{{ state_attr('sensor.energiforbrug_total', 'power')| float(0) }}"
+#      state_class: measurement
+#      device_class: power
+
+#    - name: "Frient Total Consumption"
+#      unit_of_measurement: "kWh"
+#      state: "{{ states('sensor.energiforbrug_total') | float(0) }}"
+#      state_class: total_increasing
+#      device_class: energy
+# Hver fil under entities/templates/ er en listepost for template-integrationen
+
+- sensor:
+    # Jonatan (Shelly) øjeblikseffekt
+    - name: "Jonatan Power Real Time"
+      unique_id: jonatan_power
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      availability: >
+        {{ states('sensor.shelly_plug_2_power') not in ['unknown','unavailable','none',''] }}
+      state: >
+        {{ states('sensor.shelly_plug_2_power') | float(0) }}
+
+    # Frient total (langtid) - KILDE: sensor.energiforbrug_total
+    - name: "Frient Long Term Statistics"
+      unique_id: frient_long_term_statistics
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      availability: >
+        {{ states('sensor.energiforbrug_total') not in ['unknown','unavailable','none',''] }}
+      state: >
+        {{ states('sensor.energiforbrug_total') | float }}
+
+    # Frient øjeblikseffekt (fra attribute 'power' på energiforbrug_total)
+    - name: "Frient Total Power Real Time"
+      unique_id: sensor.frient_energiforbrug_total_power
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      availability: >
+        {{ states('sensor.energiforbrug_total') not in [none, 'unknown', 'unavailable'] }}
+      state: >
+        {{ states('sensor.energiforbrug_total') | float(0) }}
+
+    # Alias af total (hvis du ønsker denne separat)
+    - name: "Frient Total Consumption"
+      unique_id: frient_total_consumption
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      availability: >
+        {{ states('sensor.energiforbrug_total') not in ['unknown','unavailable','none',''] }}
+      state: >
+        {{ states('sensor.energiforbrug_total') | float }}

@@ -1,0 +1,20 @@
+scene.*daempet:
+  entity_picture: /local/images/light/daempet.png
+
+scene.*fa_ny_energi:
+  entity_picture: /local/images/light/faa_ny_energi.png
+
+scene.*klar:
+  entity_picture: /local/images/light/klar.png
+
+scene.*koncentrer_dig:
+  entity_picture: /local/images/light/koncentrer_dig.png
+
+scene.*laes:
+  entity_picture: /local/images/light/laes.png
+
+scene.*natlys:
+  entity_picture: /local/images/light/nat_belysning.png
+
+scene.*slap_af:
+  entity_picture: /local/images/light/slap_af.png

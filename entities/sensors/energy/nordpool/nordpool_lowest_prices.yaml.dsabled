@@ -1,0 +1,26 @@
+---
+#
+#
+# https://www.facebook.com/groups/209025039666209
+#
+# sensor til at fortælle om der er data til lovelace card.
+# Disabled d. 14-01-20233 da jeg bruger energi data service
+platform: template
+sensors:
+  power_lowest_prices:
+    friendly_name: 'power_low_price'
+    value_template: >
+        {% set start_time = now().hour %}
+        {% set prices = (state_attr("sensor.nord_pool_elpriser", "today") + state_attr("sensor.nord_pool_elpriser", "tomorrow"))[start_time:] %}
+        {% set index = prices.index(prices | min) %}
+        {{today_at("00:00") + timedelta(hours = index + start_time)}}
+
+  elpris_lowest_prices_nice_format:
+    friendly_name: Hvornår er strømmen billist
+    value_template: "{{ as_timestamp(states('sensor.power_lowest_prices'))|timestamp_custom('%d-%m-%Y %H:%M', true)}}"
+    icon_template: mdi:currency-usd
+
+  elpris_lowest_prices_nice_format2:
+    friendly_name: Hvornår er strømmen billist2
+    value_template: "{{ as_timestamp(states('sensor.power_lowest_prices'))|timestamp_custom('%H:%M', true)}}"
+    icon_template: mdi:currency-usd

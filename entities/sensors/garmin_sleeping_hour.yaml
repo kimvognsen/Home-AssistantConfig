@@ -1,0 +1,13 @@
+---
+#
+#
+# https://www.home-assistant.io/integrations/light.group/
+#
+#
+#kim: sensor
+platform: template
+sensors:
+  sleeping_hours:
+    value_template: >
+      {% set ct = states('sensor.sleeping_time') | int(0) %}
+      {% if ct > 60 %}{{ ct // 60 }}:{{ '{:0>2d}'.format(ct%60) }} hours{% else %}{{ct}} minutes{% endif %}

@@ -1,0 +1,45 @@
+---
+# Radio Start 
+#
+# forsæg på at lave radio kanaler på HA
+# inspiratioin fundet her: https://www.youtube.com/watch?v=Pt1kneqidBM&t=918s&ab_channel=BeardedTinker
+#
+#####
+# Radio player - script to start playing radio with selected values.
+#
+#####
+#radio_play:
+alias: Spil radio på Streaminghøjtaler
+sequence:
+- service: media_player.volume_set
+  data:
+    entity_id: >
+      {% if is_state("input_select.radio_speaker", "Køkken") %} media_player.kokken_hojtaler
+      {% elif is_state("input_select.radio_speaker", "Bryggers") %} media_player.nest_mini_bryggers
+      {% elif is_state("input_select.radio_speaker", "Drengeværelse") %} media_player.nest_mini_drengevaerelse
+      {% elif is_state("input_select.radio_speaker", "Apple TV stuen") %} media_player.apple_tv_stuen
+      {% elif is_state("input_select.radio_speaker", "Apple TV køkken") %} media_player.apple_tv_kokken
+      {% elif is_state("input_select.radio_speaker", "JBL speaker") %} media_player.jbl
+      {% elif is_state("input_select.radio_speaker", "All speakers") %} media_player.all_speakers
+      {% endif %}
+    volume_level: '{{  states("input_number.radio_volume")  }}'
+- service: media_player.play_media
+  data:
+    entity_id: >
+      {% if is_state("input_select.radio_speaker", "Køkken") %} media_player.kokken_hojtaler
+      {% elif is_state("input_select.radio_speaker", "Bryggers") %} media_player.nest_mini_bryggers
+      {% elif is_state("input_select.radio_speaker", "Drengeværelse") %} media_player.nest_mini_drengevaerelse
+      {% elif is_state("input_select.radio_speaker", "Apple TV stuen") %} media_player.apple_tv_stuen
+      {% elif is_state("input_select.radio_speaker", "Apple TV køkken") %} media_player.apple_tv_kokken
+      {% elif is_state("input_select.radio_speaker", "JBL speaker") %} media_player.jbl
+      {% elif is_state("input_select.radio_speaker", "All speakers") %} media_player.all_speakers
+      {% endif %}
+    media_content_id: >
+      {% if is_state("input_select.radio_station", "DR 4") %} https://drliveradio.akamaized.net/hls/live/2022411/p4kobenhavn/playlist-320000.m3u8
+      {% elif is_state("input_select.radio_station", "DR 3") %} https://drliveradio.akamaized.net/hls/live/2022411/p3/playlist-320000.m3u8
+      {% elif is_state("input_select.radio_station", "My Rock") %} https://live-bauerdk.sharp-stream.com/myrock_dk_mp3?direct=true&amp;listenerid=c9dd7ec4c5ebf1476b107f25bc003905&amp
+      {% elif is_state("input_select.radio_station", "Planet Rock") %} https://live-bauerdk.sharp-stream.com/planetrock_dk.mp3?direct=true&amp;listenerid=c9dd7ec4c5ebf1476b107f25bc003905&amp
+      {% elif is_state("input_select.radio_station", "Vinyl afspiller") %} http://10.0.0.69:8000/rapi.mp3
+      {% endif %}
+    media_content_type: 'audio/mp4'
+mode: restart

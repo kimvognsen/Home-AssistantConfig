@@ -1,0 +1,6 @@
+---
+#
+#
+# https://community.home-assistant.io/t/error-when-splitting-up-my-config-component-utility-meter-cannot-be-merged-expected-a-dict/217824
+#
+utility_meter: !include_dir_merge_named ../entities/utility_meters

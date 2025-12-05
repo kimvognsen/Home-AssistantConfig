@@ -1,0 +1,118 @@
+entre_lys_klar:
+  sequence:
+  - service: hue.hue_activate_scene
+    data:
+      group_name: Entre
+      scene_name: Entrelysklar
+  mode: single
+  icon: hue:ceiling-aurelle
+stuen_led_bloklys_on:
+  sequence:
+  - service: remote.send_command
+    target:
+      entity_id: remote.brodlink_4_mini_remote
+    data:
+      device: stuen_led_bloklys
+      command: 'on'
+  mode: restart
+  alias: Stuen LED Bloklys on
+  icon: mdi:candle
+stuen_led_bloklys_off:
+  sequence:
+  - service: remote.send_command
+    target:
+      entity_id: remote.brodlink_4_mini_remote
+    data:
+      device: stuen_led_bloklys
+      command: 'off'
+  mode: restart
+  alias: Stuen LED Bloklys off
+  icon: mdi:candle
+stuen_led_bloklys_2h:
+  sequence:
+  - service: remote.send_command
+    target:
+      entity_id: remote.brodlink_4_mini_remote
+    data:
+      device: stuen_led_bloklys
+      command: 2hour
+  mode: restart
+  alias: Stuen LED Bloklys 2 timer
+  icon: mdi:candle
+stuen_led_bloklys_4h:
+  sequence:
+  - service: remote.send_command
+    target:
+      entity_id: remote.brodlink_4_mini_remote
+    data:
+      device: stuen_led_bloklys
+      command: 4hour
+  mode: restart
+  alias: Stuen LED Bloklys 4 timer
+  icon: mdi:candle
+stuen_led_bloklys_6h:
+  sequence:
+  - service: remote.send_command
+    target:
+      entity_id: remote.brodlink_4_mini_remote
+    data:
+      device: stuen_led_bloklys
+      command: 4hour
+  mode: restart
+  alias: Stuen LED Bloklys 4 timer
+  icon: mdi:candle
+stuen_led_bloklys_8h:
+  sequence:
+  - service: remote.send_command
+    target:
+      entity_id: remote.brodlink_4_mini_remote
+    data:
+      device: stuen_led_bloklys
+      command: 8hour
+  mode: restart
+  alias: Stuen LED Bloklys 8 timer
+  icon: mdi:candle
+stuen_led_bloklys_candle_mode:
+  sequence:
+  - service: remote.send_command
+    target:
+      entity_id: remote.brodlink_4_mini_remote
+    data:
+      device: stuen_led_bloklys
+      command: candle
+  mode: restart
+  alias: Stuen LED Bloklys Candle mode
+  icon: mdi:candle
+stuen_led_bloklys_light_mode:
+  sequence:
+  - service: remote.send_command
+    target:
+      entity_id: remote.brodlink_4_mini_remote
+    data:
+      device: stuen_led_bloklys
+      command: light_mode
+  mode: restart
+  alias: Stuen LED Bloklys light mode
+  icon: mdi:candle
+stuen_led_bloklys_dim_minus:
+  sequence:
+  - service: remote.send_command
+    target:
+      entity_id: remote.brodlink_4_mini_remote
+    data:
+      device: stuen_led_bloklys
+      command: dim_minus
+  mode: restart
+  alias: Stuen LED Bloklys lysstyrke ned
+  icon: mdi:candle
+stuen_led_bloklys_dim_plus:
+  sequence:
+  - service: remote.send_command
+    target:
+      entity_id: remote.brodlink_4_mini_remote
+    data:
+      device: stuen_led_bloklys
+      command: dim_plus
+  mode: restart
+  alias: Stuen LED Bloklys lysstyrke op
+  icon: mdi:candle

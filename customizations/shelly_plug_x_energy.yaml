@@ -1,0 +1,71 @@
+---
+#
+#test på at få energy data fra Shelly S plug
+#
+#https://www.facebook.com/photo.php?fbid=10158344339293715&set=p.10158344339293715&type=3
+#
+
+sensor.shelly_plug_2_power:
+# last_reset: '1970-01-01T00:00:00+00:00'
+  friendly_name: Jonatans computer current comsumption
+
+sensor.shelly_plug_1_power:
+# last_reset: '1970-01-01T00:00:00+00:00'
+  friendly_name: Kims computer current comsumption
+
+sensor.shelly_plug_3_power:
+# last_reset: '1970-01-01T00:00:00+00:00'
+  friendly_name: Matias computer current comsumption
+
+sensor.shelly_plug_4_power:
+# last_reset: '1970-01-01T00:00:00+00:00'
+  friendly_name: Rackskab current comsumption
+
+sensor.shelly_plug_5_power:
+# last_reset: '1970-01-01T00:00:00+00:00'
+  friendly_name: Terasselyskæde current comsumption
+
+sensor.shellyplug_6_power:
+# last_reset: '1970-01-01T00:00:00+00:00'
+  friendly_name: 3D printer current comsumption
+
+sensor.shelly_plug_7_power:
+# last_reset: '1970-01-01T00:00:00+00:00'
+  friendly_name: Værksted-radiator current comsumption
+
+sensor.shelly_plug_8_power:
+# last_reset: '1970-01-01T00:00:00+00:00'
+  friendly_name: Vækrsted-køleskab current comsumption
+
+sensor.shelly_plug_9_power:
+# last_reset: '1970-01-01T00:00:00+00:00'
+  friendly_name: Gittes computer current comsumption
+
+sensor.shelly_plug_1_energy:
+  friendly_name: Kims computer total forbrug
+
+sensor.shelly_plug_2_energy:
+  friendly_name: Jonatans computer total forbrug
+
+sensor.shelly_plug_3_energy:
+  friendly_name: Matias computer total forbrug
+
+sensor.shelly_plug_4_energy:
+  friendly_name: Rackskab total forbrug
+
+sensor.shelly_plug_5_energy:
+  friendly_name: Terasselyskæde total forbrug
+
+sensor.shelly_plug_6_energy:
+  friendly_name: 3D printer total forbrug
+
+sensor.shelly_plug_7_energy:
+  friendly_name: Vækrsted-radiator total forbrug
+
+sensor.shelly_plug_8_energy:
+  friendly_name: Vækrsted-køleskab total forbrug
+
+sensor.shelly_plug_9_energy:
+  friendly_name: Gittes computer total forbrug
+
+

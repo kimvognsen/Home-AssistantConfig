@@ -1,0 +1,31 @@
+---
+#
+# 
+# sensor.tuya_smart_plug2_total_energy
+#
+# Unifi Bryggers på Tuya Smart plug 2
+unifi_bryggers_hourly_energy:
+  source: sensor.tuya_smart_plug2_total_energy
+  unique_id: 'unifi_bryggers_hourly_energy'
+  name: Unifi bryggers Hourly Energy
+  cycle: hourly
+unifi_bryggers_daily_energy:
+  source: sensor.tuya_smart_plug2_total_energy
+  unique_id: 'unifi_bryggers_daily_energ'
+  name: Unifi bryggers Daily Energy
+  cycle: daily
+unifi_bryggers_weekly_energy:
+  source: sensor.tuya_smart_plug2_total_energy
+  unique_id: 'unifi_bryggers_weekly_energy'
+  name: Unifi bryggers Weekly Energy
+  cycle: weekly
+unifi_bryggers_monthly_energy:
+  source: sensor.tuya_smart_plug2_total_energy
+  unique_id: 'unifi_bryggers_monthly_energy'
+  name: Unifi bryggers Monthly Energy
+  cycle: monthly
+unifi_bryggers_yearly_energy:
+  source: sensor.tuya_smart_plug2_total_energy
+  unique_id: 'unifi_bryggers_yearly_energy'
+  name: Unifi bryggers Yearly Energy
+  cycle: yearly

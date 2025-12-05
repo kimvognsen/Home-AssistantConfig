@@ -1,0 +1,24 @@
+---
+#
+#
+#
+#
+#
+#####
+# Sensor Template - Vis UV med to decimaler
+#####
+#  - sensor:
+#    - unique_id: current_uv
+#      name: Nuværende UV
+#      #unit_of_measurement: 'm³'
+#      state: "{{ states('sensor.openuv_current_uv_index') |round(2) }}"
+
+
+- sensor:
+    - unique_id: current_uv
+      name: Nuværende UV
+      state: "{{ states('sensor.openuv_current_uv_index') | float(0) | round(2) }}"
+      state_class: measurement
+      icon: mdi:white-balance-sunny
+      availability: >
+        {{ states('sensor.openuv_current_uv_index') not in ['unknown','unavailable',''] }}

@@ -1,0 +1,31 @@
+---
+#
+#
+#
+#
+# Gittes computer Shelly plug 
+gittes_computer_hourly_energy:
+  source: sensor.shelly_plug_9_energy
+  unique_id: 'gittes_computer_hourly_energy'
+  name: Gittes computer Hourly Energy
+  cycle: hourly
+gittes_computer_daily_energy:
+  source: sensor.shelly_plug_9_energy
+  unique_id: 'gittes_computer_daily_energ'
+  name: Gittes computer Daily Energy
+  cycle: daily
+gittes_computer_weekly_energy:
+  source: sensor.shelly_plug_9_energy
+  unique_id: 'gittes_computer_weekly_energy'
+  name: Gittes computer Weekly Energy
+  cycle: weekly
+gittes_computer_monthly_energy:
+  source: sensor.shelly_plug_9_energy
+  unique_id: 'gittes_computer_monthly_energy'
+  name: Gittes computer Monthly Energy
+  cycle: monthly
+gittes_computer_yearly_energy:
+  source: sensor.shelly_plug_9_energy
+  unique_id: 'gittes_computer_yearly_energy'
+  name: Gittes computer Yearly Energy
+  cycle: yearly

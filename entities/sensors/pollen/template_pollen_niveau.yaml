@@ -1,0 +1,173 @@
+#
+# Pollen niveauer (tekst)
+#
+platform: template
+sensors:
+
+  birke_pollen_niveau:
+    friendly_name: "Birke pollen niveau"
+    unique_id: birke_pollen_niveau
+    value_template: >-
+      {% set level = states('sensor.birke_pollen_seneste') | int(-1) %}
+      {% if level == -1 %}
+        Uden for sæson
+      {% elif level <= 10 %}
+        Lav
+      {% elif level <= 50 %}
+        Middel
+      {% else %}
+        Høj
+      {% endif %}
+
+  bynke_pollen_niveau:
+    friendly_name: "Bynke pollen niveau"
+    unique_id: bynke_pollen_niveau
+    value_template: >-
+      {% set level = states('sensor.bynke_pollen_seneste') | int(-1) %}
+      {% if level == -1 %}
+        Uden for sæson
+      {% elif level <= 10 %}
+        Lav
+      {% elif level <= 50 %}
+        Middel
+      {% else %}
+        Høj
+      {% endif %}
+
+  el_pollen_niveau:
+    friendly_name: "El pollen niveau"
+    unique_id: el_pollen_niveau
+    value_template: >-
+      {% set level = states('sensor.el_pollen_seneste') | int(-1) %}
+      {% if level == -1 %}
+        Uden for sæson
+      {% elif level <= 10 %}
+        Lav
+      {% elif level <= 50 %}
+        Middel
+      {% else %}
+        Høj
+      {% endif %}
+
+  elm_pollen_niveau:
+    friendly_name: "Elm pollen niveau"
+    unique_id: elm_pollen_niveau
+    value_template: >-
+      {% set level = states('sensor.elm_pollen_seneste') | int(-1) %}
+      {% if level == -1 %}
+        Uden for sæson
+      {% elif level <= 10 %}
+        Lav
+      {% elif level <= 50 %}
+        Middel
+      {% else %}
+        Høj
+      {% endif %}
+
+  alternaria_pollen_niveau:
+    friendly_name: "Alternaria pollen niveau"
+    unique_id: alternaria_pollen_niveau
+    value_template: >-
+      {% set level = states('sensor.alternaria_seneste') | int(-1) %}
+      {% if level == -1 %}
+        Uden for sæson
+      {% elif level <= 10 %}
+        Lav
+      {% elif level <= 50 %}
+        Middel
+      {% else %}
+        Høj
+      {% endif %}
+
+  cladosporium_pollen_niveau:
+    friendly_name: "Cladosporium pollen niveau"
+    unique_id: cladosporium_pollen_niveau
+    value_template: >-
+      {% set level = states('sensor.cladosporium_seneste') | int(-1) %}
+      {% if level == -1 %}
+        Uden for sæson
+      {% elif level <= 10 %}
+        Lav
+      {% elif level <= 50 %}
+        Middel
+      {% else %}
+        Høj
+      {% endif %}
+
+  graes_pollen_niveau:
+    friendly_name: "Græs pollen niveau"
+    unique_id: graes_pollen_niveau
+    value_template: >-
+      {% set level = states('sensor.graes_pollen_seneste') | int(-1) %}
+      {% if level == -1 %}
+        Uden for sæson
+      {% elif level <= 10 %}
+        Lav
+      {% elif level <= 50 %}
+        Middel
+      {% else %}
+        Høj
+      {% endif %}
+
+  hassel_pollen_niveau:
+    friendly_name: "Hassel pollen niveau"
+    unique_id: hassel_pollen_niveau
+    value_template: >-
+      {% set level = states('sensor.hassel_pollen_seneste') | int(-1) %}
+      {% if level == -1 %}
+        Uden for sæson
+      {% elif level <= 10 %}
+        Lav
+      {% elif level <= 50 %}
+        Middel
+      {% else %}
+        Høj
+      {% endif %}
+
+  vis_birke_pollen_chip:
+    friendly_name: "Vis Birk Chip"
+    value_template: >-
+      {% set s = states('sensor.birke_pollen_niveau') %}
+      {{ s in ['Lav', 'Middel', 'Høj'] }}
+
+  vis_bynke_pollen_chip:
+    friendly_name: "Vis Bynke Chip"
+    value_template: >-
+      {% set s = states('sensor.bynke_pollen_niveau') %}
+      {{ s in ['Lav', 'Middel', 'Høj'] }}
+
+  vis_el_pollen_chip:
+    friendly_name: "Vis El Chip"
+    value_template: >-
+      {% set s = states('sensor.el_pollen_niveau') %}
+      {{ s in ['Lav', 'Middel', 'Høj'] }}
+
+  vis_elm_pollen_chip:
+    friendly_name: "Vis Elm Chip"
+    value_template: >-
+      {% set s = states('sensor.elm_pollen_niveau') %}
+      {{ s in ['Lav', 'Middel', 'Høj'] }}
+
+  vis_alternaria_pollen_chip:
+    friendly_name: "Vis Alternaria Chip"
+    value_template: >-
+      {% set s = states('sensor.alternaria_pollen_niveau') %}
+       {{ s in ['Lav', 'Middel', 'Høj'] }}
+
+  vis_cladosporium_pollen_chip:
+    friendly_name: "Vis Cladosporium Chip"
+    value_template: >-
+      {% set s = states('sensor.cladosporium_pollen_niveau') %}
+      {{ s in ['Lav', 'Middel', 'Høj'] }}
+
+  vis_graes_pollen_chip:
+    friendly_name: "Vis Græs Chip"
+    value_template: >-
+      {% set s = states('sensor.graes_pollen_niveau') %}
+      {{ s in ['Lav', 'Middel', 'Høj'] }}
+
+  vis_hassel_pollen_chip:
+    friendly_name: "Vis Hassel Chip"
+    value_template: >-
+      {% set s = states('sensor.hassel_pollen_niveau') %}
+      {{ s in ['Lav', 'Middel', 'Høj'] }}

@@ -1,0 +1,12 @@
+---
+#
+#
+#
+#
+#
+#####
+# Sensor Template - to disibaler til OpenUv
+#####
+  - sensor: 
+    - name: "OpenUV to dicimaler"
+      value_template: "{{ '%.2f' | format(states('sensor.openuv_current_uv_index')| float(0)) }}"

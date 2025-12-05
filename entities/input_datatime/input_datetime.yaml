@@ -1,0 +1,18 @@
+---
+#
+# test om input datetime virker, denne bliver ikke brugt p.t.
+#
+coffee_time:
+  name: Coffee Time
+  has_date: false
+  has_time: true
+
+last_time_home_kim:
+  name: Kim sidste set
+  has_date: true
+  has_time: true
+
+last_time_home_gitte:
+  name: Gitte sidste set
+  has_date: true
+  has_time: true

@@ -1,0 +1,18 @@
+---
+###################################
+## Lightning is no Joke around here.
+# @CCOSTAN
+# Original Repo : https://github.com/CCOSTAN/Home-AssistantConfig
+# https://github.com/CCOSTAN/Home-AssistantConfig/issues/392
+# https://www.vcloudinfo.com/2020/08/adding-a-lightning-sensor-to-home-assistant.html
+###################################
+alias: Snooze Lightning
+id: 1f295bb8-8925-4b22-8f75-9l1ghtn1nga8
+trigger:
+  platform: event
+  event_type: ios.notification_action_fired
+  event_data:
+    actionName: SNOOZE_LIGHTNING
+action:
+  - service: input_boolean.turn_on
+    entity_id: input_boolean.snooze_lightning

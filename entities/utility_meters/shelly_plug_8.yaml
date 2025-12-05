@@ -1,0 +1,31 @@
+---
+#
+#
+#
+#
+# Værksted-køleskab computer Shelly plug 
+varksted_koleskab_hourly_energy:
+  source: sensor.shelly_plug_8_energy
+  unique_id: 'varksted_koleskab_hourly_energy'
+  name: Værksted-køleskab Hourly Energy
+  cycle: hourly
+varksted_koleskab_daily_energy:
+  source: sensor.shelly_plug_8_energy
+  unique_id: 'varksted_koleskab_daily_energ'
+  name: Værksted-køleskab Daily Energy
+  cycle: daily
+varksted_koleskab_weekly_energy:
+  source: sensor.shelly_plug_8_energy
+  unique_id: 'varksted_koleskab_weekly_energy'
+  name: Værksted-køleskab Weekly Energy
+  cycle: weekly
+varksted_koleskab_monthly_energy:
+  source: sensor.shelly_plug_8_energy
+  unique_id: 'varksted_koleskab_monthly_energy'
+  name: Værksted-køleskab Monthly Energy
+  cycle: monthly
+varksted_koleskab_yearly_energy:
+  source: sensor.shelly_plug_8_energy
+  unique_id: 'varksted_koleskab_yearly_energy'
+  name: Værksted-køleskab Yearly Energy
+  cycle: yearly

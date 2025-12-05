@@ -1,0 +1,28 @@
+---
+# Til Iphone
+#
+# https://www.home-assistant.io/integrations/ios/
+#
+
+#ios:
+  ###################################
+## Lightning is no Joke around here.
+# @CCOSTAN
+# Original Repo : https://github.com/CCOSTAN/Home-AssistantConfig
+# https://github.com/CCOSTAN/Home-AssistantConfig/issues/392
+# https://www.vcloudinfo.com/2020/08/adding-a-lightning-sensor-to-home-assistant.html
+###################################
+#disabled grunder udfasning i 2022.2
+#push:
+#    categories:
+#      - name: Lightning
+#        identifier: 'LIGHTNING'
+#        actions:
+#          - identifier: 'SNOOZE_LIGHTNING'
+#            title: 'Snooze Alarm indtil i morgen'
+#            activationMode: 'background'
+#            authenticationRequired: no
+#            destructive: no
+  # end lightning 
+#  
+mobile_app:

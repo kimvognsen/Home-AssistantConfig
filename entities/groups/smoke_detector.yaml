@@ -1,0 +1,15 @@
+---
+# Bliver ikke brugt p.t.
+#
+#
+# https://www.home-assistant.io/integrations/group/
+#
+#
+security_smoke_alarm_status:
+  name: Røgalarm varsle
+  entities:
+    - binary_sensor.smoke_detector_vaerksted_smoke
+    - binary_sensor.smoke_detector_hall_smoke_detected
+    - binary_sensor.smoke_detector_smoke_detected_bryggers
+    - binary_sensor.smoke_detector_smoke_detected_stuen
+

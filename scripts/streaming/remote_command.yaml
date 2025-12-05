@@ -1,0 +1,24 @@
+#---
+# Styr TV og Apple TV med HA
+#
+#
+# Inspiration er fundet her https://leonardosmarthomemakers.com/how-to-create-a-home-assistant-dashboard-media-edition/#Picture_Card
+alias: Remote Command
+fields:
+  command:
+    description: The Command to send to the remote
+    example: up
+sequence:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: input_select.media_cabinet
+            state: Apple TV
+        sequence:
+          - service: remote.send_command
+            target:
+              entity_id: remote.apple_tv_stuen
+            data:
+              command: "{{ command }}"
+    default: []
+mode: single

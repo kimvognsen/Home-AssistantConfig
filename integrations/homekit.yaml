@@ -1,0 +1,33 @@
+---
+#
+# https://www.home-assistant.io/integrations/homekit
+#
+# Example configuration.yaml entry configuring HomeKit
+homekit:
+  name: Home Assistant Bridge
+  filter:
+    include_domains:
+      - light
+      - switch
+      - climate
+      - fan
+      - cover
+    include_entities:
+      - sensor.owm_uv_forecast
+      - sensor.owm_uv_forecast_om_1t
+      - sensor.owm_uv_forecast_om_2t
+    exclude_domains:
+      - automation
+      - script
+      - input_boolean
+      - input_number
+      - input_text
+      - sensor  # Ekskluder alle sensorer først ...
+    # ... og så inkluderer vi kun dem vi ønsker manuelt
+  entity_config:
+    sensor.owm_uv_forecast:
+      name: UV Prognose Nu
+    sensor.owm_uv_forecast_om_1t:
+      name: UV +1t
+    sensor.owm_uv_forecast_om_2t:
+      name: UV +2t

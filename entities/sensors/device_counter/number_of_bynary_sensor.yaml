@@ -1,0 +1,24 @@
+---
+#
+#
+#
+#platform: template
+#sensors:
+#  binary_sensor_count:
+#    friendly_name: 'Number of Binary Sensors'
+#    value_template: >
+#      {%- set domains = ['binary_sensor'] -%}
+#      {%- for domain in domains -%}
+#        {%- for item in states[domain] -%}
+#          {% if loop.first %}
+#            {{loop.length}}
+#          {% endif %}
+#        {%- endfor -%}
+#      {%- endfor -%}
+
+platform: template
+sensors:
+  binary_sensor_count:
+    friendly_name: 'Number of Binary Sensors'
+    value_template: >
+      {{ states.binary_sensor | list | count }}

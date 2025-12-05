@@ -1,0 +1,19 @@
+---
+#
+#
+# Unifigateway via HACS
+# # bruges også af unifi2_my_unifi som er en test
+platform: unifigateway
+host: !secret unifigateway_ip
+port: !secret unifigateway_port
+username: !secret unifigateway_user
+password: !secret unifigateway_password
+version: v6
+monitored_conditions:
+  - vpn
+  - lan
+  - wan
+  - www
+  - wlan
+  - alerts
+  - firmware

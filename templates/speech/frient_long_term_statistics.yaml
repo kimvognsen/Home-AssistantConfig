@@ -1,0 +1,19 @@
+---
+#
+#
+#
+#
+#
+#####
+# Sensor Template - Energy use Daily Offpeak Cost
+#####
+  - sensor: 
+    - name: "Frient Long Term Statistics"
+      unit_of_measurement: kWh
+      state: "{{ states('sensor.energiforbrug_total') }}"
+      attributes: 
+        device_class: energy
+        state_class: measurement
+        last_reset: "{{ state_attr('sensor.energiforbrug_total', 'metering_date') }}"
+
+

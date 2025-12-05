@@ -1,0 +1,11 @@
+---
+# Styr TV og Apple TV med HA
+#
+#
+# Inspiration er fundet her https://leonardosmarthomemakers.com/how-to-create-a-home-assistant-dashboard-media-edition/#Picture_Card
+alias: Remote Arrow Down
+sequence:
+  - service: script.remote_command
+    data:
+      command: down
+mode: single

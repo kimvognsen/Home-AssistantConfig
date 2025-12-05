@@ -1,0 +1,15 @@
+---
+#
+# powercalc
+# https://github.com/bramstroker/homeassistant-powercalc?fbclid=IwAR21AFY74VNcPiFC8oGo6AYU33zpqbm-zEUO1mqS-39XJY0UOvkTtZsU28w
+#
+# Lyskøde i  carport
+#
+# mål med Shelle plug og bruger caa. 9,5 w
+# 
+powercalc:
+  sensors:
+    - entity_id: light.hue_smart_plug_lyskaede
+      unique_id: f868ba00-a615-47b4-9131-6e2230977742
+      fixed:
+        power: 9.5

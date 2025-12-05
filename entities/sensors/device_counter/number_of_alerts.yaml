@@ -1,0 +1,13 @@
+---
+#
+#
+#####
+# Counter that tracks total number of alerts
+#
+#####
+platform: template
+sensors:
+  count_alert:
+    friendly_name: 'Number of Alerts'
+    value_template: >-
+      {{ states.alert | list | count }}

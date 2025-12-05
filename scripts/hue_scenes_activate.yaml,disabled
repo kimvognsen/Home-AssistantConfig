@@ -1,0 +1,39 @@
+---
+#
+#
+# Hue scenes
+#
+# https://community.home-assistant.io/t/select-activate-hue-scenes-in-new-v2-api-setup/356057/27
+#
+alias: Activate Hue dynamic scene
+mode: restart
+icon: mdi:power
+sequence:
+- condition: >
+    {{is_state('binary_sensor.selected_hue_group_active_scene','off')}}
+# first record current state of lights in the selected group
+- service: scene.create
+  data:
+    scene_id: before_dynamic_scene
+    snapshot_entities:
+      - >
+        {% set select = states('input_select.hue_group')|slugify %}
+        {% set group ='light.' + select %}
+        {{group}}
+- service: hue.activate_scene
+  data:
+    dynamic: true
+    speed: >
+      {{states('input_number.hue_dynamic_scene_speed')|int}}
+    brightness: >
+      {{states('input_number.hue_dynamic_scene_brightness')|int}}
+  target:
+    entity_id: >
+      {% set select = states('input_select.hue_dynamic_scene')|slugify %}
+      {{'scene.' + select}}
+
+#            {% set select = states('input_select.hue_dynamic_scene')%}
+#            {{states.scene
+#             |selectattr('attributes.friendly_name','eq',select)
+#             |map(attribute='entity_id')|join}}
+

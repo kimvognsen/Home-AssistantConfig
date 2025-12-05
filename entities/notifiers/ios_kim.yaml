@@ -1,0 +1,9 @@
+---
+#
+#
+#
+# 
+platform: group
+name: ios_kims_iphone
+services:
+  - service: mobile_app_kims_iphone

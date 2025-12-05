@@ -1,0 +1,31 @@
+---
+#
+#
+# virker ikke da shelly sensor er disabled, så man ikke kommer til at slukke for printeren
+#
+# 3D printer Shelly plug 
+3dprinter_hourly_energy:
+  source: sensor.shelly_plug_6_energy
+  unique_id: '3d_print_hourly_energy'
+  name: 3D printer Hourly Energy
+  cycle: hourly
+3dprinter_daily_energy:
+  source: sensor.shelly_plug_6_energy
+  unique_id: '3d_print_daily_energ'
+  name: 3D printer Daily Energy
+  cycle: daily
+3dprinter_weekly_energy:
+  source: sensor.shelly_plug_6_energy
+  unique_id: '3d_print_weekly_energy'
+  name: 3D printer Weekly Energy
+  cycle: weekly
+3dprinter_monthly_energy:
+  source: sensor.shelly_plug_6_energy
+  unique_id: '3d_print_monthly_energy'
+  name: 3D printer Monthly Energy
+  cycle: monthly
+3dprinter_yearly_energy:
+  source: sensor.shelly_plug_6_energy
+  unique_id: '3d_print_yearly_energy'
+  name: 3D printer Yearly Energy
+  cycle: yearly

@@ -1,0 +1,52 @@
+---
+#
+# powercalc
+# https://github.com/bramstroker/homeassistant-powercalc?fbclid=IwAR21AFY74VNcPiFC8oGo6AYU33zpqbm-zEUO1mqS-39XJY0UOvkTtZsU28w
+#
+# 
+# Opsætning af huset
+platform: powercalc
+create_group: Alt lys i huset
+entities:
+# Køkken
+  - create_group: Strømforbrug i køkkenet
+    entities:
+      - entity_id: input_number.samsung_koleskab_watt
+      - entity_id: light.dimmable_light_22
+      - entity_id: light.dimmable_light_23
+      - entity_id: light.dimmable_light_24
+      - entity_id: media_player.apple_tv_kokken
+      - entity_id: light.ikea_driver_over_spisebord
+# Indkørssel
+  - create_group: Strømforbrug i indkørelsen
+    entities:
+      - entity_id: light.hue_outdoor_bryggers
+      - entity_id: light.hue_outdoor_wall_1
+      - entity_id: light.dimmable_light_22
+      - entity_id: switch.philips_hue_plug_carport
+# Soveværelse
+  - create_group: Strømforbrug i sovelværelse
+    entities:
+#      - entity_id: light.hue_aurelle_panel_1_2 # ikke med endnu
+      - entity_id: light.hue_color_candle_1
+      - entity_id: light.hue_color_candle_1_2
+# Stuen
+  - create_group: Strømforbrug i stuen
+    entities:
+#      - entity_id: light.dimmable_light_9 # ikke med endnu
+      - entity_id: light.dimmable_light_18
+      - entity_id: light.dimmable_light_19
+      - entity_id: remote.brodlink_4_mini_remote
+#      - entity_id: color_temperature_light_25
+# Hall
+  - create_group: Strømforbrug i Hall
+    entities:
+      - entity_id: light.bordlampe_i_hall
+# Gamer room
+#  - create_group: Strømforbrug i Gamer room
+#    entities:
+#      - entity_id: sensor.nest_mini_drengevaerelse
+# Bryggers
+  - create_group: Strømforbrug i Bryggers
+    entities:
+      - entity_id: media_player.nest_mini_bryggers

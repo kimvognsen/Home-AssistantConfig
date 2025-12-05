@@ -1,0 +1,27 @@
+---
+# Radio stop
+#
+# forsæg på at lave radio kanaler på HA
+# inspiratioin fundet her: https://www.youtube.com/watch?v=Pt1kneqidBM&t=918s&ab_channel=BeardedTinker
+#
+#####
+# Radio player - script to stop playing radio .
+#
+#####
+#'1634037921824':
+alias: 'radio stop'
+sequence:
+- service: media_player.turn_off
+  data:
+    entity_id: '{% if is_state("input_select.radio_speaker", "Bryggers") %} media_player.nest_mini_bryggers
+      {% elif is_state("input_select.radio_speaker", "Drengeværelse") %} media_player.nest_mini_drengevaerelse
+      {% elif is_state("input_select.radio_speaker", "Apple TV stuen") %} media_player.apple_tv_stuen
+      {% elif is_state("input_select.radio_speaker", "Apple TV køkken") %} media_player.apple_tv_kokken
+      {% elif is_state("input_select.radio_speaker", "JBL speaker") %} media_player.jbl
+      {% elif is_state("input_select.radio_speaker", "All speakers") %} media_player.all_speakers
+      {% endif %}'
+- service: input_select.select_option
+  data:
+    entity_id: input_select.radio_station
+    option: Stopped
+mode: restart

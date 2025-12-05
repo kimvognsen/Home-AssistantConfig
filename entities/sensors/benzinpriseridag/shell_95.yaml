@@ -1,0 +1,11 @@
+platform: rest
+name: fuel_shell_95
+unique_id: 'fuel_shell_95'
+resource: https://benzinpriseridag.dk/
+scan_interval: 900
+timeout: 15
+value_template: >
+  {% set m = value | regex_findall('\\bShell\\b.*?(\\d{1,2}[\\.,]\\d{2})\\s*kr/l') %}
+  {{ (m[0] | replace(',', '.') | float) if m | length > 0 else none }}
+unit_of_measurement: "kr/l"
+device_class: monetary

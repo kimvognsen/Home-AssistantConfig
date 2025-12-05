@@ -1,0 +1,40 @@
+birke_pollen_tidligere:
+  name: Birk pollen i går
+  min: 0
+  max: 1000
+  step: 1
+bynke_pollen_tidligere:
+  name: Bynke pollen i går
+  min: 0
+  max: 1000
+  step: 1
+el_pollen_tidligere:
+  name: El pollen i går
+  min: 0
+  max: 1000
+  step: 1
+elm_pollen_tidligere:
+  name: Elm pollen i går
+  min: 0
+  max: 1000
+  step: 1
+alternaria_pollen_tidligere:
+  name: Alternaria pollen i går
+  min: 0
+  max: 1000
+  step: 1
+cladosporium_pollen_tidligere:
+  name: Cladosporium pollen i går
+  min: 0
+  max: 1000
+  step: 1
+graes_pollen_tidligere:
+  name: Græs pollen i går
+  min: 0
+  max: 1000
+  step: 1
+hassel_pollen_tidligere:
+  name: Hassel pollen i går
+  min: 0
+  max: 1000
+  step: 1

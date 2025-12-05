@@ -1,0 +1,14 @@
+# Calendar
+#
+# https://www.home-assistant.io/integrations/caldav/#basic-setup
+#
+
+calendar:
+  - platform: caldav
+    #url: !secret caldav_calender
+    url: https://caldav.icloud.com
+    username: !secret caldav_apple_id
+    password: !secret caldav_apple_password
+#    calendars:
+#      - "Family"
+#      - "Kalender"

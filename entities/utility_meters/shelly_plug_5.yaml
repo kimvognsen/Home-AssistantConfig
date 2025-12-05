@@ -1,0 +1,31 @@
+---
+#
+#
+#
+#
+# terrasselyskæde Shelly plug 
+terasselyskaede_hourly_energy:
+  source: sensor.shelly_plug_5_energy
+  unique_id: 'terasselyskaede_hourly_energy'
+  name: Terasselyskæde Hourly Energy
+  cycle: hourly
+terasselyskaede_daily_energy:
+  source: sensor.shelly_plug_5_energy
+  unique_id: 'terasselyskaede_daily_energ'
+  name: Terasselyskæde Daily Energy
+  cycle: daily
+terasselyskaede_weekly_energy:
+  source: sensor.shelly_plug_5_energy
+  unique_id: 'terasselyskaede_weekly_energy'
+  name: Terasselyskæde Weekly Energy
+  cycle: weekly
+terasselyskaede_monthly_energy:
+  source: sensor.shelly_plug_5_energy
+  unique_id: 'terasselyskaede_monthly_energy'
+  name: Terasselyskæde Monthly Energy
+  cycle: monthly
+terasselyskaede_yearly_energy:
+  source: sensor.shelly_plug_5_energy
+  unique_id: 'terasselyskaede_yearly_energy'
+  name: Terasselyskæde Yearly Energy
+  cycle: yearly

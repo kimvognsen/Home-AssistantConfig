@@ -1,0 +1,28 @@
+esphome:
+  name: master-bedroom-br-node
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  platform: esphome
+  password: "53b2e136c30cfc7ac50fdb650deb2b17"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Master-Bedroom-Br-Node"
+    password: "g7vT21gaVjrF"
+
+captive_portal:

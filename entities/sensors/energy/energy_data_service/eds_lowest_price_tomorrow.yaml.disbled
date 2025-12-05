@@ -1,0 +1,13 @@
+---
+#
+#
+# 
+#
+# sensor til at fortælle om der er data til lovelace card.
+platform: template
+sensors:
+  eds_lavest_price_tomorrow:
+    friendly_name: "Laveste el-pris i morgen"
+    unit_of_measurement: "Kr"
+    value_template: >
+      {{ state_attr('sensor.energi_data_service', 'tomorrow_min').price }}

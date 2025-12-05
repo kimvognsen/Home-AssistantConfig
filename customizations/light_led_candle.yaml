@@ -1,0 +1,8 @@
+---
+#
+#test på at få energy data fra Shelly S plug
+#
+# 
+#
+script.stuen_led_bloklys_on:
+  friendly_name: Bloklys i stuen

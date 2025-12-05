@@ -1,0 +1,17 @@
+---
+#
+# powercalc
+# https://github.com/bramstroker/homeassistant-powercalc?fbclid=IwAR21AFY74VNcPiFC8oGo6AYU33zpqbm-zEUO1mqS-39XJY0UOvkTtZsU28w
+#
+# Philips Hue
+#
+# TDP 3 W
+# 
+powercalc:
+  sensors:
+    - entity_id: device_tracker.unifi_default_ec_b5_fa_22_3a_99
+      unique_id: ca8808ef-b5ce-4feb-9078-4d98f0cfd21d
+      fixed:
+        power: 3
+        states_power:
+          idle: 0.5

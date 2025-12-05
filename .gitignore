@@ -1,37 +1,102 @@
-#
-# An * ensures that everything will be ignored.
-# You can whitelist files/folders with !, these will not be ignored.
+#############################################
+# Home Assistant – Standard protection
+#############################################
+
+# Whitelist YAML files (all other files ignored unless whitelisted)
 !*.yaml
 !.gitignore
 !*.md
 
-# Ignore folders.
-.storage
-.cloud
-.google.token
-.ssh
-pyscript
-zigbee2mqtt
-zigpy_ota.slet_mig
+#############################################
+# Sensitive or runtime data (must never be in Git)
+#############################################
 
-# Ensure these YAML files are ignored, otherwise your secret data/credentials will leak.
-ip_bans.yaml
+# HA internal
+.storage/
+.cloud/
+.google.token
+.miele-token-cache
+
+# Secrets
 secrets.yaml
+ip_bans.yaml
 known_devices.yaml
 *.disabled
+
+# SSH keys
+.ssh/
 id_rsa*
-.miele-token-cache
+id_ed25519*
+id_ecdsa*
+
+#############################################
+# Databases / logs / temp
+#############################################
+
+home-assistant.log
+home-assistant_v2.db*
 *.db
 *.db-shm
 *.db-wal
-home-assistant.log
-home-assistant_v2.db*
+*.sqlite
+*.sqlite3
+
 core.*
-.github/
-.idea/
-.vscode/
-__pycache__/
-deps/
 *.log
 *.old
+*.bak
+*.tmp
+*.dump
 *.txt
+
+
+#############################################
+# Zigbee, MQTT, integrations
+#############################################
+
+zigbee2mqtt/
+pyscript/
+deps/
+
+#############################################
+# BambuLab (ignore large print files)
+#############################################
+
+# Ignore whole print/media folder
+www/media/ha-bambulab/
+# Ignore all print formats
+*.gcode
+*.gcode.gz
+*.3mf
+*.stl
+*.step
+*.obj
+
+#############################################
+# Temp www cache
+#############################################
+
+www/tmp/
+
+#############################################
+# TTS cache
+#############################################
+
+tts/
+
+#############################################
+# Development tools
+#############################################
+
+__pycache__/
+.idea/
+.vscode/
+.vscode-server/
+*.swp
+*.swo
+
+#############################################
+# Backups
+#############################################
+
+backup/

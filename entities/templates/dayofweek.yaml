@@ -1,0 +1,18 @@
+- sensor:
+    - name: "Dato format"
+      unique_id: "1675fe7f-6120-4e4c-b726-796dd13ad0c7"
+      state: "{{ now().timestamp() | timestamp_custom('den %d. %B %Y') }}"
+      icon: mdi:calendar-clock
+
+    - name: "Ugedag"
+      unique_id: "80980dc9-03a6-45f8-96cc-f5aff3dfbe2a"
+      state: >-
+        {{ ['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'][now().weekday()] }}
+
+    - name: "Sammensat dato"
+      unique_id: "5f703199-495e-434d-b601-e6b924884db9"
+      state: >-
+        {{ ['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'][now().weekday()] }}
+        {{ now().timestamp() | timestamp_custom('den %d. %B %Y') }}
+
+        

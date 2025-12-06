@@ -1,0 +1,24 @@
+- sensor:
+    - name: "TheCloud Free Space"
+      unique_id: thecloud_free_space
+      icon: mdi:server
+      unit_of_measurement: "TB"
+      availability: >-
+        {{ states('sensor.thecloud_volume_1_total_size') not in ['unknown','unavailable',''] and
+           states('sensor.thecloud_volume_1_used_space') not in ['unknown','unavailable',''] }}
+      state: >-
+        {% set total = states('sensor.thecloud_volume_1_total_size') | replace('Tb','') | float(0) %}
+        {% set used  = states('sensor.thecloud_volume_1_used_space')  | replace('Tb','') | float(0) %}
+        {{ (total - used) | round(2) }}
+
+    - name: "DeskStation Free Space"
+      unique_id: deskstation_free_space
+      icon: mdi:server
+      unit_of_measurement: "TB"
+      availability: >-
+        {{ states('sensor.diskstation_volume_1_total_size') not in ['unknown','unavailable',''] and
+           states('sensor.diskstation_volume_1_used_space') not in ['unknown','unavailable',''] }}
+      state: >-
+        {% set total = states('sensor.diskstation_volume_1_total_size') | replace('Tb','') | float(0) %}
+        {% set used  = states('sensor.diskstation_volume_1_used_space')  | replace('Tb','') | float(0) %}
+        {{ (total - used) | round(2) }}

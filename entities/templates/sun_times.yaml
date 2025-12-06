@@ -1,0 +1,64 @@
+- sensor:
+    - name: "Næste solopgang"
+      unique_id: "64c98fdf-e737-4399-85fe-6e9242ed4f08"
+      icon: mdi:weather-sunset-up
+      unit_of_measurement: " "
+      state: >-
+        {% set ts = state_attr('sun.sun', 'next_rising') %}
+        {% if ts %}
+          {{ as_timestamp(ts) | timestamp_custom('%H.%M') }}
+        {% else %}
+          unknown
+        {% endif %}
+
+    - name: "Næste solnedgang"
+      unique_id: "6aae8f6e-25be-451d-953b-2edcf8b29d53"
+      icon: mdi:weather-sunset-down
+      unit_of_measurement: " "
+      state: >-
+        {% set ts = state_attr('sun.sun', 'next_setting') %}
+        {% if ts %}
+          {{ as_timestamp(ts) | timestamp_custom('%H.%M') }}
+        {% else %}
+          unknown
+        {% endif %}
+
+    - name: "Næste daggry"
+      unique_id: "d425f7bb-4c2f-4902-9382-2c839d4b660a"
+      state: >-
+        {% set ts = state_attr('sun.sun', 'next_dawn') %}
+        {% if ts %}
+          {{ as_timestamp(ts) | timestamp_custom('%H:%M') }}
+        {% else %}
+          unknown
+        {% endif %}
+
+    - name: "Næste Twilight"
+      unique_id: "377785fe-f38c-4132-b939-e7e0cd0619f4"
+      state: >-
+        {% set ts = state_attr('sun.sun', 'next_dusk') %}
+        {% if ts %}
+          {{ as_timestamp(ts) | timestamp_custom('%H:%M') }}
+        {% else %}
+          unknown
+        {% endif %}
+
+    - name: "Næste midnat"
+      unique_id: "146b3db9-5a09-4f8f-8812-d9dfcc6827e6"
+      state: >-
+        {% set ts = state_attr('sun.sun', 'next_midnight') %}
+        {% if ts %}
+          {{ as_timestamp(ts) | timestamp_custom('%H:%M') }}
+        {% else %}
+          unknown
+        {% endif %}
+
+    - name: "Næste middag"
+      unique_id: "682290b8-8b05-4eaa-8959-c1d04e2a1579"
+      state: >-
+        {% set ts = state_attr('sun.sun', 'next_noon') %}
+        {% if ts %}
+          {{ as_timestamp(ts) | timestamp_custom('%H:%M') }}
+        {% else %}
+          unknown
+        {% endif %}

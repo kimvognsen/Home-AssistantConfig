@@ -1,0 +1,31 @@
+- sensor:
+    - name: "Door sensors status array"
+      unique_id: door_sensors_status_array
+      state: >-
+        {% set members = state_attr('group.all_door_sensors', 'entity_id') or [] %}
+        [
+        {%- for e in members %}
+          {%- if not loop.first %},{% endif -%}
+          {{ 1 if is_state(e, 'on') else 0 }}
+        {%- endfor -%}
+        ]
+
+    - name: "Åbne døre (antal)"
+      unique_id: door_sensors_status_on
+      state: >-
+        {% set members = state_attr('group.all_door_sensors', 'entity_id') or [] %}
+        {{ expand(members) | selectattr('state', 'eq', 'on') | list | length }}
+
+    - name: "Døre i alt"
+      unique_id: door_sensors_status_count
+      state: >-
+        {% set members = state_attr('group.all_door_sensors', 'entity_id') or [] %}
+        {{ members | length }}
+
+    - name: "Dør sensorer åben"
+      unique_id: door_sensors_status
+      icon: "mdi:door-open"
+      state: >-
+        {{ states('sensor.door_sensors_status_on') }}/{{ states('sensor.door_sensors_status_count') }}
+
+        

@@ -1,0 +1,75 @@
+- sensor:
+    - name: "Z-Wave"
+      unique_id: z_wave_online
+      state: >-
+        {% if is_state("binary_sensor.z_wave_js_running", "on") %}
+          Online
+        {% else %}
+          Offline
+        {% endif %}
+      icon: >-
+        {% if this.state == 'Online' %}
+          mdi:z-wave
+        {% else %}
+          mdi:z-wave-off
+        {% endif %}
+
+    - name: "Hue"
+      unique_id: hue_online
+      state: >-
+        {% if is_state("sensor.hue_bridge_zigbee_forbindelse", "connected") %}
+          Online
+        {% else %}
+          Offline
+        {% endif %}
+      icon: >-
+        {% if this.state == 'Online' %}
+          mdi:hue-bridge
+        {% else %}
+          mdi:alert-circle-outline
+        {% endif %}
+
+    - name: "EspHome"
+      unique_id: esphome_online
+      state: >-
+        {% if is_state("binary_sensor.esphome_running", "on") %}
+          Online
+        {% else %}
+          Offline
+        {% endif %}
+      icon: >-
+        {% if this.state == 'Online' %}
+          mdi:chip
+        {% else %}
+          mdi:chip-off
+        {% endif %}
+
+    - name: "Broadlink"
+      unique_id: broadlink_rm4_online
+      state: >-
+        {% if is_state("remote.brodlink_4_mini_remote", "on") %}
+          Online
+        {% else %}
+          Offline
+        {% endif %}
+      icon: >-
+        {% if this.state == 'Online' %}
+          mdi:remote
+        {% else %}
+          mdi:remote-off
+        {% endif %}
+
+    - name: "Broadlink remote HA"
+      unique_id: broadlink_rm4_online_remote_ha
+      state: >-
+        {% if is_state("remote.wi_fi_universal_remote", "on") %}
+          Online
+        {% else %}
+          Offline
+        {% endif %}
+      icon: >-
+        {% if this.state == 'Online' %}
+          mdi:remote
+        {% else %}
+          mdi:remote-off
+        {% endif %}

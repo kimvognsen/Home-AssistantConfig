@@ -1,0 +1,33 @@
+- sensor:
+    # Array af 1/0 for hvert vindue
+    - name: "Windows sensors status array"
+      unique_id: windows_sensors_status_array
+      state: >-
+        {% set ents = expand('group.all_windows_sensors') | default([], true) %}
+        [
+        {%- for e in ents -%}
+          {%- if not loop.first %},{% endif -%}
+          {{ 1 if e.state | lower == 'on' else 0 }}
+        {%- endfor -%}
+        ]
+
+    # Antal åbne vinduer
+    - name: "Åbne vinduer (antal)"
+      unique_id: windows_sensors_status_on
+      state: >-
+        {% set ents = expand('group.all_windows_sensors') | default([], true) %}
+        {{ ents | selectattr('state', 'equalto', 'on') | list | length }}
+
+    # Total antal vinduer
+    - name: "Vinduer i alt"
+      unique_id: windows_sensors_status_count
+      state: >-
+        {% set ents = expand('group.all_windows_sensors') | default([], true) %}
+        {{ ents | list | length }}
+
+    # “åbne/total” format
+    - name: "Vindue Sensors åben"
+      unique_id: windows_sensors_status
+      icon: "phu:lift-out-window-open"
+      state: >-
+        {{ states('sensor.windows_sensors_status_on') }}/{{ states('sensor.windows_sensors_status_count') }}

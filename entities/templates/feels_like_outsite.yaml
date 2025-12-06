@@ -1,0 +1,51 @@
+- sensor:
+    - name: "Det føles som udenfor"
+      unique_id: "15c57d6c-2662-4150-be62-8f538fbfc1bb"
+      unit_of_measurement: "°C"
+      availability: >-
+        {% set t = state_attr('weather.hasselhaven', 'temperature') %}
+        {% set h = state_attr('weather.hasselhaven', 'humidity') %}
+        {% set w = state_attr('weather.hasselhaven', 'wind_speed') %}
+        {{ t not in [none, 'unknown', 'unavailable']
+           and h not in [none, 'unknown', 'unavailable']
+           and w not in [none, 'unknown', 'unavailable'] }}
+      state: >-
+        {% set temp = state_attr('weather.hasselhaven', 'temperature') | float(0) %}
+        {% set humi = state_attr('weather.hasselhaven', 'humidity') | float(0) %}
+        {% set wind_ms = state_attr('weather.hasselhaven', 'wind_speed') | float(0) %}
+        {% set wind_kmh = wind_ms * 3.6 %}
+
+        {% if temp <= 10 and wind_kmh >= 5 %}
+          {% set new_wind_chill = (
+            13.12
+            + 0.6215 * temp
+            - 11.37 * (wind_kmh ** 0.16)
+            + 0.3965 * temp * (wind_kmh ** 0.16)
+          ) | round(1) %}
+          {{ new_wind_chill }}
+
+        {% elif temp >= 27 and humi >= 40 and wind_kmh <= 15 %}
+          {% set heat_index = (
+            -8.78469475556
+            + 1.61139411 * temp
+            + 2.33854883889 * humi
+            - 0.14611605 * humi * temp
+            - 0.012308094 * temp * temp
+            - 0.0164248277778 * humi * humi
+            + 0.002211732 * humi * temp * temp
+            + 0.00072546 * humi * humi * temp
+            - 0.000003582 * humi * humi * temp * temp
+          ) | round(1) %}
+          {{ heat_index }}
+
+        {% else %}
+          {% set e_sat = 6.105 * (2.718281828 ** ((17.27 * temp) / (237.7 + temp))) %}
+          {% set vapour_pressure = (humi / 100) * e_sat %}
+          {% set apparent = (
+            temp
+            + 0.33 * vapour_pressure
+            - 0.7 * wind_ms
+            - 4.0
+          ) | round(1) %}
+          {{ apparent }}
+        {% endif %}

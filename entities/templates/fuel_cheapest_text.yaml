@@ -1,7 +1,6 @@
-  - sensor:
+- sensor:
     - name: "Billigste benzin 95 (tekst)"
-      object_id: billigste_benzin_95_tekst
-      unique_id: sensor_billigste_benzin_95_tekst
+      unique_id: billigste_benzin_95_tekst
       state: >
         {% set sensors = {
           'Ingo': states('sensor.fuel_ingo_95') | float(default=999),

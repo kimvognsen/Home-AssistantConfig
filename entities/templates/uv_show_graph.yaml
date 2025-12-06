@@ -1,7 +1,7 @@
-  - binary_sensor:
+- binary_sensor:
     - name: "UV max over grænseværdi"
-      object_id: show_uv_graph        # giver binary_sensor.show_uv_graph
-      unique_id: binary_sensor_show_uv_graph
+      unique_id: uv_show_graph
       state: >
         {{ states('sensor.openuv_max_uv_index') | float(0) >
-            states('sensor.uv_sun') | float(0) }}
+           states('sensor.uv_sun') | float(0) }}
+

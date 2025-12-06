@@ -1,0 +1,273 @@
+- sensor:
+    - name: "Pap Affald"
+      unique_id: pap_affald
+      state: >-
+        {% set start_time = state_attr('calendar.pap', 'start_time') %}
+        {% if not start_time %}
+          Dato ikke tilgængelig
+        {% else %}
+          {% set days_until_collection = ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') %}
+          {% if days_until_collection == 0 %}
+            Bliver hentet i dag
+          {% elif days_until_collection == 1 %}
+            Bliver hentet i morgen
+          {% elif days_until_collection > 1 %}
+            Bliver hentet om {{ days_until_collection }} dage
+          {% else %}
+            Dato ikke tilgængelig
+          {% endif %}
+        {% endif %}
+      icon: >-
+        {% set start_time = state_attr('calendar.pap', 'start_time') %}
+        {% if not start_time %}
+          mdi:trash-can-outline
+        {% else %}
+          {% set days_until_collection = ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') %}
+          {% if days_until_collection == 0 %}
+            mdi:delete-empty
+          {% else %}
+            mdi:trash-can-outline
+          {% endif %}
+        {% endif %}
+      attributes:
+        days_until_collection: >-
+          {% set start_time = state_attr('calendar.pap', 'start_time') %}
+          {% if not start_time %}
+            unknown
+          {% else %}
+            {{ ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') }}
+          {% endif %}
+
+    - name: "Storskrald affald"
+      unique_id: storskrald_affald
+      state: >-
+        {% set start_time = state_attr('calendar.storskrald', 'start_time') %}
+        {% if not start_time %}
+          Dato ikke tilgængelig
+        {% else %}
+          {% set days_until_collection = ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') %}
+          {% if days_until_collection == 0 %}
+            Bliver hentet i dag
+          {% elif days_until_collection == 1 %}
+            Bliver hentet i morgen
+          {% elif days_until_collection > 1 %}
+            Bliver hentet om {{ days_until_collection }} dage
+          {% else %}
+            Dato ikke tilgængelig
+          {% endif %}
+        {% endif %}
+      icon: >-
+        {% set start_time = state_attr('calendar.storskrald', 'start_time') %}
+        {% if not start_time %}
+          mdi:trash-can-outline
+        {% else %}
+          {% set days_until_collection = ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') %}
+          {% if days_until_collection == 0 %}
+            mdi:delete-empty
+          {% else %}
+            mdi:trash-can-outline
+          {% endif %}
+        {% endif %}
+      attributes:
+        days_until_collection: >-
+          {% set start_time = state_attr('calendar.storskrald', 'start_time') %}
+          {% if not start_time %}
+            unknown
+          {% else %}
+            {{ ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') }}
+          {% endif %}
+
+    - name: "Papir, plast og MDK affald"
+      unique_id: papir_plast_mdk_affald
+      state: >-
+        {% set start_time = state_attr('calendar.papir_plast_mdk', 'start_time') %}
+        {% if not start_time %}
+          Dato ikke tilgængelig
+        {% else %}
+          {% set days_until_collection = ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') %}
+          {% if days_until_collection == 0 %}
+            Bliver hentet i dag
+          {% elif days_until_collection == 1 %}
+            Bliver hentet i morgen
+          {% elif days_until_collection > 1 %}
+            Bliver hentet om {{ days_until_collection }} dage
+          {% else %}
+            Dato ikke tilgængelig
+          {% endif %}
+        {% endif %}
+      icon: >-
+        {% set start_time = state_attr('calendar.papir_plast_mdk', 'start_time') %}
+        {% if not start_time %}
+          mdi:trash-can-outline
+        {% else %}
+          {% set days_until_collection = ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') %}
+          {% if days_until_collection == 0 %}
+            mdi:delete-empty
+          {% else %}
+            mdi:trash-can-outline
+          {% endif %}
+        {% endif %}
+      attributes:
+        days_until_collection: >-
+          {% set start_time = state_attr('calendar.papir_plast_mdk', 'start_time') %}
+          {% if not start_time %}
+            unknown
+          {% else %}
+            {{ ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') }}
+          {% endif %}
+
+    - name: "Metal og glas affald"
+      unique_id: metal_og_glas_affald
+      state: >-
+        {% set start_time = state_attr('calendar.metal_og_glas', 'start_time') %}
+        {% if not start_time %}
+          Dato ikke tilgængelig
+        {% else %}
+          {% set days_until_collection = ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') %}
+          {% if days_until_collection == 0 %}
+            Bliver hentet i dag
+          {% elif days_until_collection == 1 %}
+            Bliver hentet i morgen
+          {% elif days_until_collection > 1 %}
+            Bliver hentet om {{ days_until_collection }} dage
+          {% else %}
+            Dato ikke tilgængelig
+          {% endif %}
+        {% endif %}
+      icon: >-
+        {% set start_time = state_attr('calendar.metal_og_glas', 'start_time') %}
+        {% if not start_time %}
+          mdi:trash-can-outline
+        {% else %}
+          {% set days_until_collection = ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') %}
+          {% if days_until_collection == 0 %}
+            mdi:delete-empty
+          {% else %}
+            mdi:trash-can-outline
+          {% endif %}
+        {% endif %}
+      attributes:
+        days_until_collection: >-
+          {% set start_time = state_attr('calendar.metal_og_glas', 'start_time') %}
+          {% if not start_time %}
+            unknown
+          {% else %}
+            {{ ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') }}
+          {% endif %}
+
+    - name: "Mad og restaffald"
+      unique_id: mad_og_restaffald
+      state: >-
+        {% set start_time = state_attr('calendar.mad_og_rest', 'start_time') %}
+        {% if not start_time %}
+          Dato ikke tilgængelig
+        {% else %}
+          {% set days_until_collection = ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') %}
+          {% if days_until_collection == 0 %}
+            Bliver hentet i dag
+          {% elif days_until_collection == 1 %}
+            Bliver hentet i morgen
+          {% elif days_until_collection > 1 %}
+            Bliver hentet om {{ days_until_collection }} dage
+          {% else %}
+            Dato ikke tilgængelig
+          {% endif %}
+        {% endif %}
+      icon: >-
+        {% set start_time = state_attr('calendar.mad_og_rest', 'start_time') %}
+        {% if not start_time %}
+          mdi:trash-can-outline
+        {% else %}
+          {% set days_until_collection = ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') %}
+          {% if days_until_collection == 0 %}
+            mdi:delete-empty
+          {% else %}
+            mdi:trash-can-outline
+          {% endif %}
+        {% endif %}
+      attributes:
+        days_until_collection: >-
+          {% set start_time = state_attr('calendar.mad_og_rest', 'start_time') %}
+          {% if not start_time %}
+            unknown
+          {% else %}
+            {{ ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') }}
+          {% endif %}
+
+    - name: "Haveaffald"
+      unique_id: haveaffald
+      state: >-
+        {% set start_time = state_attr('calendar.haveaffald', 'start_time') %}
+        {% if not start_time %}
+          Dato ikke tilgængelig
+        {% else %}
+          {% set days_until_collection = ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') %}
+          {% if days_until_collection == 0 %}
+            Bliver hentet i dag
+          {% elif days_until_collection == 1 %}
+            Bliver hentet i morgen
+          {% elif days_until_collection > 1 %}
+            Bliver hentet om {{ days_until_collection }} dage
+          {% else %}
+            Dato ikke tilgængelig
+          {% endif %}
+        {% endif %}
+      icon: >-
+        {% set start_time = state_attr('calendar.haveaffald', 'start_time') %}
+        {% if not start_time %}
+          mdi:trash-can-outline
+        {% else %}
+          {% set days_until_collection = ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') %}
+          {% if days_until_collection == 0 %}
+            mdi:delete-empty
+          {% else %}
+            mdi:trash-can-outline
+          {% endif %}
+        {% endif %}
+      attributes:
+        days_until_collection: >-
+          {% set start_time = state_attr('calendar.haveaffald', 'start_time') %}
+          {% if not start_time %}
+            unknown
+          {% else %}
+            {{ ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') }}
+          {% endif %}
+
+    - name: "Storskrald"
+      unique_id: storskrald
+      state: >-
+        {% set start_time = state_attr('calendar.storskrald', 'start_time') %}
+        {% if not start_time %}
+          Dato ikke tilgængelig
+        {% else %}
+          {% set days_until_collection = ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') %}
+          {% if days_until_collection == 0 %}
+            Bliver hentet i dag
+          {% elif days_until_collection == 1 %}
+            Bliver hentet i morgen
+          {% elif days_until_collection > 1 %}
+            Bliver hentet om {{ days_until_collection }} dage
+          {% else %}
+            Dato ikke tilgængelig
+          {% endif %}
+        {% endif %}
+      icon: >-
+        {% set start_time = state_attr('calendar.storskrald', 'start_time') %}
+        {% if not start_time %}
+          mdi:trash-can-outline
+        {% else %}
+          {% set days_until_collection = ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') %}
+          {% if days_until_collection == 0 %}
+            mdi:delete-empty
+          {% else %}
+            mdi:trash-can-outline
+          {% endif %}
+        {% endif %}
+      attributes:
+        days_until_collection: >-
+          {% set start_time = state_attr('calendar.storskrald', 'start_time') %}
+          {% if not start_time %}
+            unknown
+          {% else %}
+            {{ ((as_timestamp(start_time) - now().timestamp()) / 86400) | round(0, 'ceil') }}
+          {% endif %}

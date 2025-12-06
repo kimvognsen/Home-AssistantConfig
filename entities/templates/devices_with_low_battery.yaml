@@ -1,0 +1,22 @@
+# entities/templates/devices_with_low_battery.yaml
+
+- sensor:
+    - name: "Devices with low battery"
+      unique_id: devices_with_low_battery
+      unit_of_measurement: "devices"
+      state: >-
+        {{ states.sensor
+            | selectattr('attributes.device_class', 'eq', 'battery')
+            | map(attribute='state')
+            | reject('in', ['unknown', 'unavailable', 'Ok'])
+            | map('int', -1)
+            | select('le', 10)
+            | list
+            | count
+        }}
+      icon: >-
+        {% if this.state | int(0) == 0 %}
+          mdi:check-circle
+        {% else %}
+          mdi:battery-alert
+        {% endif %}

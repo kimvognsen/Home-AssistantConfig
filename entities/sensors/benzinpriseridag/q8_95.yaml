@@ -1,3 +1,4 @@
+# Q8 95
 platform: rest
 name: fuel_q8_95
 unique_id: 'fuel_q8_95'
@@ -6,7 +7,6 @@ scan_interval: 900
 timeout: 15
 value_template: >
   {% set m = value | regex_findall('\\bQ8\\b.*?(\\d{1,2}[\\.,]\\d{2})\\s*kr/l') %}
-  {{ (m[0] | replace(',', '.') | float) if m | length > 0 else none }}
+  {{ (m[0] | replace(',', '.') | float(0)) if m | length > 0 else 0 }}
 unit_of_measurement: "kr/l"
 device_class: monetary
-

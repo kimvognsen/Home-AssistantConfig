@@ -3,4 +3,4 @@
       unique_id: doorlock_workshop_closed
       device_class: lock
       state: >-
-        {{ is_state('binary_sensor.doorlock_workshop', 'locked') }}
+        {{ not is_state('binary_sensor.doorlock_workshop', 'locked') }}

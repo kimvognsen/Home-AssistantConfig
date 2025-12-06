@@ -6,10 +6,14 @@ homeassistant:
   packages: !include_dir_named integrations
   customize: !include_dir_merge_named customizations
   customize_glob: !include_dir_merge_named customizations_glob
-#  customize_glob: !include /customizations_glob/customize-glob.yaml
-
   media_dirs:
     local: /media
+
+## ny struktur
+template: !include_dir_merge_list entities/templates
+
+
+## End ny struktur
 #
 script: !include scripts.yaml
 # scene: !include scenes.yaml
@@ -17,16 +21,9 @@ script: !include scripts.yaml
 command_line: !include command_line.yaml
 
 logger:
-#  default: warning
   default: info
-#  logs: {}
   logs:
-#    pydeconz: debug
-#    homeassistant.components.deconz: d ebug
-#    homeassistant.components.smartthings.light: info
-#    custom_compoments_pyscripts: info
     custom_components.icloud3: debug
-#    pyicloud: debug
 
 
 

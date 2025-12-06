@@ -1,0 +1,116 @@
+- sensor:
+    - name: "Kerne temperatur"
+      unique_id: meater_meattemp
+      state: >-
+        {% set dev = state_attr('sensor.meater', 'data') %}
+        {% set devices = dev.devices if dev is mapping and 'devices' in dev else None %}
+        {% if devices and devices | count > 0 %}
+          {{ devices[0].temperature.internal }}
+        {% else %}
+          unknown
+        {% endif %}
+      icon: mdi:food-steak
+
+    - name: "Napolion Temperatur"
+      unique_id: meater_ambient
+      state: >-
+        {% set dev = state_attr('sensor.meater', 'data') %}
+        {% set devices = dev.devices if dev is mapping and 'devices' in dev else None %}
+        {% if devices and devices | count > 0 %}
+          {{ devices[0].temperature.ambient }}
+        {% else %}
+          unknown
+        {% endif %}
+      icon: mdi:grill
+
+    - name: "Meater ID"
+      unique_id: meater_cook_id
+      state: >-
+        {% set dev = state_attr('sensor.meater', 'data') %}
+        {% set devices = dev.devices if dev is mapping and 'devices' in dev else None %}
+        {% if devices and devices | count > 0 %}
+          {{ devices[0].cook.id }}
+        {% else %}
+          unknown
+        {% endif %}
+
+    - name: "Meater - Kød valg"
+      unique_id: meater_cook_name
+      icon: mdi:chef-hat
+      state: >-
+        {% set dev = state_attr('sensor.meater', 'data') %}
+        {% set devices = dev.devices if dev is mapping and 'devices' in dev else None %}
+        {% if devices and devices | count > 0 %}
+          {{ devices[0].cook.name }}
+        {% else %}
+          unknown
+        {% endif %}
+
+    - name: "Meater Kød - State"
+      unique_id: meater_cook_state
+      state: >-
+        {% set dev = state_attr('sensor.meater', 'data') %}
+        {% set devices = dev.devices if dev is mapping and 'devices' in dev else None %}
+        {% if devices and devices | count > 0 %}
+          {{ devices[0].cook.state }}
+        {% else %}
+          unknown
+        {% endif %}
+
+    - name: "Meater - Kød temperatur mål"
+      unique_id: meater_cook_temp_target
+      state: >-
+        {% set dev = state_attr('sensor.meater', 'data') %}
+        {% set devices = dev.devices if dev is mapping and 'devices' in dev else None %}
+        {% if devices and devices | count > 0 %}
+          {{ devices[0].cook.temperature.target }}
+        {% else %}
+          unknown
+        {% endif %}
+
+    - name: "Meater - Kød temperatur Peak"
+      unique_id: meater_cook_temp_peak
+      state: >-
+        {% set dev = state_attr('sensor.meater', 'data') %}
+        {% set devices = dev.devices if dev is mapping and 'devices' in dev else None %}
+        {% if devices and devices | count > 0 %}
+          {{ devices[0].cook.temperature.peak }}
+        {% else %}
+          unknown
+        {% endif %}
+
+    - name: "Meater - Forvente tid"
+      unique_id: meater_cook_time_elapsed
+      icon: mdi:timer-sand
+      state: >-
+        {% set dev = state_attr('sensor.meater', 'data') %}
+        {% set devices = dev.devices if dev is mapping and 'devices' in dev else None %}
+        {% if devices and devices | count > 0 %}
+          {{ devices[0].cook.time.elapsed }}
+        {% else %}
+          unknown
+        {% endif %}
+
+    - name: "Meater - Tilbered tid tilbage"
+      unique_id: meater_cook_time_remaining
+      icon: mdi:timer-sand
+      state: >-
+        {% set dev = state_attr('sensor.meater', 'data') %}
+        {% set devices = dev.devices if dev is mapping and 'devices' in dev else None %}
+        {% if devices and devices | count > 0 %}
+          {{ devices[0].cook.time.remaining }}
+        {% else %}
+          unknown
+        {% endif %}
+
+    - name: "Meater - Sidst opdateret"
+      unique_id: meater_updated_at
+      icon: mdi:update
+      state: >-
+        {% set dev = state_attr('sensor.meater', 'data') %}
+        {% set devices = dev.devices if dev is mapping and 'devices' in dev else None %}
+        {% if devices and devices | count > 0 %}
+          {{ devices[0].updated_at }}
+        {% else %}
+          unknown
+        {% endif %}

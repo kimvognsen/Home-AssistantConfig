@@ -1,0 +1,15 @@
+- sensor:
+    - name: "Mailbox Last triggered"
+      unique_id: mailbox_last_triggered_formatted
+      state: >-
+        {% set dt = states('input_datetime.post_sidst_regiestreret') %}
+        {% if dt not in ['unknown', 'unavailable', 'none'] %}
+          {% set dt_obj = dt | as_datetime %}
+          {% if dt_obj and dt_obj.date() == now().date() %}
+            {{ dt_obj.strftime('%H:%M') }}
+          {% else %}
+            none
+          {% endif %}
+        {% else %}
+          none
+        {% endif %}

@@ -1,0 +1,105 @@
+- sensor:
+    - name: "Number of Alerts"
+      unique_id: count_alert
+      state: >-
+        {{ states.alert | list | count }}
+
+    - name: "Number of Automations"
+      unique_id: automation_count
+      state: "{{ states.automation | list | count }}"
+
+    - name: "Number of Binary Sensors"
+      unique_id: binary_sensor_count
+      state: "{{ states.binary_sensor | list | count }}"
+
+    - name: "Number of Camera"
+      unique_id: camera_count
+      state: "{{ states.camera | list | count }}"
+
+    - name: "Number of Climates"
+      unique_id: count_climate
+      state: "{{ states.climate | list | count }}"
+
+    - name: "Number of Counters"
+      unique_id: count_counter
+      state: "{{ states.counter | list | count }}"
+
+    - name: "Number of Devices trackers"
+      unique_id: tracker_count
+      state: "{{ states | list | count }}"  # samme logik som din gamle
+
+    - name: "Number of Entities"
+      unique_id: count_entities
+      state: "{{ states | length }}"
+
+    - name: "Number of Groups"
+      unique_id: count_groups
+      state: "{{ states.group | list | count }}"
+
+    - name: "Number of Image Processing"
+      unique_id: count_image_processing
+      state: "{{ states.image_processing | list | count }}"
+
+    - name: "Number of Input Booleans"
+      unique_id: count_boolean
+      state: "{{ states.input_boolean | list | count }}"
+
+    - name: "Number of Input Date/Time"
+      unique_id: count_datetime
+      state: "{{ states.input_datetime | list | count }}"
+
+    - name: "Number of Input Numbers"
+      unique_id: count_number
+      state: "{{ states.input_number | list | count }}"
+
+    - name: "Number of Input Selects"
+      unique_id: count_select
+      state: "{{ states.input_select | list | count }}"
+
+    - name: "Number of Input Texts"
+      unique_id: count_text
+      state: "{{ states.input_text | list | count }}"
+
+    - name: "Number of Lights"
+      unique_id: lights_count
+      state: "{{ states.light | list | count }}"
+
+    - name: "Number of Locks"
+      unique_id: count_locks
+      state: "{{ states.lock | list | count }}"
+
+    - name: "Number of Media Player"
+      unique_id: media_player_count
+      state: "{{ states.media_player | list | count }}"
+
+    - name: "Number of Persons"
+      unique_id: count_person
+      state: "{{ states.person | list | count }}"
+
+    - name: "Number of Rest commands"
+      unique_id: count_rest
+      state: "{{ states.rest_command | list | count }}"
+
+    - name: "Number of Scripts"
+      unique_id: script_count
+      state: "{{ states.script | list | count }}"
+
+    - name: "Number of Sensors"
+      unique_id: sensor_count
+      state: "{{ states.sensor | list | count }}"
+
+    - name: "Number of Switches"
+      unique_id: switch_count
+      state: "{{ states.switch | list | count }}"
+
+    - name: "Number of Timers"
+      unique_id: count_timer
+      state: "{{ states.timer | list | count }}"
+
+    - name: "Number of Utility meters"
+      unique_id: count_utility_meter
+      state: "{{ states.utility_meter | list | count }}"
+
+    - name: "Number of Weather"
+      unique_id: count_weather
+      state: "{{ states.weather | list | count }}"

@@ -1,0 +1,10 @@
+- sensor:
+    - name: "Sleeping hours"
+      unique_id: sleeping_hours
+      state: >-
+        {% set ct = states('sensor.sleeping_time') | int(0) %}
+        {% if ct > 60 %}
+          {{ (ct // 60) }}:{{ '{:0>2d}'.format(ct % 60) }} timer
+        {% else %}
+          {{ ct }} minutter
+        {% endif %}

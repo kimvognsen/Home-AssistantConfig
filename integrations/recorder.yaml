@@ -84,3 +84,30 @@ recorder:
       - sensor.*pollen*         # Pollen tal
       - sensor.disk*            # diverse diske og mit NAS Diskstation
       - sensor.thecloud*        # NAS TheCloud
+
+      # device sensor til at få overblik
+      - sensor.automation_count
+      - sensor.binary_sensor_count
+      - sensor.camera_count
+      - sensor.count_climate
+      - sensor.count_counter
+      - sensor.tracker_count
+      - sensor.count_entities
+      - sensor.count_groups
+      - sensor.count_image_processing
+      - sensor.count_boolean
+      - sensor.count_datetime
+      - sensor.count_number
+      - sensor.count_select
+      - sensor.count_text
+      - sensor.lights_count
+      - sensor.count_locks
+      - sensor.media_player_count
+      - sensor.count_person
+      - sensor.count_rest
+      - sensor.script_count
+      - sensor.sensor_count
+      - sensor.switch_count
+      - sensor.count_timer
+      - sensor.count_utility_meter
+      - sensor.count_weather

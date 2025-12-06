@@ -31,7 +31,7 @@
 ############################################################################
 platform: rest
 name: "Birke pollen (seneste)"
-unique_id: birke_pollen_seneste_v2
+unique_id: birke_pollen_seneste_v3
 scan_interval: 3600
 resource: https://www.astma-allergi.dk/umbraco/Api/PollenApi/GetPollenFeed
 value_template: >

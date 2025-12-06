@@ -1,20 +1,20 @@
 - sensor:
     - name: "Vind hastighed km/t"
-      unique_id: "930bbe41-9a57-4469-bd4a-f2fa7af51319"
+      unique_id: "vind_hastighed_km_t"
       icon: mdi:weather-windy
       unit_of_measurement: "km/h"
       state: >-
         {{ state_attr('weather.hasselhaven', 'wind_speed') }}
 
     - name: "Vind hastighed m/s long format"
-      unique_id: "f8113061-5c8b-4a3e-a4f3-c3831982769c"
+      unique_id: "vind_hastighed_m_s_long_format"
       icon: mdi:weather-windy
       unit_of_measurement: "m/s"
       state: >-
         {{ (state_attr('weather.hasselhaven', 'wind_speed') | float / 3.6) | round(2) }}
 
     - name: "Vind hastighed m/s"
-      unique_id: "f3d17c85-0b96-4f16-a804-db120108f738"
+      unique_id: "vind_hastighed_m_s_v2"
       icon: mdi:weather-windy
       unit_of_measurement: "m/s"
       state: >-

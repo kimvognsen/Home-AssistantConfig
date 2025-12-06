@@ -1,25 +1,24 @@
-template:
   - sensor:
-      - name: "Billigste benzin 95 (tekst)"
-        object_id: billigste_benzin_95_tekst
-        unique_id: sensor_billigste_benzin_95_tekst
-        state: >
-          {% set sensors = {
-            'Ingo': states('sensor.fuel_ingo_95') | float(default=999),
-            'F24': states('sensor.fuel_f24_95') | float(default=999),
-            'Circle K': states('sensor.fuel_circlek_95') | float(default=999),
-            'Uno-X': states('sensor.fuel_unox_95') | float(default=999),
-            'Q8': states('sensor.fuel_q8_95') | float(default=999),
-            'OK': states('sensor.fuel_ok_95') | float(default=999),
-            'Shell': states('sensor.fuel_shell_95') | float(default=999)
-          } %}
-          {% set min_p = sensors.values() | min %}
-          {% if min_p == 999 %}
-            Ingen priser tilgængelige
-          {% else %}
-            {% for chain, price in sensors.items() %}
-              {% if price == min_p %}
-                {{ "%.2f"|format(price) }} kr/l hos {{ chain }}
-              {% endif %}
-            {% endfor %}
-          {% endif %}
+    - name: "Billigste benzin 95 (tekst)"
+      object_id: billigste_benzin_95_tekst
+      unique_id: sensor_billigste_benzin_95_tekst
+      state: >
+        {% set sensors = {
+          'Ingo': states('sensor.fuel_ingo_95') | float(default=999),
+          'F24': states('sensor.fuel_f24_95') | float(default=999),
+          'Circle K': states('sensor.fuel_circlek_95') | float(default=999),
+          'Uno-X': states('sensor.fuel_unox_95') | float(default=999),
+          'Q8': states('sensor.fuel_q8_95') | float(default=999),
+          'OK': states('sensor.fuel_ok_95') | float(default=999),
+          'Shell': states('sensor.fuel_shell_95') | float(default=999)
+        } %}
+        {% set min_p = sensors.values() | min %}
+        {% if min_p == 999 %}
+          Ingen priser tilgængelige
+        {% else %}
+          {% for chain, price in sensors.items() %}
+            {% if price == min_p %}
+              {{ "%.2f"|format(price) }} kr/l hos {{ chain }}
+            {% endif %}
+          {% endfor %}
+        {% endif %}

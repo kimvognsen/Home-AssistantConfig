@@ -69,7 +69,7 @@
       unit_of_measurement: "DKK/kWh"
       availability: >-
         {{ (state_attr('sensor.energi_data_service','today_mean') | default(None)) is not none
-           or states('sensor.energi_data_service') | is_number }}
+          or states('sensor.energi_data_service') | is_number }}
       state: >-
         {{ (state_attr('sensor.energi_data_service','today_mean')
             | default(states('sensor.energi_data_service'))) | float }}

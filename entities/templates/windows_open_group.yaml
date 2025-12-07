@@ -13,14 +13,14 @@
 
     # Antal åbne vinduer
     - name: "Åbne vinduer (antal)"
-      unique_id: windows_sensors_status_on
+      unique_id: aabne_vindue_antal
       state: >-
         {% set ents = expand('group.all_windows_sensors') | default([], true) %}
         {{ ents | selectattr('state', 'equalto', 'on') | list | length }}
 
     # Total antal vinduer
     - name: "Vinduer i alt"
-      unique_id: windows_sensors_status_count
+      unique_id: vindue_i_alt
       state: >-
         {% set ents = expand('group.all_windows_sensors') | default([], true) %}
         {{ ents | list | length }}

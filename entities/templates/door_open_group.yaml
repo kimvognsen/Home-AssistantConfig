@@ -11,13 +11,13 @@
         ]
 
     - name: "Åbne døre (antal)"
-      unique_id: door_sensors_status_on
+      unique_id: aabne_dor_antal
       state: >-
         {% set members = state_attr('group.all_door_sensors', 'entity_id') or [] %}
         {{ expand(members) | selectattr('state', 'eq', 'on') | list | length }}
 
     - name: "Døre i alt"
-      unique_id: door_sensors_status_count
+      unique_id: door_i_alt
       state: >-
         {% set members = state_attr('group.all_door_sensors', 'entity_id') or [] %}
         {{ members | length }}

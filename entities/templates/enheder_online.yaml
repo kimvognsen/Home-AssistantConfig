@@ -14,7 +14,7 @@
           mdi:z-wave-off
         {% endif %}
 
-    - name: "Hue"
+    - name: "Hue online"
       unique_id: hue_online
       state: >-
         {% if is_state("sensor.hue_bridge_zigbee_forbindelse", "connected") %}
@@ -29,7 +29,7 @@
           mdi:alert-circle-outline
         {% endif %}
 
-    - name: "EspHome"
+    - name: "EspHome online"
       unique_id: esphome_online
       state: >-
         {% if is_state("binary_sensor.esphome_running", "on") %}
@@ -44,7 +44,7 @@
           mdi:chip-off
         {% endif %}
 
-    - name: "Broadlink"
+    - name: "Broadlink RM4 online"
       unique_id: broadlink_rm4_online
       state: >-
         {% if is_state("remote.brodlink_4_mini_remote", "on") %}

@@ -1,0 +1,117 @@
+---
+#
+#pollen
+# https://pastebin.com/HZVT5x3k
+#
+# https://smart-home-guide.dk/index.php/2023/04/25/hent-og-vis-pollental/
+#
+# https://pastebin.com/HZVT5x3k
+# 
+# Pollen
+############################################################################
+# Hent pollental og prognose fra Astma-Allergi Danmark
+#
+# REST sensor er udarbejdet af Martin Larsen og oprindeligt delt her:
+# https://www.facebook.com/groups/209025039666209/permalink/1153666198535417/
+#
+# Data er opdelt efter region:
+#
+# 48 = Øst for Storebælt
+# 49 = Vest for Storebælt
+#
+# Og derefter pollentype:
+#
+# Alternaria: 44
+# Birk: 7
+# Bynke: 31
+# Cladosporium: 45
+# El: 1
+# Elm: 4
+# Græs: 28
+# Hassel: 2
+############################################################################
+#
+# 
+#
+- resource: https://www.astma-allergi.dk/umbraco/Api/PollenApi/GetPollenFeed
+  scan_interval: 3600
+  sensor:
+    - name: "Alternaria (seneste)"
+      unique_id: alternaria_seneste_v4
+      value_template: >-
+        {% set region = '48' %}
+        {% set pollen = '44' %}
+        {% set data = value_json %}
+        {% set level = data.fields[region].mapValue.fields.data
+            .mapValue.fields[pollen].mapValue.fields.level.integerValue | int(-1) %}
+        {{ level if level > -1 else -1 }}
+
+    - name: "Birke pollen (seneste)"
+      unique_id: birke_pollen_seneste_v4
+      value_template: >-
+        {% set region = '48' %}
+        {% set pollen = '7' %}
+        {% set data = value_json %}
+        {% set level = data.fields[region].mapValue.fields.data
+            .mapValue.fields[pollen].mapValue.fields.level.integerValue | int(-1) %}
+        {{ level if level > -1 else -1 }}
+
+    - name: "Bynke pollen (seneste)"
+      unique_id: bynke_pollen_seneste_v4
+      value_template: >-
+        {% set region = '48' %}
+        {% set pollen = '31' %}
+        {% set data = value_json %}
+        {% set level = data.fields[region].mapValue.fields.data
+            .mapValue.fields[pollen].mapValue.fields.level.integerValue | int(-1) %}
+        {{ level if level > -1 else -1 }}
+
+    - name: "Cladosporium (seneste)"
+      unique_id: cladosporium_seneste_v4
+      value_template: >-
+        {% set region = '48' %}
+        {% set pollen = '45' %}
+        {% set data = value_json %}
+        {% set level = data.fields[region].mapValue.fields.data
+            .mapValue.fields[pollen].mapValue.fields.level.integerValue | int(-1) %}
+        {{ level if level > -1 else -1 }}
+
+    - name: "El pollen (seneste)"
+      unique_id: el_pollen_seneste_v4
+      value_template: >-
+        {% set region = '48' %}
+        {% set pollen = '1' %}
+        {% set data = value_json %}
+        {% set level = data.fields[region].mapValue.fields.data
+            .mapValue.fields[pollen].mapValue.fields.level.integerValue | int(-1) %}
+        {{ level if level > -1 else -1 }}
+
+    - name: "Elm pollen (seneste)"
+      unique_id: elm_pollen_seneste_v4
+      value_template: >-
+        {% set region = '48' %}
+        {% set pollen = '4' %}
+        {% set data = value_json %}
+        {% set level = data.fields[region].mapValue.fields.data
+            .mapValue.fields[pollen].mapValue.fields.level.integerValue | int(-1) %}
+        {{ level if level > -1 else -1 }}
+
+    - name: "Græs pollen (seneste)"
+      unique_id: graes_pollen_seneste_v4
+      value_template: >-
+        {% set region = '48' %}
+        {% set pollen = '28' %}
+        {% set data = value_json %}
+        {% set level = data.fields[region].mapValue.fields.data
+            .mapValue.fields[pollen].mapValue.fields.level.integerValue | int(-1) %}
+        {{ level if level > -1 else -1 }}
+
+    - name: "Hassel pollen (seneste)"
+      unique_id: hassel_pollen_seneste_v4
+      value_template: >-
+        {% set region = '48' %}
+        {% set pollen = '2' %}
+        {% set data = value_json %}
+        {% set level = data.fields[region].mapValue.fields.data
+            .mapValue.fields[pollen].mapValue.fields.level.integerValue | int(-1) %}
+        {{ level if level > -1 else -1 }}

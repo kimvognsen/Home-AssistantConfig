@@ -11,11 +11,13 @@
       icon: mdi:weather-windy
       unit_of_measurement: "m/s"
       state: >-
-        {{ (state_attr('weather.hasselhaven', 'wind_speed') | float / 3.6) | round(2) }}
+        {{ (state_attr('weather.hasselhaven', 'wind_speed') | float(0) / 3.6) | round(2) }}
 
     - name: "Vind hastighed m/s"
-      unique_id: "vind_hastighed_m_s_v2"
+      unique_id: "vind_hastighed_m_s"
       icon: mdi:weather-windy
       unit_of_measurement: "m/s"
+      availability: >-
+        {{ states('sensor.wind_speed_ms_long') not in ['unknown', 'unavailable', ''] }}
       state: >-
-        {{ states('sensor.wind_speed_ms_long') | float | round(2) }}
+        {{ states('sensor.wind_speed_ms_long') | float(0) | round(2) }}

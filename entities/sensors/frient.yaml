@@ -1,0 +1,44 @@
+- platform: integration
+  source: sensor.el_omkostning_rate
+  name: energiforbrug_total_cost
+  method: trapezoidal
+  unit_time: h
+  round: 4
+
+- platform: integration
+  source: sensor.frient_energiforbrug_total_power
+  name: frient_energy_spent_total
+  unit_prefix: k
+  round: 2
+
+- platform: statistics
+  entity_id: sensor.energiforbrug_total
+  name: Frient El Monthly Statistics
+  state_characteristic: mean
+  sampling_size: 50
+  max_age:
+    days: 30
+
+- platform: statistics
+  entity_id: sensor.energiforbrug_total
+  name: Frient Seas Monthly Statistics
+  state_characteristic: mean
+  sampling_size: 50
+  max_age:
+    days: 30
+
+- platform: history_stats
+  name: TT1 frient total history stats
+  entity_id: sensor.frient_energiforbrug_total_power
+  state: 'on'
+  type: time
+  start: '{{ now().replace(hour=0).replace(minute=0).replace(second=0) }}'
+  end: '{{ now() }}'
+
+- platform: integration
+  source: sensor.dobbelt_udtag_energimaler_power
+  name: dobbelt_udtag_energimaler_energy
+  unit_prefix: k
+  round: 2
+  unit_time: h
+  method: trapezoidal

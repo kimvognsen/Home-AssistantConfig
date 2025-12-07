@@ -12,7 +12,8 @@ homeassistant:
 ## ny struktur
 template: !include_dir_merge_list entities/templates
 rest: !include_dir_merge_list entities/rest
-sensor: !include_dir_list ../entities/sensors
+sensor: !include_dir_merge_list entities/sensors
+
 
 ## End ny struktur
 #

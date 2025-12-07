@@ -1,8 +1,0 @@
-platform: statistics
-name: Energy price last 30d (std)
-entity_id: sensor.energi_data_service
-state_characteristic: standard_deviation
-sampling_size: 512
-max_age:
-  days: 30
-

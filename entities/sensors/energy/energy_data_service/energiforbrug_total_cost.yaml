@@ -1,7 +1,0 @@
-platform: integration
-source: sensor.el_omkostning_rate
-name: energiforbrug_total_cost
-method: trapezoidal
-unit_time: h
-#unit_prefix: None
-round: 4

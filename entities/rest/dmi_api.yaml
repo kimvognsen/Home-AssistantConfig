@@ -1,0 +1,15 @@
+- resource: https://www.dmi.dk/dmidk_byvejrWS/rest/json/nuv_clear_cloud
+  scan_interval: 900
+  timeout: 15
+
+  sensor:
+    - name: UV DMI
+      unique_id: uv_dmi_v3
+      value_template: >-
+        {% if value_json is defined and value_json.List is defined %}
+          {{ value_json.List | length }}
+        {% else %}
+          0
+        {% endif %}
+      json_attributes:
+        - List

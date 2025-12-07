@@ -1,0 +1,59 @@
+- resource: https://benzinpriseridag.dk/
+  scan_interval: 900
+  timeout: 15
+  sensor:
+    - name: fuel_circlek_95
+      unique_id: fuel_circlek_95
+      value_template: >-
+        {% set m = value | regex_findall('Circle\\s*K.*?(\\d{1,2}[\\.,]\\d{2})\\s*kr/l') %}
+        {{ (m[0] | replace(',', '.') | float(0)) if m | length > 0 else 0 }}
+      unit_of_measurement: "kr/l"
+      device_class: monetary
+
+    - name: fuel_f24_95
+      unique_id: fuel_f24_95
+      value_template: >-
+        {% set m = value | regex_findall('\\bF24\\b.*?(\\d{1,2}[\\.,]\\d{2})\\s*kr/l') %}
+        {{ (m[0] | replace(',', '.') | float(0)) if m | length > 0 else 0 }}
+      unit_of_measurement: "kr/l"
+      device_class: monetary
+
+    - name: fuel_ingo_95
+      unique_id: fuel_ingo_95
+      value_template: >-
+        {% set m = value | regex_findall('\\bINGO\\b.*?(\\d{1,2}[\\.,]\\d{2})\\s*kr/l') %}
+        {{ (m[0] | replace(',', '.') | float(0)) if m | length > 0 else 0 }}
+      unit_of_measurement: "kr/l"
+      device_class: monetary
+
+    - name: fuel_ok_95
+      unique_id: fuel_ok_95
+      value_template: >-
+        {% set m = value | regex_findall('\\bOK\\b.*?(\\d{1,2}[\\.,]\\d{2})\\s*kr/l') %}
+        {{ (m[0] | replace(',', '.') | float(0)) if m | length > 0 else 0 }}
+      unit_of_measurement: "kr/l"
+      device_class: monetary
+
+    - name: fuel_q8_95
+      unique_id: fuel_q8_95
+      value_template: >-
+        {% set m = value | regex_findall('\\bQ8\\b.*?(\\d{1,2}[\\.,]\\d{2})\\s*kr/l') %}
+        {{ (m[0] | replace(',', '.') | float(0)) if m | length > 0 else 0 }}
+      unit_of_measurement: "kr/l"
+      device_class: monetary
+
+    - name: fuel_shell_95
+      unique_id: fuel_shell_95
+      value_template: >-
+        {% set m = value | regex_findall('\\bShell\\b.*?(\\d{1,2}[\\.,]\\d{2})\\s*kr/l') %}
+        {{ (m[0] | replace(',', '.') | float(0)) if m | length > 0 else 0 }}
+      unit_of_measurement: "kr/l"
+      device_class: monetary
+
+    - name: fuel_unox_95
+      unique_id: fuel_unox_95
+      value_template: >-
+        {% set m = value | regex_findall('\\bUno-X\\b.*?(\\d{1,2}[\\.,]\\d{2})\\s*kr/l') %}
+        {{ (m[0] | replace(',', '.') | float(0)) if m | length > 0 else 0 }}
+      unit_of_measurement: "kr/l"
+      device_class: monetary

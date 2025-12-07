@@ -4,12 +4,15 @@
 # https://community.home-assistant.io/t/meater-through-the-api/264292
 #
 #
+- resource: https://public-api.cloud.meater.com/v1/devices/
+  scan_interval: 120
+  timeout: 15
+  headers:
+    Authorization: !secret meater
 
-platform: rest
-name: meater
-json_attributes:
-  - data
-resource: https://public-api.cloud.meater.com/v1/devices/
-headers:
-  Authorization: !secret meater
-value_template: "Ok"
+  sensor:
+    - name: meater
+      unique_id: meater_rest_status
+      value_template: "Ok"
+      json_attributes:
+        - data

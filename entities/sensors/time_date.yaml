@@ -1,0 +1,9 @@
+---
+#
+#
+# https://github.com/J-Lindvig/HomeAssistant/blob/master/include/packages/cards/clock.yaml
+- platform: time_date
+  display_options:
+    - time
+    - date
+    - date_time

@@ -1983,3 +1983,37 @@
     data:
       message: Advarsel, luften er forurenet, åbne vinduer! (PM2.5)
   mode: single
+- id: '1765125246698'
+  alias: Tænd alt lys i stuen
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 498fe383de41ab901ce272ddaaa1eee2
+    type: action
+    subtype: 'on'
+    trigger: device
+  conditions: []
+  actions:
+  - action: light.turn_on
+    metadata: {}
+    target:
+      entity_id: light.alt_lys_i_stuen
+    data: {}
+  mode: single
+- id: '1765125330854'
+  alias: Sluk alt lys i stuen
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 498fe383de41ab901ce272ddaaa1eee2
+    type: action
+    subtype: 'off'
+    trigger: device
+  conditions: []
+  actions:
+  - action: light.turn_off
+    metadata: {}
+    target:
+      entity_id: light.alt_lys_i_stuen
+    data: {}
+  mode: single

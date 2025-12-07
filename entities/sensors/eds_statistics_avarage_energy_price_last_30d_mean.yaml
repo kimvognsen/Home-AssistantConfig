@@ -1,0 +1,22 @@
+- platform: statistics
+  name: "Energy price last 30d mean"
+  entity_id: sensor.energi_data_service
+  state_characteristic: mean
+  sampling_size: 760
+  max_age:
+    days: 30
+
+- platform: statistics
+  name: "Energy price last 30d (std)"
+  entity_id: sensor.energi_data_service
+  state_characteristic: standard_deviation
+  sampling_size: 512
+  max_age:
+    days: 30
+
+- platform: integration
+  source: sensor.el_omkostning_rate
+  name: energiforbrug_total_cost
+  method: trapezoidal
+  unit_time: h
+  round: 4

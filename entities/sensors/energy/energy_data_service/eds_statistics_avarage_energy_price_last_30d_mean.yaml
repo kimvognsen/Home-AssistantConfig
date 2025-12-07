@@ -1,7 +1,0 @@
-platform: statistics
-name: Average energy price last 30d mean
-entity_id: sensor.energi_data_service
-state_characteristic: mean
-sampling_size: 760
-max_age:
-  days: 30

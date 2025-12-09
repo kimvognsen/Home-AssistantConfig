@@ -13,6 +13,13 @@ homeassistant:
 template: !include_dir_merge_list entities/templates
 rest: !include_dir_merge_list entities/rest
 sensor: !include_dir_merge_list entities/sensors
+binary_sensor: !include_dir_merge_list entities/binary_sensors
+input_boolean:  !include_dir_merge_named entities/input_boolean
+input_number:   !include_dir_merge_named entities/input_number
+input_datetime: !include_dir_merge_named entities/input_datetime
+input_select:   !include_dir_merge_named entities/input_selects
+input_text:     !include_dir_merge_named entities/input_text
+group: !include_dir_merge_named entities/groups
 
 
 ## End ny struktur

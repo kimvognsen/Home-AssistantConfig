@@ -1,0 +1,52 @@
+# Gruppe 1: alle dør-sensorer
+all_door_sensors:
+  name: Alle dør sensor
+  icon: mdi:door
+  all: true
+  entities:
+    # - binary_sensor.contact_sensor_950f_door_open
+    - binary_sensor.dorsensor_stuen
+    - binary_sensor.dor_sensor_entre_contact
+    - binary_sensor.dor_sensor_vaerksted_contact
+
+# Gruppe 2: alle vindue-sensorer
+all_windows_sensors:
+  name: Alle vindue sensor
+  icon: phu:lift-out-window-close
+  all: true
+  entities:
+    - binary_sensor.vindue_sensor_badevaerelse_contact
+    - binary_sensor.vinduesensor_sovevaerelse_contact
+    - binary_sensor.vinduesensor_matias_vaerelse_contact
+    - binary_sensor.vindue_sensor_jonatans_vaerelse_contact
+
+# Gruppe 3: family
+family:
+  name: family
+  entities:
+    - person.kim_vognsen
+    - person.gitte_vognsen
+
+# Gruppe 4: arriving
+arriving:
+  name: Arriving
+  entities: []
+
+# Gruppe 5: home_modes
+home_modes:
+  name: Home Mode
+  entities:
+    - input_boolean.guest_mode
+    - input_boolean.arbejde_mode
+    - input_boolean.alert_mode
+    - input_boolean.speech_notifications
+    - input_boolean.text_notifications
+
+# Gruppe 6: security smoke alarms
+security_smoke_alarm_status:
+  name: Røgalarm varsle
+  entities:
+    - binary_sensor.smoke_detector_vaerksted_smoke
+    - binary_sensor.smoke_detector_hall_smoke_detected
+    - binary_sensor.smoke_detector_smoke_detected_bryggers
+    - binary_sensor.smoke_detector_smoke_detected_stuen

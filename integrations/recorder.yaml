@@ -111,3 +111,4 @@ recorder:
       - sensor.count_timer
       - sensor.count_utility_meter
       - sensor.count_weather
+      - sensor.vind_hastighed_m_s

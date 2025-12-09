@@ -1,23 +1,12 @@
 - sensor:
-    - name: "Vind hastighed km/t"
-      unique_id: "vind_hastighed_km_t"
-      icon: mdi:weather-windy
-      unit_of_measurement: "km/h"
-      state: >-
-        {{ state_attr('weather.hasselhaven', 'wind_speed') }}
-
-    - name: "Vind hastighed m/s long format"
-      unique_id: "vind_hastighed_m_s_long_format"
-      icon: mdi:weather-windy
-      unit_of_measurement: "m/s"
-      state: >-
-        {{ (state_attr('weather.hasselhaven', 'wind_speed') | float(0) / 3.6) | round(2) }}
-
     - name: "Vind hastighed m/s"
-      unique_id: "vind_hastighed_m_s"
+      unique_id: vind_hastighed_ms_v3
       icon: mdi:weather-windy
       unit_of_measurement: "m/s"
-      availability: >-
-        {{ states('sensor.wind_speed_ms_long') not in ['unknown', 'unavailable', ''] }}
       state: >-
-        {{ states('sensor.wind_speed_ms_long') | float(0) | round(2) }}
+        {% set spd = state_attr('weather.hasselhaven', 'wind_speed') %}
+        {% if spd not in [none, 'unknown', 'unavailable', ''] %}
+          {{ (spd | float(0) / 3.6) | round(1) }}
+        {% else %}
+          unknown
+        {% endif %}

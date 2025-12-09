@@ -372,8 +372,7 @@
       temperature: 7
       hvac_mode: 'off'
     target:
-      device_id:
-      - 17434a01f12d30983442c1c39b0479d5
+      entity_id: climate.termostat_badevaerelse
   mode: single
 - id: '1733750928988'
   alias: 'Termostat badeværelse: Skru op ved lav temperatur'
@@ -392,8 +391,7 @@
       temperature: 21.5
       hvac_mode: heat
     target:
-      device_id:
-      - 17434a01f12d30983442c1c39b0479d5
+      entity_id: climate.termostat_badevaerelse
   mode: single
 - id: '1735118266847'
   alias: Notifikation - Soveværelsevindue åben
@@ -801,27 +799,6 @@
       message: Nogen i bryggers!
     action: notify.ios_kims_iphone
   mode: single
-- id: '1750161337108'
-  alias: Update OpenUV
-  triggers:
-  - trigger: time_pattern
-    minutes: /30
-  conditions:
-  - condition: sun
-    after: sunrise
-    before: sunset
-    before_offset: +00:45:00
-  - condition: template
-    value_template: "{{\n  state_attr('automation.update_openuv', 'last_triggered')
-      == None\n  or (\n    now() - state_attr('automation.update_openuv', 'last_triggered')\n
-      \ ) >= timedelta(hours = 1, minutes = 30)\n}}"
-  actions:
-  - action: homeassistant.update_entity
-    target:
-      entity_id:
-      - binary_sensor.openuv_protection_window
-      - sensor.openuv_current_uv_level
-    data: {}
 - id: '1751112500748'
   alias: Opdater pollen “tidligere” værdier
   description: ''

@@ -32,7 +32,7 @@
     - name: "EspHome online"
       unique_id: esphome_online
       state: >-
-        {% if is_state("binary_sensor.esphome_running", "on") %}
+        {% if is_state("sensor.esphome", "on") %}
           Online
         {% else %}
           Offline
@@ -44,32 +44,32 @@
           mdi:chip-off
         {% endif %}
 
-    - name: "Broadlink RM4 online"
-      unique_id: broadlink_rm4_online
-      state: >-
-        {% if is_state("remote.brodlink_4_mini_remote", "on") %}
-          Online
-        {% else %}
-          Offline
-        {% endif %}
-      icon: >-
-        {% if this.state == 'Online' %}
-          mdi:remote
-        {% else %}
-          mdi:remote-off
-        {% endif %}
+#    - name: "Broadlink RM4 online"
+#      unique_id: broadlink_rm4_online
+#      state: >-
+#        {% if is_state("remote.brodlink_4_mini_remote", "on") %}
+#          Online
+#        {% else %}
+#          Offline
+#        {% endif %}
+#      icon: >-
+#        {% if this.state == 'Online' %}
+#          mdi:remote
+#        {% else %}
+#          mdi:remote-off
+#        {% endif %}
 
-    - name: "Broadlink remote HA"
-      unique_id: broadlink_rm4_online_remote_ha
-      state: >-
-        {% if is_state("remote.wi_fi_universal_remote", "on") %}
-          Online
-        {% else %}
-          Offline
-        {% endif %}
-      icon: >-
-        {% if this.state == 'Online' %}
-          mdi:remote
-        {% else %}
-          mdi:remote-off
-        {% endif %}
+#    - name: "Broadlink remote HA"
+#      unique_id: broadlink_rm4_online_remote_ha
+#      state: >-
+#        {% if is_state("remote.wi_fi_universal_remote", "on") %}
+#          Online
+#        {% else %}
+#          Offline
+#        {% endif %}
+#      icon: >-
+#        {% if this.state == 'Online' %}
+#          mdi:remote
+#        {% else %}
+#          mdi:remote-off
+#        {% endif %}

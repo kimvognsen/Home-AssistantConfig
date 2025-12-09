@@ -1,0 +1,12 @@
+lux_low_active_hall:
+  name: Lux Low Active Hall
+  icon: mdi:bell
+
+lux_high_active_hall:
+  name: Lux High Active Hall
+  icon: mdi:bell
+
+snooze_lightning:
+  name: Snooze Lightning
+  initial: off
+  icon: mdi:weather-lightning

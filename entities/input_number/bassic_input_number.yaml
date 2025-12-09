@@ -1,0 +1,107 @@
+# ----- LUX THRESHOLDS -----
+
+high_lux:
+  name: High Lux
+  icon: mdi:gauge
+  min: 0
+  max: 400
+  step: 10
+
+low_lux:
+  name: Low Lux
+  icon: mdi:gauge
+  min: 0
+  max: 200
+  step: 5
+
+# ----- HUE DYNAMIC SCENE SETTINGS -----
+
+hue_dynamic_scene_speed:
+  name: Hue scene speed
+  min: 0
+  max: 100
+  step: 10
+
+hue_dynamic_scene_brightness:
+  name: Hue scene brightness
+  min: 0
+  max: 255
+  step: 10
+
+# ----- POLLEN: PREVIOUS DAY VALUES -----
+
+birke_pollen_tidligere:
+  name: Birk pollen i går
+  min: 0
+  max: 1000
+  step: 1
+
+bynke_pollen_tidligere:
+  name: Bynke pollen i går
+  min: 0
+  max: 1000
+  step: 1
+
+el_pollen_tidligere:
+  name: El pollen i går
+  min: 0
+  max: 1000
+  step: 1
+
+elm_pollen_tidligere:
+  name: Elm pollen i går
+  min: 0
+  max: 1000
+  step: 1
+
+alternaria_pollen_tidligere:
+  name: Alternaria pollen i går
+  min: 0
+  max: 1000
+  step: 1
+
+cladosporium_pollen_tidligere:
+  name: Cladosporium pollen i går
+  min: 0
+  max: 1000
+  step: 1
+
+graes_pollen_tidligere:
+  name: Græs pollen i går
+  min: 0
+  max: 1000
+  step: 1
+
+hassel_pollen_tidligere:
+  name: Hassel pollen i går
+  min: 0
+  max: 1000
+  step: 1
+
+# ----- UV INDEX -----
+
+uv_index_tidligere:
+  name: UV indeks i går
+  min: 0
+  max: 1000
+  step: 1
+
+# ----- RADIO VOLUME -----
+
+radio_volume:
+  name: Volume
+  icon: mdi:volume-high
+  initial: 0.3
+  min: 0
+  max: 1
+  step: 0.05
+  mode: box
+
+# ----- RODENT COUNTER -----
+
+rotte_counter:
+  name: Motion Counter
+  initial: 0
+  min: 0
+  max: 10000
+  step: 1

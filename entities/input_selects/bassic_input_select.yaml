@@ -1,0 +1,41 @@
+hue_group:
+  name: Select Hue group
+  options:
+    - Klar
+    - Læs
+    - Dæmpet
+    - Natlys
+    - Få ny energi
+    - Slap af
+    - Koncentrer dig
+
+hue_dynamic_scene:
+  name: Hue Dynamic scene
+  options:
+    - Soveværelse
+    - Bryggers
+    - Entre
+    - Badeværelse
+
+radio_speaker:
+  name: Vælg Speaker
+  options:
+    - Køkken
+    - Stuen
+    - Bryggers
+    - Drengeværelse
+    - Apple TV 4K
+    - JBL speaker
+    - Chromecast stuen
+  initial: Køkken
+  icon: mdi:speaker-wireless
+
+radio_station:
+  name: Vælg Radio Station
+  options:
+    - DR 4
+    - DR 3
+    - My Rock
+    - Planet Rock
+  initial: DR 4
+  icon: mdi:radio

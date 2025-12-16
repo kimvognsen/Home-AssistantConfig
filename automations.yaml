@@ -1994,3 +1994,94 @@
       entity_id: light.alt_lys_i_stuen
     data: {}
   mode: single
+- id: '1765815476616'
+  alias: Sonos Højtaler – IKEA dimmer i køkken (rigtig volume)
+  description: ''
+  triggers:
+  - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
+    trigger: mqtt
+  actions:
+  - choose:
+    - conditions: '{{ action == ''toggle'' }}'
+      sequence:
+      - target:
+          entity_id: '{{ speaker }}'
+        action: media_player.media_play_pause
+    - conditions: '{{ action == ''arrow_right_click'' }}'
+      sequence:
+      - target:
+          entity_id: '{{ speaker }}'
+        action: media_player.media_next_track
+    - conditions: '{{ action == ''arrow_left_click'' }}'
+      sequence:
+      - target:
+          entity_id: '{{ speaker }}'
+        action: media_player.media_previous_track
+    - conditions: '{{ action == ''brightness_up_click'' }}'
+      sequence:
+      - target:
+          entity_id: '{{ speaker }}'
+        action: media_player.volume_up
+    - conditions: '{{ action == ''brightness_down_click'' }}'
+      sequence:
+      - target:
+          entity_id: '{{ speaker }}'
+        action: media_player.volume_down
+    - conditions: '{{ action in [''brightness_up_hold'', ''brightness_up_press'']
+        }}'
+      sequence:
+      - repeat:
+          sequence:
+          - target:
+              entity_id: '{{ speaker }}'
+            action: media_player.volume_up
+          - wait_for_trigger:
+            - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
+              payload: brightness_up_release
+              trigger: mqtt
+            - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
+              payload: brightness_stop
+              trigger: mqtt
+            timeout:
+              milliseconds: '{{ ramp_delay_ms }}'
+            continue_on_timeout: true
+          until:
+          - condition: template
+            value_template: '{{ wait.trigger is not none }}'
+          - condition: template
+            value_template: '{{ repeat.index * (ramp_delay_ms/1000) >= max_ramp_seconds
+              }}
+
+              '
+    - conditions: '{{ action in [''brightness_down_hold'', ''brightness_down_press'']
+        }}'
+      sequence:
+      - repeat:
+          sequence:
+          - target:
+              entity_id: '{{ speaker }}'
+            action: media_player.volume_down
+          - wait_for_trigger:
+            - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
+              payload: brightness_down_release
+              trigger: mqtt
+            - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
+              payload: brightness_stop
+              trigger: mqtt
+            timeout:
+              milliseconds: '{{ ramp_delay_ms }}'
+            continue_on_timeout: true
+          until:
+          - condition: template
+            value_template: '{{ wait.trigger is not none }}'
+          - condition: template
+            value_template: '{{ repeat.index * (ramp_delay_ms/1000) >= max_ramp_seconds
+              }}
+
+              '
+  mode: restart
+  variables:
+    action: '{{ trigger.payload | default('''') }}'
+    speaker: media_player.kokken_hojtaler
+    ramp_delay_ms: 180
+    max_ramp_seconds: 8

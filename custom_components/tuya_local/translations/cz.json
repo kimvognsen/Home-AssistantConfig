@@ -266,7 +266,20 @@
                 }
             },
             "heater": {
-                "name": "Ohřívač"
+                "name": "Ohřívač",
+                "state_attributes": {
+                    "preset_mode": {
+                        "state": {
+                            "low": "Nízký",
+                            "medium": "Střední",
+                            "high": "Vysoký",
+                            "program_1": "Program 1",
+                            "program_2": "Program 2",
+                            "program_3": "Program 3",
+                            "standby": "Pohotovostní režim"
+                        }
+                    }
+                }
             },
             "thermo_switch": {
                 "state_attributes": {
@@ -440,6 +453,9 @@
             },
             "timer_x": {
                 "name": "Časovač {x}"
+            },
+            "volume": {
+                "name": "Hlasitost"
             }
         },
         "select": {
@@ -493,7 +509,8 @@
                     "honey_water": "Med",
                     "infant_formula": "Dětská výživa",
                     "white_tea": "Bílý čaj",
-                    "oolong_tea": "Oolong čaj"
+                    "oolong_tea": "Oolong čaj",
+                    "water": "Voda"
                 }
             },
             "language": {
@@ -511,7 +528,9 @@
                     "portuguese": "Português",
                     "russian": "Русский",
                     "spanish": "Español",
-                    "turkish": "Türkçe"
+                    "turkish": "Türkçe",
+                    "polish": "Polski",
+                    "vietnamese": "Tiếng Việt"
                 }
             },
             "light_mode": {
@@ -520,7 +539,9 @@
                     "off": "Vypnuto",
                     "on": "Zapnuto",
                     "state": "Stav",
-                    "locator": "Lokalizátor"
+                    "locator": "Lokalizátor",
+                    "auto": "Auto",
+                    "flash": "Blesk"
                 }
             },
             "mopping": {
@@ -669,6 +690,117 @@
                     "trip_breaker": "Jistič"
                 }
             },
+            "mode": {
+                "name": "Režim",
+                "state": {
+                    "auto": "Auto",
+                    "manual": "Manuál",
+                    "off": "Vypnuto",
+                    "low": "Nízký",
+                    "medium": "Střední",
+                    "high": "Vysoký",
+                    "rapid_clean": "Rychlé čištění",
+                    "schedule": "Plán"
+                }
+            },
+            "activation_mode": {
+                "name": "Režim aktivace",
+                "state": {
+                    "normal": "Normální",
+                    "smart": "Chytrý",
+                    "night": "Noční",
+                    "motion": "Pohyb"
+                }
+            },
+            "bidet_mode": {
+                "name": "Režim bidetu",
+                "state": {
+                    "normal": "Normální",
+                    "dry": "Suchý",
+                    "child": "Dítě"
+                }
+            },
+            "curtain_mode": {
+                "name": "Režim závěsu",
+                "state": {
+                    "morning": "Ráno",
+                    "night": "Noc"
+                }
+            },
+            "chlorination_mode": {
+                "name": "Režim chlorace",
+                "state": {
+                    "inverter": "Měnič",
+                    "auto_ph": "Auto pH",
+                    "smart": "Chytrý",
+                    "manual": "Manuál"
+                }
+            },
+            "alarm_mode": {
+                "name": "Režim alarmu",
+                "state": {
+                    "sound": "Zvuk",
+                    "light": "Světlo",
+                    "sound_and_light": "Zvuk a světlo"
+                }
+            },
+            "air_mode": {
+                "name": "Režim vzduchu",
+                "state": {
+                    "dehumidify": "Odvlhčovat",
+                    "purify": "Očistit",
+                    "dehumidify_and_purify": "Odvlhčovat a očistit"
+                }
+            },
+            "cleaning_mode": {
+                "name": "Režim čištění",
+                "state": {
+                    "sweep": "Zametání",
+                    "mop": "Vytírání",
+                    "sweep_and_mop": "Zametání a vytírání",
+                    "intensive": "Intenzivní",
+                    "quiet": "Tichý",
+                    "sweep_before_mopping": "Zametání před vytíráním"
+                }
+            },
+            "washing_mode": {
+                "name": "Režim praní",
+                "state": {
+                    "fruit": "Ovoce",
+                    "intensive": "Intenzivní",
+                    "rapid": "Rychlý",
+                    "eco": "Eco",
+                    "standard": "Standardní",
+                    "neutral": "Neutrální",
+                    "90_minute": "90 minut",
+                    "glass": "Sklo",
+                    "auto": "Auto",
+                    "soak": "Namočit",
+                    "self_clean": "Samočistící",
+                    "hygiene": "Hygiena",
+                    "party": "Večírek",
+                    "baby_care": "Dětská péče"
+                }
+            },
+            "menu": {
+                "name": "Menu",
+                "state": {
+                    "home": "Domů",
+                    "mode": "Režim",
+                    "recode": "Recept",
+                    "settings": "Nastavení"
+                }
+            },
+            "charging_mode": {
+                "name": "Režim nabíjení",
+                "state": {
+                    "immediate": "Okamžitý",
+                    "charge_to_percent": "Nabít na procento",
+                    "fixed_charge": "Pevné nabití",
+                    "scheduled_charge": "Plánované nabití",
+                    "delayed_charge": "Zpožděné nabití"
+                }
+            },
             "oven_built_in_recipe": {
                 "name": "Vestavěný recept",
                 "state": {
@@ -799,7 +931,8 @@
                     "maintenance_required": "Vyžadována údržba",
                     "dry": "Suchý",
                     "comfortable": "Pohodlný",
-                    "damp": "Vlhost"
+                    "damp": "Vlhost",
+                    "smoothing": "Vyhlazování"
                 }
             },
             "time_remaining": {

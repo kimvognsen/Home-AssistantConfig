@@ -267,7 +267,20 @@
                 }
             },
             "heater": {
-                "name": "Stufa"
+                "name": "Stufa",
+                "state_attributes": {
+                    "preset_mode": {
+                        "state": {
+                            "low": "Basso",
+                            "medium": "Medio",
+                            "high": "Alto",
+                            "program_1": "Programma 1",
+                            "program_2": "Programma 2",
+                            "program_3": "Programma 3",
+                            "standby": "Standby"
+                        }
+                    }
+                }
             },
             "thermo_switch": {
                 "state_attributes": {
@@ -441,6 +454,9 @@
             },
             "timer_x": {
                 "name": "Timer {x}"
+            },
+            "volume": {
+                "name": "Volume"
             }
         },
         "select": {
@@ -494,7 +510,8 @@
                     "honey_water": "Acqua al miele",
                     "infant_formula": "Formula per neonati",
                     "white_tea": "Tè bianco",
-                    "oolong_tea": "Tè Oolong"
+                    "oolong_tea": "Tè Oolong",
+                    "water": "Acqua"
                 }
             },
             "language": {
@@ -512,7 +529,9 @@
                     "portuguese": "Português",
                     "russian": "Русский",
                     "spanish": "Español",
-                    "turkish": "Türkçe"
+                    "turkish": "Türkçe",
+                    "polish": "Polski",
+                    "vietnamese": "Tiếng Việt"
                 }
             },
             "light_mode": {
@@ -521,7 +540,9 @@
                     "off": "Spento",
                     "on": "Acceso",
                     "state": "Stato",
-                    "locator": "Localizzatore"
+                    "locator": "Localizzatore",
+                    "auto": "Auto",
+                    "flash": "Flash"
                 }
             },
             "mopping": {
@@ -670,6 +691,117 @@
                     "trip_breaker": "Interrompi il circuito"
                 }
             },
+            "mode": {
+                "name": "Modalità",
+                "state": {
+                    "auto": "Auto",
+                    "manual": "Manuale",
+                    "off": "Spento",
+                    "low": "Basso",
+                    "medium": "Medio",
+                    "high": "Alto",
+                    "rapid_clean": "Pulizia rapida",
+                    "schedule": "Programma"
+                }
+            },
+            "activation_mode": {
+                "name": "Modalità di attivazione",
+                "state": {
+                    "normal": "Normale",
+                    "smart": "Smart",
+                    "night": "Notte",
+                    "motion": "Movimento"
+                }
+            },
+            "bidet_mode": {
+                "name": "Modalità bidet",
+                "state": {
+                    "normal": "Normale",
+                    "dry": "Asciutto",
+                    "child": "Bambino"
+                }
+            },
+            "curtain_mode": {
+                "name": "Modalità tenda",
+                "state": {
+                    "morning": "Mattina",
+                    "night": "Notte"
+                }
+            },
+            "chlorination_mode": {
+                "name": "Modalità clorazione",
+                "state": {
+                    "inverter": "Inverter",
+                    "auto_ph": "Auto PH",
+                    "smart": "Smart",
+                    "manual": "Manuale"
+                }
+            },
+            "alarm_mode": {
+                "name": "Modalità allarme",
+                "state": {
+                    "sound": "Suono",
+                    "light": "Luce",
+                    "sound_and_light": "Suono e luce"
+                }
+            },
+            "air_mode": {
+                "name": "Modalità aria",
+                "state": {
+                    "dehumidify": "Deumidificare",
+                    "purify": "Purificare",
+                    "dehumidify_and_purify": "Deumidificare e purificare"
+                }
+            },
+            "cleaning_mode": {
+                "name": "Modalità di pulizia",
+                "state": {
+                    "sweep": "Spazzare",
+                    "mop": "Mocio",
+                    "sweep_and_mop": "Spazzare e mocio",
+                    "intensive": "Intensivo",
+                    "quiet": "Silenzioso",
+                    "sweep_before_mopping": "Spazzare prima di passare il mocio"
+                }
+            },
+            "washing_mode": {
+                "name": "Modalità di lavaggio",
+                "state": {
+                    "fruit": "Frutta",
+                    "intensive": "Intensivo",
+                    "rapid": "Rapido",
+                    "eco": "Eco",
+                    "standard": "Standard",
+                    "neutral": "Neutro",
+                    "90_minute": "90 minuti",
+                    "glass": "Vetro",
+                    "auto": "Auto",
+                    "soak": "Ammollo",
+                    "self_clean": "Auto-pulizia",
+                    "hygiene": "Igiene",
+                    "party": "Festa",
+                    "baby_care": "Cura del bambino"
+                }
+            },
+            "menu": {
+                "name": "Menu",
+                "state": {
+                    "home": "Home",
+                    "mode": "Modalità",
+                    "recode": "Ricorda",
+                    "settings": "Impostazioni"
+                }
+            },
+            "charging_mode": {
+                "name": "Modalità di ricarica",
+                "state": {
+                    "immediate": "Immediata",
+                    "charge_to_percent": "Carica fino a percentuale",
+                    "fixed_charge": "Carica fissa",
+                    "scheduled_charge": "Ricarica programmata",
+                    "delayed_charge": "Ricarica ritardata"
+                }
+            },
             "oven_built_in_recipe": {
                 "name": "Ricetta incorporata",
                 "state": {
@@ -800,7 +932,8 @@
                     "maintenance_required": "Manutenzione richiesta",
                     "dry": "Asciutto",
                     "comfortable": "Confortevole",
-                    "damp": "Umido"
+                    "damp": "Umido",
+                    "smoothing": "Levigazione"
                 }
             },
             "time_remaining": {

@@ -8,6 +8,7 @@ all_door_sensors:
     - binary_sensor.dorsensor_stuen
     - binary_sensor.dor_sensor_entre_contact
     - binary_sensor.dor_sensor_vaerksted_contact
+    - binary_sensor.dor_sensor_bryggers_contact
 
 # Gruppe 2: alle vindue-sensorer
 all_windows_sensors:

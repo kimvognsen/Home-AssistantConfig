@@ -266,7 +266,20 @@
                 }
             },
             "heater": {
-                "name": "Обогреватель"
+                "name": "Обогреватель",
+                "state_attributes": {
+                    "preset_mode": {
+                        "state": {
+                            "low": "Низкий",
+                            "medium": "Средний",
+                            "high": "Высокий",
+                            "program_1": "Программа 1",
+                            "program_2": "Программа 2",
+                            "program_3": "Программа 3",
+                            "standby": "Режим ожидания"
+                        }
+                    }
+                }
             },
             "thermo_switch": {
                 "state_attributes": {
@@ -440,6 +453,9 @@
             },
             "timer_x": {
                 "name": "Таймер {x}"
+            },
+            "volume": {
+                "name": "Громкость"
             }
         },
         "select": {
@@ -493,7 +509,8 @@
                     "honey_water": "Медовая вода",
                     "infant_formula": "Детская смесь",
                     "white_tea": "Белый чай",
-                    "oolong_tea": "Улун"
+                    "oolong_tea": "Улун",
+                    "water": "Вода"
                 }
             },
             "language": {
@@ -511,7 +528,9 @@
                     "portuguese": "Português",
                     "russian": "Русский",
                     "spanish": "Español",
-                    "turkish": "Türkçe"
+                    "turkish": "Türkçe",
+                    "polish": "Polski",
+                    "vietnamese": "Tiếng Việt"
                 }
             },
             "light_mode": {
@@ -520,7 +539,9 @@
                     "off": "Выкл",
                     "on": "Вкл",
                     "state": "Состояние",
-                    "locator": "Локатор"
+                    "locator": "Локатор",
+                    "auto": "Авто",
+                    "flash": "Мигание"
                 }
             },
             "mopping": {
@@ -669,6 +690,117 @@
                     "trip_breaker": "Автоматический выключатель"
                 }
             },
+            "mode": {
+                "name": "Режим",
+                "state": {
+                    "auto": "Авто",
+                    "manual": "Ручной",
+                    "off": "Выкл",
+                    "low": "Низкий",
+                    "medium": "Средний",
+                    "high": "Высокий",
+                    "rapid_clean": "Быстрая очистка",
+                    "schedule": "Расписание"
+                }
+            },
+            "activation_mode": {
+                "name": "Режим активации",
+                "state": {
+                    "normal": "Нормальный",
+                    "smart": "Умный",
+                    "night": "Ночной",
+                    "motion": "Движение"
+                }
+            },
+            "bidet_mode": {
+                "name": "Режим биде",
+                "state": {
+                    "normal": "Нормальный",
+                    "dry": "Сушка",
+                    "child": "Детский"
+                }
+            },
+            "curtain_mode": {
+                "name": "Режим штор",
+                "state": {
+                    "morning": "Утро",
+                    "night": "Ночь"
+                }
+            },
+            "chlorination_mode": {
+                "name": "Режим хлорирования",
+                "state": {
+                    "inverter": "Инвертор",
+                    "auto_ph": "Авто pH",
+                    "smart": "Умный",
+                    "manual": "Ручной"
+                }
+            },
+            "alarm_mode": {
+                "name": "Режим тревоги",
+                "state": {
+                    "sound": "Звук",
+                    "light": "Свет",
+                    "sound_and_light": "Звук и свет"
+                }
+            },
+            "air_mode": {
+                "name": "Режим воздуха",
+                "state": {
+                    "dehumidify": "Осушение",
+                    "purify": "Очистка",
+                    "dehumidify_and_purify": "Осушение и очистка"
+                }
+            },
+            "cleaning_mode": {
+                "name": "Режим очистки",
+                "state": {
+                    "sweep": "Подметание",
+                    "mop": "Мытье пола",
+                    "sweep_and_mop": "Подметание и мытье пола",
+                    "intensive": "Интенсивная",
+                    "quiet": "Тихая",
+                    "sweep_before_mopping": "Подметание перед мытьем пола"
+                }
+            },
+            "washing_mode": {
+                "name": "Режим стирки",
+                "state": {
+                    "fruit": "Фрукты",
+                    "intensive": "Интенсивная",
+                    "rapid": "Быстрая",
+                    "eco": "Эко",
+                    "standard": "Стандартная",
+                    "neutral": "Нейтральная",
+                    "90_minute": "90 минут",
+                    "glass": "Стекло",
+                    "auto": "Авто",
+                    "soak": "Замачивание",
+                    "self_clean": "Самоочистка",
+                    "hygiene": "Гигиена",
+                    "party": "Вечеринка",
+                    "baby_care": "Уход за ребенком"
+                }
+            },
+            "menu": {
+                "name": "Меню",
+                "state": {
+                    "home": "Главная",
+                    "mode": "Режим",
+                    "recode": "Рекорд",
+                    "settings": "Настройки"
+                }
+            },
+            "charging_mode": {
+                "name": "Режим зарядки",
+                "state": {
+                    "immediate": "Немедленно",
+                    "charge_to_percent": "Зарядить до процента",
+                    "fixed_charge": "Фиксированная зарядка",
+                    "scheduled_charge": "Запланированная зарядка",
+                    "delayed_charge": "Отложенная зарядка"
+                }
+            },
             "oven_built_in_recipe": {
                 "name": "Встроенный рецепт",
                 "state": {
@@ -799,7 +931,8 @@
                     "maintenance_required": "Требуется техническое обслуживание",
                     "dry": "Сухой",
                     "comfortable": "Комфортный",
-                    "damp": "Влажный"
+                    "damp": "Влажный",
+                    "smoothing": "Сглаживание"
                 }
             },
             "time_remaining": {

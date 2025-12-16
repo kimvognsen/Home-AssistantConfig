@@ -266,7 +266,20 @@
                 }
             },
             "heater": {
-                "name": "Heater"
+                "name": "Heater",
+                "state_attributes": {
+                    "preset_mode": {
+                        "state": {
+                            "low": "Low",
+                            "medium": "Medium",
+                            "high": "High",
+                            "program_1": "Program 1",
+                            "program_2": "Program 2",
+                            "program_3": "Program 3",
+                            "standby": "Standby"
+                        }
+                    }
+                }
             },
             "thermo_switch": {
                 "state_attributes": {
@@ -440,6 +453,9 @@
             },
             "timer_x": {
                 "name": "Timer {x}"
+            },
+            "volume": {
+                "name": "Volume"
             }
         },
         "select": {
@@ -493,7 +509,8 @@
                     "honey_water": "Honey water",
                     "infant_formula": "Infant formula",
                     "white_tea": "White tea",
-                    "oolong_tea": "Oolong tea"
+                    "oolong_tea": "Oolong tea",
+                    "water": "Water"
                 }
             },
             "language": {
@@ -511,7 +528,9 @@
                     "portuguese": "Português",
                     "russian": "Русский",
                     "spanish": "Español",
-                    "turkish": "Türkçe"
+                    "turkish": "Türkçe",
+                    "polish": "Polski",
+                    "vietnamese": "Tiếng Việt"
                 }
             },
             "light_mode": {
@@ -520,7 +539,9 @@
                     "off": "Off",
                     "on": "On",
                     "state": "State",
-                    "locator": "Locator"
+                    "locator": "Locator",
+                    "auto": "Auto",
+                    "flash": "Flash"
                 }
             },
             "mopping": {
@@ -669,6 +690,117 @@
                     "trip_breaker": "Trip breaker"
                 }
             },
+            "mode": {
+                "name": "Mode",
+                "state": {
+                    "auto": "Auto",
+                    "manual": "Manual",
+                    "off": "Off",
+                    "low": "Low",
+                    "medium": "Medium",
+                    "high": "High",
+                    "rapid_clean": "Rapid clean",
+                    "schedule": "Schedule"
+                }
+            },
+            "activation_mode": {
+                "name": "Activation mode",
+                "state": {
+                    "normal": "Normal",
+                    "smart": "Smart",
+                    "night": "Night",
+                    "motion": "Motion"
+                }
+            },
+            "bidet_mode": {
+                "name": "Bidet mode",
+                "state": {
+                    "normal": "Normal",
+                    "dry": "Dry",
+                    "child": "Child"
+                }
+            },
+            "curtain_mode": {
+                "name": "Curtain mode",
+                "state": {
+                    "morning": "Morning",
+                    "night": "Night"
+                }
+            },
+            "chlorination_mode": {
+                "name": "Chlorination mode",
+                "state": {
+                    "inverter": "Inverter",
+                    "auto_ph": "Auto pH",
+                    "smart": "Smart",
+                    "manual": "Manual"
+                }
+            },
+            "alarm_mode": {
+                "name": "Alarm mode",
+                "state": {
+                    "sound": "Sound",
+                    "light": "Light",
+                    "sound_and_light": "Sound and Light"
+                }
+            },
+            "air_mode": {
+                "name": "Air mode",
+                "state": {
+                    "dehumidify": "Dehumidify",
+                    "purify": "Purify",
+                    "dehumidify_and_purify": "Dehumidify and purify"
+                }
+            },
+            "cleaning_mode": {
+                "name": "Cleaning mode",
+                "state": {
+                    "sweep": "Sweep",
+                    "mop": "Mop",
+                    "sweep_and_mop": "Sweep and mop",
+                    "intensive": "Intensive",
+                    "quiet": "Quiet",
+                    "sweep_before_mopping": "Sweep before mopping"
+                }
+            },
+            "washing_mode": {
+                "name": "Washing mode",
+                "state": {
+                    "fruit": "Fruit",
+                    "intensive": "Intensive",
+                    "rapid": "Rapid",
+                    "eco": "Eco",
+                    "standard": "Standard",
+                    "neutral": "Neutral",
+                    "90_minute": "90 Minute",
+                    "glass": "Glass",
+                    "auto": "Auto",
+                    "soak": "Soak",
+                    "self_clean": "Self Clean",
+                    "hygiene": "Hygiene",
+                    "party": "Party",
+                    "baby_care": "Baby Care"
+                }
+            },
+            "menu": {
+                "name": "Menu",
+                "state": {
+                    "home": "Home",
+                    "mode": "Mode",
+                    "recode": "Recode",
+                    "settings": "Settings"
+                }
+            },
+            "charging_mode": {
+                "name": "Charging mode",
+                "state": {
+                    "immediate": "Immediate",
+                    "charge_to_percent": "Charge to percent",
+                    "fixed_charge": "Fixed charge",
+                    "scheduled_charge": "Scheduled charge",
+                    "delayed_charge": "Delayed charge"
+                }
+            },
             "oven_built_in_recipe": {
                 "name": "Built-in recipe",
                 "state": {
@@ -799,7 +931,8 @@
                     "maintenance_required": "Maintenance required",
                     "dry": "Dry",
                     "comfortable": "Comfortable",
-                    "damp": "Damp"
+                    "damp": "Damp",
+                    "smoothing": "Smoothing"
                 }
             },
             "time_remaining": {

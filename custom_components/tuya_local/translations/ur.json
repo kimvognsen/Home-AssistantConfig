@@ -268,7 +268,20 @@
                 }
             },
             "heater": {
-                "name": "ہیٹر"
+                "name": "ہیٹر",
+                "state_attributes": {
+                    "preset_mode": {
+                        "state": {
+                            "low": "کم",
+                            "medium": "درمیانہ",
+                            "high": "زیادہ",
+                            "program_1": "پروگرام 1",
+                            "program_2": "پروگرام 2",
+                            "program_3": "پروگرام 3",
+                            "standby": "اسٹینڈ بائی"
+                        }
+                    }
+                }
             },
             "thermo_switch": {
                 "state_attributes": {
@@ -442,6 +455,9 @@
             },
             "timer_x": {
                 "name": "ٹائمر {x}"
+            },
+            "volume": {
+                "name": "آواز"
             }
         },
         "select": {
@@ -495,7 +511,8 @@
                     "honey_water": "شہد پانی",
                     "infant_formula": "بچہ فارمولا",
                     "white_tea": "سفید چائے",
-                    "oolong_tea": "اولونگ چائے"
+                    "oolong_tea": "اولونگ چائے",
+                    "water": "پانی"
                 }
             },
             "language": {
@@ -513,7 +530,9 @@
                     "portuguese": "Português",
                     "russian": "Русский",
                     "spanish": "Español",
-                    "turkish": "Türkçe"
+                    "turkish": "Türkçe",
+                    "polish": "Polski",
+                    "vietnamese": "Tiếng Việt"
                 }
             },
             "light_mode": {
@@ -522,7 +541,9 @@
                     "off": "آف",
                     "on": "آن",
                     "state": "حالت",
-                    "locator": "لوکیٹر"
+                    "locator": "لوکیٹر",
+                    "auto": "خود کار",
+                    "flash": "فلیش"
                 }
             },
             "mopping": {
@@ -671,6 +692,117 @@
                     "trip_breaker": "ٹریپ بریکر"
                 }
             },
+            "mode": {
+                "name": "موڈ",
+                "state": {
+                    "auto": "خود کار",
+                    "manual": "دستی",
+                    "off": "آف",
+                    "low": "کم",
+                    "medium": "درمیانہ",
+                    "high": "زیادہ",
+                    "rapid_clean": "تیز صفائی",
+                    "schedule": "شیڈول"
+                }
+            },
+            "activation_mode": {
+                "name": "ایکٹیویشن موڈ",
+                "state": {
+                    "normal": "عام",
+                    "smart": "سمارٹ",
+                    "night": "رات",
+                    "motion": "حرکت"
+                }
+            },
+            "bidet_mode": {
+                "name": "بڈٹ موڈ",
+                "state": {
+                    "normal": "عام",
+                    "dry": "خشک",
+                    "child": "بچہ"
+                }
+            },
+            "curtain_mode": {
+                "name": "پردے کا موڈ",
+                "state": {
+                    "morning": "صبح",
+                    "night": "رات"
+                }
+            },
+            "chlorination_mode": {
+                "name": "کلورینیشن موڈ",
+                "state": {
+                    "inverter": "انورٹر",
+                    "auto_ph": "خود کار پی ایچ",
+                    "smart": "سمارٹ",
+                    "manual": "دستی"
+                }
+            },
+            "alarm_mode": {
+                "name": "الارم موڈ",
+                "state": {
+                    "sound": "آواز",
+                    "light": "روشنی",
+                    "sound_and_light": "آواز اور روشنی"
+                }
+            },
+            "air_mode": {
+                "name": "ہوا کا موڈ",
+                "state": {
+                    "dehumidify": "ڈی ہیومیڈیفائی کریں۔",
+                    "purify": "پاک کریں۔",
+                    "dehumidify_and_purify": "ڈی ہیومیڈیفائی اور صاف کریں۔"
+                }
+            },
+            "cleaning_mode": {
+                "name": "صفائی کا موڈ",
+                "state": {
+                    "sweep": "جھاڑو",
+                    "mop": "پوچھا",
+                    "sweep_and_mop": "جھاڑو اور پونچھا",
+                    "intensive": "شدید",
+                    "quiet": "چپ چاپ",
+                    "sweep_before_mopping": "پوچھنے سے پہلے جھاڑو"
+                }
+            },
+            "washing_mode": {
+                "name": "دھونے کا موڈ",
+                "state": {
+                    "fruit": "پھل",
+                    "intensive": "شدید",
+                    "rapid": "تیز",
+                    "eco": "ایکو",
+                    "standard": "معیاری",
+                    "neutral": "غیر جانبدار",
+                    "90_minute": "90 منٹ",
+                    "glass": "گلاس",
+                    "auto": "خود کار",
+                    "soak": "بھگو دینا",
+                    "self_clean": "خود صفائی",
+                    "hygiene": "صفائی",
+                    "party": "پارٹی",
+                    "baby_care": "بچے کی دیکھ بھال"
+                }
+            },
+            "menu": {
+                "name": "مینو",
+                "state": {
+                    "home": "ہوم",
+                    "mode": "موڈ",
+                    "recode": "ریکوڈ",
+                    "settings": "سیٹنگز"
+                }
+            },
+            "charging_mode": {
+                "name": "چارجنگ موڈ",
+                "state": {
+                    "immediate": "فوری",
+                    "charge_to_percent": "فیصد تک چارج کریں",
+                    "fixed_charge": "مقررہ چارج",
+                    "scheduled_charge": "شیڈول چارج",
+                    "delayed_charge": "تاخیر سے چارج کریں"
+                }
+            },
             "oven_built_in_recipe": {
                 "name": "بلٹ ان ریسیپی",
                 "state": {
@@ -801,7 +933,8 @@
                     "maintenance_required": "مینٹیننس کی ضرورت ہے",
                     "dry": "خشک",
                     "comfortable": "آرام دہ",
-                    "damp": "نم"
+                    "damp": "نم",
+                    "smoothing": "ہموار کرنا"
                 }
             },
             "time_remaining": {

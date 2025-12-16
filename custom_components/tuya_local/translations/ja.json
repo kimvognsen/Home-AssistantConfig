@@ -266,7 +266,20 @@
                 }
             },
             "heater": {
-                "name": "ヒーター"
+                "name": "ヒーター",
+                "state_attributes": {
+                    "preset_mode": {
+                        "state": {
+                            "low": "低い",
+                            "medium": "中",
+                            "high": "高い",
+                            "program_1": "プログラム 1",
+                            "program_2": "プログラム 2",
+                            "program_3": "プログラム 3",
+                            "standby": "スタンバイ"
+                        }
+                    }
+                }
             },
             "thermo_switch": {
                 "state_attributes": {
@@ -440,6 +453,9 @@
             },
             "timer_x": {
                 "name": "タイマー{x}"
+            },
+            "volume": {
+                "name": "音量"
             }
         },
         "select": {
@@ -493,7 +509,8 @@
                     "honey_water": "蜂蜜水",
                     "infant_formula": "乳児用調製粉乳",
                     "white_tea": "白茶",
-                    "oolong_tea": "烏龍茶"
+                    "oolong_tea": "烏龍茶",
+                    "water": "水"
                 }
             },
             "language": {
@@ -511,7 +528,9 @@
                     "portuguese": "Português",
                     "russian": "Русский",
                     "spanish": "Español",
-                    "turkish": "Türkçe"
+                    "turkish": "Türkçe",
+                    "polish": "Polski",
+                    "vietnamese": "Tiếng Việt"
                 }
             },
             "light_mode": {
@@ -520,7 +539,9 @@
                     "off": "オフ",
                     "on": "オン",
                     "state": "状態",
-                    "locator": "ロケーター"
+                    "locator": "ロケーター",
+                    "auto": "自動",
+                    "flash": "フラッシュ"
                 }
             },
             "mopping": {
@@ -669,6 +690,117 @@
                     "trip_breaker": "ブレーカーを落とす"
                 }
             },
+            "mode": {
+                "name": "モード",
+                "state": {
+                    "auto": "自動",
+                    "manual": "手動",
+                    "off": "オフ",
+                    "low": "低い",
+                    "medium": "中",
+                    "high": "高い",
+                    "rapid_clean": "急速清掃",
+                    "schedule": "スケジュール"
+                }
+            },
+            "activation_mode": {
+                "name": "アクティベーションモード",
+                "state": {
+                    "normal": "普通",
+                    "smart": "スマート",
+                    "night": "夜",
+                    "motion": "モーション"
+                }
+            },
+            "bidet_mode": {
+                "name": "ビデモード",
+                "state": {
+                    "normal": "普通",
+                    "dry": "ドライ",
+                    "child": "子供"
+                }
+            },
+            "curtain_mode": {
+                "name": "カーテンモード",
+                "state": {
+                    "morning": "朝",
+                    "night": "夜"
+                }
+            },
+            "chlorination_mode": {
+                "name": "塩素消毒モード",
+                "state": {
+                    "inverter": "インバーター",
+                    "auto_ph": "自動PH",
+                    "smart": "スマート",
+                    "manual": "マニュアル"
+                }
+            },
+            "alarm_mode": {
+                "name": "アラームモード",
+                "state": {
+                    "sound": "サウンド",
+                    "light": "ライト",
+                    "sound_and_light": "サウンドとライト"
+                }
+            },
+            "air_mode": {
+                "name": "エアモード",
+                "state": {
+                    "dehumidify": "除湿",
+                    "purify": "浄化",
+                    "dehumidify_and_purify": "除湿と浄化"
+                }
+            },
+            "cleaning_mode": {
+                "name": "クリーニングモード",
+                "state": {
+                    "sweep": "掃く",
+                    "mop": "モップ",
+                    "sweep_and_mop": "掃きとモップ",
+                    "intensive": "集中的",
+                    "quiet": "静粛",
+                    "sweep_before_mopping": "モッピング前に掃く"
+                }
+            },
+            "washing_mode": {
+                "name": "洗濯モード",
+                "state": {
+                    "fruit": "フルーツ",
+                    "intensive": "集中的",
+                    "rapid": "急速",
+                    "eco": "エコ",
+                    "standard": "標準",
+                    "neutral": "中性",
+                    "90_minute": "90分",
+                    "glass": "ガラス",
+                    "auto": "自動",
+                    "soak": "浸す",
+                    "self_clean": "セルフクリーニング",
+                    "hygiene": "衛生",
+                    "party": "パーティ",
+                    "baby_care": "ベビーケア"
+                }
+            },
+            "menu": {
+                "name": "メニュー",
+                "state": {
+                    "home": "ホーム",
+                    "mode": "モード",
+                    "recode": "記録",
+                    "settings": "設定"
+                }
+            },
+            "charging_mode": {
+                "name": "充電モード",
+                "state": {
+                    "immediate": "即時",
+                    "charge_to_percent": "パーセントまで充電",
+                    "fixed_charge": "固定充電",
+                    "scheduled_charge": "予定された変更",
+                    "delayed_charge": "遅延充電"
+                }
+            },
             "oven_built_in_recipe": {
                 "name": "内蔵レシピ",
                 "state": {
@@ -799,7 +931,8 @@
                     "maintenance_required": "メンテナンス必要",
                     "dry": "乾燥",
                     "comfortable": "快適",
-                    "damp": "湿気"
+                    "damp": "湿気",
+                    "smoothing": "平滑化"
                 }
             },
             "time_remaining": {

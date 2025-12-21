@@ -170,3 +170,13 @@
       state: >
         {{ (states('sensor.daily_energy')|float(0))
             * (state_attr('sensor.energi_data_service','today_mean')|float(0)) | round(2) }}
+
+#til brug for 3D printer
+    - name: "Elpris nu (kr/kWh) inkl moms"
+      unique_id: elpris_nu_kr_kwh_inkl_moms
+      unit_of_measurement: "DKK/kWh"
+      state: >
+        {% set spot = states('sensor.eds_price_now')|float(0) %}
+        {% set tarif = 0.132|float(0) %}
+        {% set moms = 1.25 %}
+        {{ ((spot + tarif) * moms) | round(3) }}

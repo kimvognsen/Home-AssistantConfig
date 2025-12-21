@@ -1,5 +1,0 @@
-- sensor:
-    - name: "Bogtitel"
-      unique_id: booktitle
-      icon: mdi:book-open-variant
-      state: "{{ state_attr('sensor.bibliotekslan_kim_vognsen', 'loans') }}"

@@ -1,0 +1,58 @@
+- sensor:
+    - name: "TheCloud used percent"
+      unique_id: thecloud_used_percent
+      unit_of_measurement: "%"
+      state: >-
+        {% set total = states('sensor.thecloud_volume_1_total_size') | replace('Tb','') | replace('TB','') | float(0) %}
+        {% set used  = states('sensor.thecloud_volume_1_used_space') | replace('Tb','') | replace('TB','') | float(0) %}
+        {% if total > 0 %}
+          {{ (used / total * 100) | round(1) }}
+        {% else %}
+          {{ 'unknown' }}
+        {% endif %}
+
+    - name: "TheCloud Free Space"
+      unique_id: thecloud_free_space
+      unit_of_measurement: "TB"
+      icon: mdi:harddisk
+      availability: >-
+        {{ states('sensor.thecloud_volume_1_total_size') not in ['unknown','unavailable',''] and
+           states('sensor.thecloud_volume_1_used_space') not in ['unknown','unavailable',''] }}
+      state: >-
+        {% set total = states('sensor.thecloud_volume_1_total_size')
+            | replace('TB','') | replace('Tb','') | float(0) %}
+        {% set used = states('sensor.thecloud_volume_1_used_space')
+            | replace('TB','') | replace('Tb','') | float(0) %}
+        {{ (total - used) | round(2) if total > 0 else 'unknown' }}
+
+    - name: "DeskStation Free Space"
+      unique_id: deskstation_free_space
+      unit_of_measurement: "TB"
+      icon: mdi:harddisk
+      availability: >-
+        {{ states('sensor.diskstation_volume_1_total_size') not in ['unknown','unavailable',''] and
+           states('sensor.diskstation_volume_1_used_space') not in ['unknown','unavailable',''] }}
+      state: >-
+        {% set total = states('sensor.diskstation_volume_1_total_size')
+            | replace('TB','') | replace('Tb','') | float(0) %}
+        {% set used = states('sensor.diskstation_volume_1_used_space')
+            | replace('TB','') | replace('Tb','') | float(0) %}
+        {{ (total - used) | round(2) if total > 0 else 'unknown' }}
+
+    - name: "DiskStation used percent"
+      unique_id: diskstation_used_percent
+      unit_of_measurement: "%"
+      icon: mdi:chart-donut
+      availability: >-
+        {{ states('sensor.diskstation_volume_1_total_size') not in ['unknown','unavailable',''] and
+           states('sensor.diskstation_volume_1_used_space') not in ['unknown','unavailable',''] }}
+      state: >-
+        {% set total = states('sensor.diskstation_volume_1_total_size')
+            | replace('TB','') | replace('Tb','') | float(0) %}
+        {% set used = states('sensor.diskstation_volume_1_used_space')
+            | replace('TB','') | replace('Tb','') | float(0) %}
+        {% if total > 0 %}
+          {{ (used / total * 100) | round(1) }}
+        {% else %}
+          {{ 'unknown' }}
+        {% endif %}

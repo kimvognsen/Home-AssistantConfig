@@ -743,7 +743,7 @@ class BambuDataUpdateCoordinator(DataUpdateCoordinator):
             if (new_sw_ver != "unknown"):
                 dev_reg = device_registry.async_get(self._hass)
                 hadevice = dev_reg.async_get_device(identifiers={(DOMAIN, self.get_model().info.serial)})
-                dev_reg.async_update_device(hadevice.id, sw_version=new_sw_ver, hw_version=new_hw_ver)
+                dev_reg.async_update_device(hadevice.id, sw_version=new_sw_ver, hw_version=new_hw_ver, serial_number=self.config_entry.data["serial"])
                 self._updatedDevice = True
 
     async def _reinitialize_sensors(self):
@@ -755,11 +755,17 @@ class BambuDataUpdateCoordinator(DataUpdateCoordinator):
         await self.hass.config_entries.async_forward_entry_setups(self.config_entry, PLATFORMS)
         LOGGER.debug("_reinitialize_sensors DONE")
 
-        # Check for dead entities and clean them up
-        self._remove_dead_entities()
-
         # Versions may have changed so update those now that the device and sensors are ready.
         self._update_device_info()
+
+        # Allow HA entity platform to finish adding entities before we try to delete dead ones.
+        # Needs to delay two event loop ticks as entity addition is doubly async.
+        await asyncio.sleep(0)
+        await asyncio.sleep(0)
+
+        # Check for dead entities and clean them up
+        LOGGER.debug("Checking for dead entities to remove")
+        self._remove_dead_entities()
 
     def _remove_dead_entities(self):
         """Remove entities no longer created by the integration."""
@@ -774,7 +780,7 @@ class BambuDataUpdateCoordinator(DataUpdateCoordinator):
 
         for entity in entities:
             state = self.hass.states.get(entity.entity_id)
-            if state is None or state.attributes.get("restored") is True:
+            if state is not None and state.attributes.get("restored") is True:
                 LOGGER.debug(f"{entity.entity_id} is DEAD. Removing it.")
                 entity_registry.async_remove(entity.entity_id)
         

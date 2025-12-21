@@ -112,9 +112,11 @@ class Device:
         send_event = send_event | self.print_fun.print_update(data = data)
         send_event = send_event | self.extruder_tool.print_update(data = data)
 
-        send_ready_event = self.get_version_data is not None and self.push_all_data is None
         if data.get("command") == "push_status":
             if data.get("msg", 0) == 0:
+                send_ready_event = self.get_version_data is not None and self.push_all_data is None
+                if self.push_all_data is None:
+                    LOGGER.debug("Reached first push of all data.")
                 self.push_all_data = data
                 if send_ready_event:
                     self._client.callback("event_printer_ready")
@@ -132,6 +134,8 @@ class Device:
 
         if data.get("command") == "get_version":
             send_ready_event = self.get_version_data is None and self.push_all_data is not None
+            if self.get_version_data is None:
+                LOGGER.debug("Reached first push of version data.")
             self.get_version_data = data
             if send_ready_event:
                 self._client.callback("event_printer_ready")
@@ -1205,35 +1209,70 @@ class PrintJob:
     #     FILE: /cache/Lovers Valentine Day Shadowbox.3mf
     # 
 
-    ftp_search_paths = ['/cache/', '/']
+    # The cached files also include the file size appended to them so that new prints of the same model
+    # filename but different settings can be cached independently. This keeps the print history truer and
+    # allows reprints of earlier prints that had the same name.
+    #
+    # The legacy caching approach just put them in a matching path in the local cache for
+    # the printer. If we encounter that, we move the files to the new size-based subdirectory.
     def _attempt_ftp_download_of_file(self, ftp, file_path, progress_callback=None):
         if 'Metadata' in file_path:
             # This is a ram drive on the X1 and is not accessible via FTP
             return None
 
+        cache_root = os.path.join(self._client.cache_path, "prints")
+
         try:
             LOGGER.debug(f"Looking for '{file_path}'")
-            size = ftp.size(file_path)
+            size = int(ftp.size(file_path))
             LOGGER.debug(f"File exists. Size: {size} bytes.")
-            
-            relative_path = file_path.lstrip('/')
-            cache_dir = os.path.join(self._client.cache_path, "prints")
-            cache_file_path = os.path.join(cache_dir, relative_path)
+
+            relative_path = Path(file_path.lstrip('/'))
+            subdir = relative_path.parent
+            filename = relative_path.name
+
+            if filename.startswith(f"{size}-"):
+                # Craft legacy cache filepath for backwards compatibility:
+                cache_file_path = Path(cache_root) / subdir / filename
+                cache_file_path_legacy = Path(cache_root) / subdir / filename.removeprefix(f"{size}-")
+            else:
+                cache_file_path = Path(cache_root) / subdir / f"{size}-{filename}"
+                cache_file_path_legacy = Path(cache_root) / subdir / filename
 
             # Ensure the directory exists
-            os.makedirs(os.path.dirname(cache_file_path), exist_ok=True)
+            cache_file_path.parent.mkdir(parents=True, exist_ok=True)
 
-            # Check if file already exists in cache with same size
-            try:
-                cache_file_size = os.path.getsize(cache_file_path)
-                if cache_file_size == size:
-                    LOGGER.debug(f"File already in cache with same size.")
-                    # Update last edited time to refresh it's cache lifetime.
-                    os.utime(cache_file_path, None)
-                    return cache_file_path
-            except FileNotFoundError:
-                # File doesn't exist in the cache.
-                pass
+            # First check the new cache file path:
+            if cache_file_path.exists() and cache_file_path.stat().st_size == size:
+                LOGGER.debug(f"File already in cache: {cache_file_path}")
+                # Update last edited time to refresh its cache lifetime and print order in history.
+                os.utime(cache_file_path, None)
+                return str(cache_file_path)
+
+            # Check the legacy path second for backwards compatibility.
+            if cache_file_path_legacy.exists() and cache_file_path_legacy.stat().st_size == size:
+                LOGGER.debug(f"File already in cache: {cache_file_path_legacy}")
+                # File exists but in the old naming scheme. Move files to new location.
+                extensions = [
+                    ".3mf",
+                    ".gcode",
+                    ".png",
+                    ".slice_info.config",
+                ]
+                # Base path without the final suffix (so we can swap extensions)
+                for extension in extensions:
+                    src = cache_file_path_legacy.with_suffix("").with_suffix(extension)
+                    dst = cache_file_path.with_suffix("").with_suffix(extension)
+                    if src.exists():
+                        LOGGER.debug(f"Moving {src} -> {dst}")
+                        try:
+                            shutil.move(str(src), str(dst))
+                        except Exception as e:
+                            LOGGER.debug(f"Failed moving {src} -> {dst}: {e}")
+
+                # Update last edited time to refresh it's cache lifetime and print order in history.
+                os.utime(cache_file_path, None)
+                return str(cache_file_path)
 
             # Download to cache with progress tracking
             total_downloaded = 0
@@ -1261,7 +1300,7 @@ class PrintJob:
                     LOGGER.debug(f"Error in progress callback: {e}")
                     # Don't let progress callback errors break the download
 
-            with open(cache_file_path, 'wb') as f:
+            with open(str(cache_file_path), 'wb') as f:
                 # Create a wrapper function that combines file writing and progress tracking
                 def write_with_progress(data):
                     f.write(data)
@@ -1277,7 +1316,7 @@ class PrintJob:
             download_speed = size / download_time if download_time > 0 else 0
             
             LOGGER.debug(f"Successfully downloaded '{file_path}' to cache. Time: {download_time:.0f}s, Speed: {download_speed/1024:.0f} KB/s")
-            return cache_file_path
+            return str(cache_file_path)
                     
         except ftplib.error_perm as e:
              if '550' not in str(e.args): # 550 is unavailable.
@@ -1288,6 +1327,7 @@ class PrintJob:
             pass
         return None
 
+    ftp_search_paths = ['/cache/', '/']
     def _attempt_ftp_download_of_file_from_search_path(self, ftp, filename):
         for path in self.ftp_search_paths:
             file_path = f"{path}{filename.lstrip('/')}"
@@ -1337,23 +1377,46 @@ class PrintJob:
         # Look for the newest file with extension in directory.
         file_list = []
         def parse_line(path: str, line: str):
+            # Example line content:
+            # -rw-r--r--    1 1000     1000      1632221 Jun 17  2025 video_2025-06-17_12-12-18.mp4
+            # -rw-r--r--    1 1000     1000      1640240 Jun 18 00:27 video_2025-06-17_14-48-33.mp4
+            # (retrieved on 12/16/2025)
+
             # Match the line format: '-rw-rw-rw- 1 user group 1234 Jan 01 12:34 filename'
             pattern_with_time_no_year      = r'^\S+\s+\d+\s+\S+\s+\S+\s+\d+\s+(\S+\s+\d+\s+\d+:\d+)\s+(.+)$'
             # Match the line format: '-rw-rw-rw- 1 user group 1234 Jan 01 2024 filename'
             pattern_without_time_just_year = r'^\S+\s+\d+\s+\S+\s+\S+\s+\d+\s+(\S+\s+\d+\s+\d+)\s+(.+)$'
             match = re.match(pattern_with_time_no_year, line)
+            #LOGGER.debug(line)
             if match:
                 timestamp_str, filename = match.groups()
                 _, extension = os.path.splitext(filename)
                 if extension in extensions:
-                    # Since these dates don't have the year we have to work it out. If the date is earlier in 
-                    # the year than now then it's this year. If it's later it's last year.
+                    # Since these dates don't have the year we have to work it out. For the most part that is going to be
+                    # the current year, but we need to handle the case where the file is from December and now it's January
+                    # or the file is from January but it's currently December because we've just passed through the New Year.
+                    # The transition from without year to with year is ~6 months in the past.
                     timestamp = datetime.strptime(timestamp_str, '%b %d %H:%M')
                     timestamp = timestamp.replace(tzinfo=timezone.utc)
                     utc_time_now = datetime.now().astimezone(timezone.utc)
+
+                    # Initially assume current year, then adjust if the parsed time would be more than ~6 months away from now
                     timestamp = timestamp.replace(year=utc_time_now.year)
-                    if timestamp > utc_time_now:
-                        timestamp = timestamp.replace(year=datetime.now().year - 1)
+                    delta = timestamp - utc_time_now
+                    six_months = timedelta(days=190) # Slightly more than 6 months to be safe
+
+                    # If the timestamp is more than six months in the future, it's really from the previous year. This will be a
+                    # common case for files from the previous year until we reach mid-year current time.
+                    if delta > six_months:
+                        timestamp = timestamp.replace(year=utc_time_now.year - 1)
+
+                    # If the timestamp is more than six months in the past, it's from next year. Should be rare but could happen
+                    # as the timezone the printer uses is not consistent. Sometimes it's UTC+8 (China), sometimes UTC, sometimes
+                    # local + day light savings. So we could end up with a slightly future time (ignoring year) that becomes way
+                    # in the past when we assign the current year right before new years.
+                    elif delta < -six_months:
+                        timestamp = timestamp.replace(year=utc_time_now.year + 1)
+
                     return timestamp, f"{path}/{filename}" if path != '/' else f"/{filename}"
                 else:
                     return None
@@ -1381,6 +1444,7 @@ class PrintJob:
             except Exception as e:
                 LOGGER.error(f"FTP list Exception. Type: {type(e)} Args: {e}")
                 pass
+
 
         files = sorted(file_list, key=lambda file: file[0], reverse=True)
         for file in files:
@@ -1436,7 +1500,7 @@ class PrintJob:
         # Files to delete: those beyond the 'keep' most recent
         old_files = matching_files[keep:]
 
-        LOGGER.debug(f"Keeping {keep} files. Deleting {len(old_files)} files.")
+        LOGGER.debug(f"Keeping up to {keep} files. Deleting {len(old_files)} excess files.")
         
         for primary_file in old_files:
             try:

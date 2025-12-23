@@ -2311,18 +2311,252 @@
       entity_id: switch.symfonisk_kokken
     action: switch.turn_off
   mode: single
-- id: '1766334463891'
-  alias: P1S - log print cost
+- id: '1766488650498'
+  alias: Sonos Højtaler – IKEA dimmer i køkken (rigtig volume + power gate Tuya 2-kanal)
   description: ''
   triggers:
-  - entity_id: sensor.p1s_print_status
+  - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
+    trigger: mqtt
+  actions:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ action == ''toggle'' }}'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: state
+            entity_id: switch.dobbelt_udtag_energimaler_socket_1
+            state: 'off'
+          - condition: state
+            entity_id: switch.dobbelt_udtag_energimaler_socket_2
+            state: 'off'
+          sequence:
+          - repeat:
+              count: 3
+              sequence:
+              - target:
+                  entity_id: switch.dobbelt_udtag_energimaler_socket_1
+                continue_on_error: true
+                action: switch.turn_on
+              - target:
+                  entity_id: switch.dobbelt_udtag_energimaler_socket_2
+                continue_on_error: true
+                action: switch.turn_on
+              - delay: 00:00:01
+              - choose:
+                - conditions:
+                  - condition: or
+                    conditions:
+                    - condition: state
+                      entity_id: switch.dobbelt_udtag_energimaler_socket_1
+                      state: 'on'
+                    - condition: state
+                      entity_id: switch.dobbelt_udtag_energimaler_socket_2
+                      state: 'on'
+                  sequence:
+                  - stop: Mindst én socket er tændt
+        - conditions: []
+          sequence:
+          - target:
+              entity_id: media_player.kokken_hojtaler
+            action: media_player.media_play_pause
+    - conditions:
+      - condition: template
+        value_template: '{{ action == ''arrow_right_click'' }}'
+      sequence:
+      - target:
+          entity_id: media_player.kokken_hojtaler
+        action: media_player.media_next_track
+    - conditions:
+      - condition: template
+        value_template: '{{ action == ''arrow_left_click'' }}'
+      sequence:
+      - target:
+          entity_id: media_player.kokken_hojtaler
+        action: media_player.media_previous_track
+    - conditions:
+      - condition: template
+        value_template: '{{ action == ''brightness_up_click'' }}'
+      sequence:
+      - target:
+          entity_id: media_player.kokken_hojtaler
+        action: media_player.volume_up
+    - conditions:
+      - condition: template
+        value_template: '{{ action == ''brightness_down_click'' }}'
+      sequence:
+      - target:
+          entity_id: media_player.kokken_hojtaler
+        action: media_player.volume_down
+    - conditions:
+      - condition: template
+        value_template: '{{ action in [''brightness_up_hold'', ''brightness_up_press'']
+          }}'
+      sequence:
+      - repeat:
+          sequence:
+          - target:
+              entity_id: media_player.kokken_hojtaler
+            action: media_player.volume_up
+          - wait_for_trigger:
+            - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
+              payload: brightness_up_release
+              trigger: mqtt
+            - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
+              payload: brightness_stop
+              trigger: mqtt
+            timeout:
+              milliseconds: '{{ ramp_delay_ms }}'
+            continue_on_timeout: true
+          until:
+          - condition: template
+            value_template: '{{ wait.trigger is not none }}'
+          - condition: template
+            value_template: '{{ repeat.index * (ramp_delay_ms/1000) >= max_ramp_seconds
+              }}'
+    - conditions:
+      - condition: template
+        value_template: '{{ action in [''brightness_down_hold'', ''brightness_down_press'']
+          }}'
+      sequence:
+      - repeat:
+          sequence:
+          - target:
+              entity_id: media_player.kokken_hojtaler
+            action: media_player.volume_down
+          - wait_for_trigger:
+            - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
+              payload: brightness_down_release
+              trigger: mqtt
+            - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
+              payload: brightness_stop
+              trigger: mqtt
+            timeout:
+              milliseconds: '{{ ramp_delay_ms }}'
+            continue_on_timeout: true
+          until:
+          - condition: template
+            value_template: '{{ wait.trigger is not none }}'
+          - condition: template
+            value_template: '{{ repeat.index * (ramp_delay_ms/1000) >= max_ramp_seconds
+              }}'
+  mode: restart
+  variables:
+    action: '{{ trigger.payload | default('''') }}'
+    ramp_delay_ms: 180
+    max_ramp_seconds: 8
+- id: '1766491489275'
+  alias: H2D - log print cost
+  description: Logger strøm + filament pris for H2D til CSV
+  triggers:
+  - entity_id: sensor.h2d_0948db552101895_print_status
     trigger: state
   actions:
   - choose:
     - conditions:
       - condition: template
-        value_template: '{{ trigger.to_state.state in [''printing''] and trigger.from_state.state
-          not in [''printing''] }}'
+        value_template: "{% set active = ['running','paused','preparing','heating','calibrating','homing']
+          %} {{ trigger.to_state is not none and trigger.from_state is not none\n
+          \  and trigger.to_state.state in active\n   and trigger.from_state.state
+          not in active }}\n"
+      sequence:
+      - target:
+          entity_id: counter.h2d_print_counter
+        action: counter.increment
+      - target:
+          entity_id: input_number.h2d_start_wh
+        data:
+          value: '{{ energy_wh }}'
+        action: input_number.set_value
+      - target:
+          entity_id: input_number.h2d_price_start_kr_kwh
+        data:
+          value: '{{ price_kr_kwh_now }}'
+        action: input_number.set_value
+      - target:
+          entity_id: input_text.h2d_job_name
+        data:
+          value: '{% set n = states(''counter.h2d_print_counter'') | int(0) %} {{
+            ''H2D-'' ~ ''{:06d}''.format(n) ~ '' '' ~ now().strftime(''%Y-%m-%d %H:%M'')
+            }}
+
+            '
+        action: input_text.set_value
+      - target:
+          entity_id: input_number.h2d_filament_grams
+        data:
+          value: '{{ weight_g }}'
+        action: input_number.set_value
+    - conditions:
+      - condition: template
+        value_template: "{{ trigger.to_state is not none\n   and trigger.to_state.state
+          == 'finished' }}\n"
+      sequence:
+      - target:
+          entity_id: input_number.h2d_filament_grams
+        data:
+          value: '{{ weight_g }}'
+        action: input_number.set_value
+      - variables:
+          used_wh: '{{ (energy_wh - start_wh) | max(0) }}'
+          used_kwh: '{{ (used_wh / 1000) }}'
+          price_kr_kwh: '{{ price_kr_kwh_start if price_kr_kwh_start > 0 else price_kr_kwh_now
+            }}'
+          el_kr: '{{ used_kwh * price_kr_kwh }}'
+          filament_kr: '{{ (filament_g / 1000) * filament_kr_per_kg }}'
+          total_kr: '{{ el_kr + filament_kr }}'
+          ts: '{{ now().isoformat() }}'
+          job_csv: '{{ (job | default('''')) | replace(''"'',''""'') }}'
+          filament_type_csv: '{{ (filament_type | default('''')) | replace(''"'',''""'')
+            }}'
+          line: '{{ ts }},H2D,"{{ job_csv }}",{{ used_wh | round(1) }}, {{ used_kwh
+            | round(3) }},{{ price_kr_kwh | round(3) }}, {{ el_kr | round(2) }},"{{
+            filament_type_csv }}", {{ filament_g | round(1) }},{{ filament_kr | round(2)
+            }}, {{ total_kr | round(2) }}'
+      - data:
+          message: '{{ line | replace(''
+
+            '','''') | replace(''  '','' '') }}'
+        action: notify.print_cost_log
+  variables:
+    active_states: '[''running'',''paused'']'
+    energy_raw: '{{ states(''sensor.lvd_smart_plug_bambu_h2d_energy'') | float(0)
+      }}'
+    energy_uom: '{{ state_attr(''sensor.lvd_smart_plug_bambu_h2d_energy'', ''unit_of_measurement'')
+      | default('''') }}'
+    energy_wh: "{% if energy_uom in ['kWh','KWH','kwh'] %}\n  {{ energy_raw * 1000
+      }}\n{% else %}\n  {{ energy_raw }}\n{% endif %}\n"
+    weight_raw: '{{ states(''sensor.h2d_0948db552101895_printvaegt'') | float(0) }}'
+    weight_uom: '{{ state_attr(''sensor.h2d_0948db552101895_printvaegt'', ''unit_of_measurement'')
+      | default('''') }}'
+    weight_g: "{% if weight_uom in ['kg','KG'] %}\n  {{ weight_raw * 1000 }}\n{% else
+      %}\n  {{ weight_raw }}\n{% endif %}\n"
+    price_kr_kwh_start: '{{ states(''input_number.h2d_price_start_kr_kwh'') | float(0)
+      }}'
+    price_kr_kwh_now: '{{ states(''sensor.elpris_nu_kr_kwh_inkl_moms'') | float(0)
+      }}'
+    start_wh: '{{ states(''input_number.h2d_start_wh'') | float(0) }}'
+    job: '{{ states(''input_text.h2d_job_name'') }}'
+    filament_type: '{{ states(''input_text.h2d_filament_type'') }}'
+    filament_g: '{{ states(''input_number.h2d_filament_grams'') | float(0) }}'
+    filament_kr_per_kg: '{{ states(''input_number.h2d_filament_kr_per_kg'') | float(0)
+      }}'
+  mode: single
+- id: '1766491555955'
+  alias: P1S - log print cost
+  description: Logger strøm + filament pris for P1S til CSV
+  triggers:
+  - entity_id: sensor.ps1_01_print_status
+    trigger: state
+  actions:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{% set active = ['running','paused','preparing','heating','calibrating','homing']
+          %} {{ trigger.to_state is not none and trigger.from_state is not none\n
+          \  and trigger.to_state.state in active\n   and trigger.from_state.state
+          not in active }}\n"
       sequence:
       - target:
           entity_id: input_number.p1s_start_wh
@@ -2330,93 +2564,74 @@
           value: '{{ energy_wh }}'
         action: input_number.set_value
       - target:
-          entity_id: input_text.p1s_job_name
+          entity_id: input_number.p1s_price_start_kr_kwh
         data:
-          value: '{{ states(''sensor.p1s_current_job'') }}'
-        action: input_text.set_value
-    - conditions:
-      - condition: template
-        value_template: '{{ trigger.from_state.state in [''printing''] and trigger.to_state.state
-          in [''idle'',''finished'',''complete''] }}'
-      sequence:
-      - variables:
-          used_wh: '{{ (energy_wh - start_wh) | max(0) }}'
-          used_kwh: '{{ (used_wh / 1000) }}'
-          el_kr: '{{ (used_kwh * price_kr_kwh) }}'
-          filament_kr: '{{ (filament_g/1000 * filament_kr_per_kg) }}'
-          total_kr: '{{ (el_kr + filament_kr) }}'
-          ts: '{{ now().isoformat() }}'
-          line: '{{ ts }}, P1S, "{{ job|replace(''"'',''""'') }}", {{ used_wh|round(1)
-            }}, {{ used_kwh|round(3) }}, {{ price_kr_kwh|round(3) }}, {{ el_kr|round(2)
-            }}, "{{ filament_type|replace(''"'',''""'') }}", {{ filament_g|round(1)
-            }}, {{ filament_kr|round(2) }}, {{ total_kr|round(2) }}'
-      - data:
-          message: '{{ line | replace(''
-
-            '','''') }}'
-        action: notify.print_cost_log
-  mode: single
-  variables:
-    energy_wh: '{{ states(''sensor.lvd_smart_plug_bambu_p1s_energy'')|float(0) }}'
-    price_kr_kwh: '{{ states(''sensor.elpris_nu_kr_kwh_inkl_moms'')|float(0) }}'
-    start_wh: '{{ states(''input_number.p1s_start_wh'')|float(0) }}'
-    job: '{{ states(''input_text.p1s_job_name'') }}'
-    filament_type: '{{ states(''input_text.p1s_filament_type'') }}'
-    filament_g: '{{ states(''input_number.p1s_filament_grams'')|float(0) }}'
-    filament_kr_per_kg: '{{ states(''input_number.p1s_filament_kr_per_kg'')|float(0)
-      }}'
-- id: '1766334907796'
-  alias: H2D - log print cost
-  description: H2D Pris
-  triggers:
-  - entity_id: sensor.h2d_print_status
-    trigger: state
-  conditions: []
-  actions:
-  - choose:
-    - conditions:
-      - condition: template
-        value_template: '{{ trigger.to_state.state in [''printing''] and trigger.from_state.state
-          not in [''printing''] }}'
-      sequence:
-      - target:
-          entity_id: input_number.h2d_start_wh
-        data:
-          value: '{{ energy_wh }}'
+          value: '{{ price_kr_kwh_now }}'
         action: input_number.set_value
       - target:
-          entity_id: input_text.h2d_job_name
+          entity_id: input_text.p1s_job_name
         data:
-          value: '{{ states(''sensor.h2d_current_job'') }}'
+          value: "{% set fn = states('sensor.ps1_01_gcode_filename') %} {% if fn not
+            in ['unknown','unavailable','none',''] %}\n  {{ fn }}\n{% else %}\n  {{
+            states('sensor.ps1_01_task_name') }}\n{% endif %}\n"
         action: input_text.set_value
+      - target:
+          entity_id: input_number.p1s_filament_grams
+        data:
+          value: '{{ weight_g }}'
+        action: input_number.set_value
     - conditions:
       - condition: template
-        value_template: '{{ trigger.from_state.state in [''printing''] and trigger.to_state.state
-          in [''idle'',''finished'',''complete''] }}'
+        value_template: "{{ trigger.to_state is not none\n  and trigger.to_state.state
+          == 'finished' }}\n"
       sequence:
+      - target:
+          entity_id: input_number.p1s_filament_grams
+        data:
+          value: '{{ weight_g }}'
+        action: input_number.set_value
       - variables:
           used_wh: '{{ (energy_wh - start_wh) | max(0) }}'
           used_kwh: '{{ (used_wh / 1000) }}'
-          el_kr: '{{ (used_kwh * price_kr_kwh) }}'
-          filament_kr: '{{ (filament_g/1000 * filament_kr_per_kg) }}'
-          total_kr: '{{ (el_kr + filament_kr) }}'
+          price_kr_kwh: '{{ price_kr_kwh_start if price_kr_kwh_start > 0 else price_kr_kwh_now
+            }}'
+          el_kr: '{{ used_kwh * price_kr_kwh }}'
+          filament_kr: '{{ (filament_g / 1000) * filament_kr_per_kg }}'
+          total_kr: '{{ el_kr + filament_kr }}'
           ts: '{{ now().isoformat() }}'
-          line: '{{ ts }}, H2D, "{{ job|replace(''"'',''""'') }}", {{ used_wh|round(1)
-            }}, {{ used_kwh|round(3) }}, {{ price_kr_kwh|round(3) }}, {{ el_kr|round(2)
-            }}, "{{ filament_type|replace(''"'',''""'') }}", {{ filament_g|round(1)
-            }}, {{ filament_kr|round(2) }}, {{ total_kr|round(2) }}'
+          job_csv: '{{ (job | default('''')) | replace(''"'',''""'') }}'
+          filament_type_csv: '{{ (filament_type | default('''')) | replace(''"'',''""'')
+            }}'
+          line: '{{ ts }},P1S,"{{ job_csv }}",{{ used_wh | round(1) }}, {{ used_kwh
+            | round(3) }},{{ price_kr_kwh | round(3) }}, {{ el_kr | round(2) }},"{{
+            filament_type_csv }}", {{ filament_g | round(1) }},{{ filament_kr | round(2)
+            }}, {{ total_kr | round(2) }}'
       - data:
           message: '{{ line | replace(''
 
-            '','''') }}'
+            '','''') | replace(''  '','' '') }}'
         action: notify.print_cost_log
-  mode: single
   variables:
-    energy_wh: '{{ states(''sensor.lvd_smart_plug_bambu_h2d_energy'')|float(0) }}'
-    price_kr_kwh: '{{ states(''sensor.elpris_nu_kr_kwh_inkl_moms'')|float(0) }}'
-    start_wh: '{{ states(''input_number.h2d_start_wh'')|float(0) }}'
-    job: '{{ states(''input_text.h2d_job_name'') }}'
-    filament_type: '{{ states(''input_text.h2d_filament_type'') }}'
-    filament_g: '{{ states(''input_number.h2d_filament_grams'')|float(0) }}'
-    filament_kr_per_kg: '{{ states(''input_number.h2d_filament_kr_per_kg'')|float(0)
+    active_states: '[''running'',''paused'']'
+    energy_raw: '{{ states(''sensor.lvd_smart_plug_bambu_p1s_energy'') | float(0)
       }}'
+    energy_uom: '{{ state_attr(''sensor.lvd_smart_plug_bambu_p1s_energy'', ''unit_of_measurement'')
+      | default('''') }}'
+    energy_wh: "{% if energy_uom in ['kWh','KWH','kwh'] %}\n  {{ energy_raw * 1000
+      }}\n{% else %}\n  {{ energy_raw }}\n{% endif %}\n"
+    weight_raw: '{{ states(''sensor.ps1_01_print_weight'') | float(0) }}'
+    weight_uom: '{{ state_attr(''sensor.ps1_01_print_weight'', ''unit_of_measurement'')
+      | default('''') }}'
+    weight_g: "{% if weight_uom in ['kg','KG'] %}\n  {{ weight_raw * 1000 }}\n{% else
+      %}\n  {{ weight_raw }}\n{% endif %}\n"
+    price_kr_kwh_start: '{{ states(''input_number.p1s_price_start_kr_kwh'') | float(0)
+      }}'
+    price_kr_kwh_now: '{{ states(''sensor.elpris_nu_kr_kwh_inkl_moms'') | float(0)
+      }}'
+    start_wh: '{{ states(''input_number.p1s_start_wh'') | float(0) }}'
+    job: '{{ states(''input_text.p1s_job_name'') }}'
+    filament_type: '{{ states(''input_text.p1s_filament_type'') }}'
+    filament_g: '{{ states(''input_number.p1s_filament_grams'') | float(0) }}'
+    filament_kr_per_kg: '{{ states(''input_number.p1s_filament_kr_per_kg'') | float(0)
+      }}'
+  mode: single

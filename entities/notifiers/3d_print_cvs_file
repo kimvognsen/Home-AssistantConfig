@@ -1,5 +1,5 @@
-notify:
-  - platform: file
-    name: print_cost_log
-    filename: /config/print_cost_log.csv
-    timestamp: false
+## sammen med 3d Cost 
+platform: file
+name: print_cost_log
+filename: /config/print_cost_log.csv
+timestamp: false

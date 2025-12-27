@@ -1,0 +1,141 @@
+- sensor:
+    # ---- Justér disse 2 værdier ----
+    - name: "Elpris nu (kr/kWh) – beregnet"
+      unique_id: elpris_nu_kr_per_kwh_beregnet
+      unit_of_measurement: "kr/kWh"
+      state_class: measurement
+      state: >
+        {# 1) Sæt din EDS-pris-sensor her #}
+        {% set price_entity = 'sensor.ENERGI_DATA_SERVICE_PRIS_HER' %}
+
+        {# 2) Hvis din EDS er i øre/kWh: sæt true, ellers false #}
+        {% set price_is_ore = false %}
+
+        {# 3) Fast tarif i kr/kWh (eksempel: 0.132). Sæt 0 hvis du ikke vil medtage #}
+        {% set tariff_kr_per_kwh = 0.0 %}
+
+        {% set p = states(price_entity) | float(0) %}
+        {% if price_is_ore %}
+          {{ ((p / 100) + tariff_kr_per_kwh) | round(3) }}
+        {% else %}
+          {{ (p + tariff_kr_per_kwh) | round(3) }}
+        {% endif %}
+
+    # ---- Total: kr/time lige nu (baseret på Frient total power) ----
+    - name: "Hus – kr/time nu"
+      unique_id: hus_kr_per_time_nu
+      unit_of_measurement: "kr/t"
+      state_class: measurement
+      state: >
+        {% set w = states('sensor.frient_energiforbrug_total_power') | float(0) %}
+        {% set kr_per_kwh = states('sensor.elpris_nu_kr_per_kwh_beregnet') | float(0) %}
+        {{ ((w / 1000) * kr_per_kwh) | round(2) }}
+
+    # ---- Total: kWh (Frient) er allerede kWh, men gør den "statistik-klar" hvis du vil ----
+    - name: "Hus – energi (kWh) – statistik"
+      unique_id: hus_energi_kwh_statistik
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      state: >
+        {{ states('sensor.frient_energiforbrug_total_energy') | float(0) }}
+
+    # ---- Kr/time pr. rum (brug dine rum-power sensorer) ----
+    - name: "Badeværelse – kr/time nu"
+      unique_id: badevaerelse_kr_per_time_nu
+      unit_of_measurement: "kr/t"
+      state_class: measurement
+      state: >
+        {% set w = states('sensor.badevaerelse_stromforbrug') | float(0) %}
+        {% set kr_per_kwh = states('sensor.elpris_nu_kr_per_kwh_beregnet') | float(0) %}
+        {{ ((w / 1000) * kr_per_kwh) | round(2) }}
+
+    - name: "Bryggers – kr/time nu"
+      unique_id: bryggers_kr_per_time_nu
+      unit_of_measurement: "kr/t"
+      state_class: measurement
+      state: >
+        {% set w = states('sensor.bryggers_stromforbrug') | float(0) %}
+        {% set kr_per_kwh = states('sensor.elpris_nu_kr_per_kwh_beregnet') | float(0) %}
+        {{ ((w / 1000) * kr_per_kwh) | round(2) }}
+
+    - name: "Entré – kr/time nu"
+      unique_id: entre_kr_per_time_nu
+      unit_of_measurement: "kr/t"
+      state_class: measurement
+      state: >
+        {% set w = states('sensor.entre_stromforbrug') | float(0) %}
+        {% set kr_per_kwh = states('sensor.elpris_nu_kr_per_kwh_beregnet') | float(0) %}
+        {{ ((w / 1000) * kr_per_kwh) | round(2) }}
+
+    - name: "Hall – kr/time nu"
+      unique_id: hall_kr_per_time_nu
+      unit_of_measurement: "kr/t"
+      state_class: measurement
+      state: >
+        {% set w = states('sensor.hall_stromforbrug') | float(0) %}
+        {% set kr_per_kwh = states('sensor.elpris_nu_kr_per_kwh_beregnet') | float(0) %}
+        {{ ((w / 1000) * kr_per_kwh) | round(2) }}
+
+    - name: "Jonatans værelse – kr/time nu"
+      unique_id: jonatans_vaerelse_kr_per_time_nu
+      unit_of_measurement: "kr/t"
+      state_class: measurement
+      state: >
+        {% set w = states('sensor.jonatans_vaerelse_stromforbrug') | float(0) %}
+        {% set kr_per_kwh = states('sensor.elpris_nu_kr_per_kwh_beregnet') | float(0) %}
+        {{ ((w / 1000) * kr_per_kwh) | round(2) }}
+
+    - name: "Kontor – kr/time nu"
+      unique_id: kontor_kr_per_time_nu
+      unit_of_measurement: "kr/t"
+      state_class: measurement
+      state: >
+        {% set w = states('sensor.kontor_stromforbrug') | float(0) %}
+        {% set kr_per_kwh = states('sensor.elpris_nu_kr_per_kwh_beregnet') | float(0) %}
+        {{ ((w / 1000) * kr_per_kwh) | round(2) }}
+
+    - name: "Køkken – kr/time nu"
+      unique_id: kokken_kr_per_time_nu
+      unit_of_measurement: "kr/t"
+      state_class: measurement
+      state: >
+        {% set w = states('sensor.kokken_stromforbrug') | float(0) %}
+        {% set kr_per_kwh = states('sensor.elpris_nu_kr_per_kwh_beregnet') | float(0) %}
+        {{ ((w / 1000) * kr_per_kwh) | round(2) }}
+
+    - name: "Matias værelse – kr/time nu"
+      unique_id: matias_vaerelse_kr_per_time_nu
+      unit_of_measurement: "kr/t"
+      state_class: measurement
+      state: >
+        {% set w = states('sensor.matias_vaerelse_stromforbrug') | float(0) %}
+        {% set kr_per_kwh = states('sensor.elpris_nu_kr_per_kwh_beregnet') | float(0) %}
+        {{ ((w / 1000) * kr_per_kwh) | round(2) }}
+
+    - name: "Soveværelse – kr/time nu"
+      unique_id: sovevaerelse_kr_per_time_nu
+      unit_of_measurement: "kr/t"
+      state_class: measurement
+      state: >
+        {% set w = states('sensor.sovevaerelse_stromforbrug') | float(0) %}
+        {% set kr_per_kwh = states('sensor.elpris_nu_kr_per_kwh_beregnet') | float(0) %}
+        {{ ((w / 1000) * kr_per_kwh) | round(2) }}
+
+    - name: "Stuen – kr/time nu"
+      unique_id: stuen_kr_per_time_nu
+      unit_of_measurement: "kr/t"
+      state_class: measurement
+      state: >
+        {% set w = states('sensor.stuen_stromforbrug') | float(0) %}
+        {% set kr_per_kwh = states('sensor.elpris_nu_kr_per_kwh_beregnet') | float(0) %}
+        {{ ((w / 1000) * kr_per_kwh) | round(2) }}
+
+    - name: "Værksted – kr/time nu"
+      unique_id: vaerksted_kr_per_time_nu
+      unit_of_measurement: "kr/t"
+      state_class: measurement
+      state: >
+        {% set w = states('sensor.vaerksted_stromforbrug') | float(0) %}
+        {% set kr_per_kwh = states('sensor.elpris_nu_kr_per_kwh_beregnet') | float(0) %}
+        {{ ((w / 1000) * kr_per_kwh) | round(2) }}

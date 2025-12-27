@@ -1979,7 +1979,7 @@
   mode: single
 - id: '1765125330854'
   alias: Sluk alt lys i stuen
-  description: ''
+  description: Med Ikea Dimmer
   triggers:
   - domain: mqtt
     device_id: 498fe383de41ab901ce272ddaaa1eee2
@@ -2100,73 +2100,74 @@
     ramp_delay_ms: 180
     max_ramp_seconds: 8
 - id: hue_dimmer_stuen_lys
-  alias: Hue Dimmer – Stuen lys
-  mode: single
-  trigger:
-  - platform: device
-    domain: hue
+  alias: Hue Dimmer 1 – Stuen lys
+  description: ''
+  triggers:
+  - domain: hue
     device_id: 5d05bf23b98e15fdcc715ab88a969fd9
     type: initial_press
     subtype: 1
     id: btn1_on
-  - platform: device
-    domain: hue
+    trigger: device
+  - domain: hue
     device_id: 5d05bf23b98e15fdcc715ab88a969fd9
     type: initial_press
     subtype: 4
     id: btn4_off
-  - platform: device
-    domain: hue
+    trigger: device
+  - domain: hue
     device_id: 5d05bf23b98e15fdcc715ab88a969fd9
     type: repeat
     subtype: 2
     id: btn2_up
-  - platform: device
-    domain: hue
+    trigger: device
+  - domain: hue
     device_id: 5d05bf23b98e15fdcc715ab88a969fd9
     type: repeat
     subtype: 3
     id: btn3_down
-  action:
+    trigger: device
+  actions:
   - choose:
     - conditions:
       - condition: trigger
         id: btn1_on
       sequence:
-      - service: light.turn_on
-        target:
+      - target:
           entity_id: light.alt_lys_i_stuen
         data:
           transition: 0.3
+        action: light.turn_on
     - conditions:
       - condition: trigger
         id: btn4_off
       sequence:
-      - service: light.turn_off
-        target:
+      - target:
           entity_id: light.alt_lys_i_stuen
         data:
           transition: 0.3
+        action: light.turn_off
     - conditions:
       - condition: trigger
         id: btn2_up
       sequence:
-      - service: light.turn_on
-        target:
+      - target:
           entity_id: light.alt_lys_i_stuen
         data:
           brightness_step_pct: 5
           transition: 0.1
+        action: light.turn_on
     - conditions:
       - condition: trigger
         id: btn3_down
       sequence:
-      - service: light.turn_on
-        target:
+      - target:
           entity_id: light.alt_lys_i_stuen
         data:
           brightness_step_pct: -5
           transition: 0.1
+        action: light.turn_on
+  mode: single
 - id: '1766317925944'
   alias: Sonos Højtaler – IKEA dimmer i køkken (rigtig volume + power gate)
   description: ''
@@ -2634,4 +2635,75 @@
     filament_g: '{{ states(''input_number.p1s_filament_grams'') | float(0) }}'
     filament_kr_per_kg: '{{ states(''input_number.p1s_filament_kr_per_kg'') | float(0)
       }}'
+  mode: single
+- id: '1766506103842'
+  alias: Hue Dimmer 2 - Lys i stuen
+  description: ''
+  triggers:
+  - device_id: ebe390a7bd0a640ecc048c45b9ca037c
+    domain: hue
+    type: initial_press
+    subtype: 1
+    unique_id: ebe390a7bd0a640ecc048c45b9ca037c
+    trigger: device
+    id: btn1_on
+  - domain: hue
+    device_id: ebe390a7bd0a640ecc048c45b9ca037c
+    type: initial_press
+    subtype: 4
+    id: btn4_off
+    trigger: device
+  - domain: hue
+    device_id: ebe390a7bd0a640ecc048c45b9ca037c
+    type: repeat
+    subtype: 2
+    id: btn2_up
+    trigger: device
+  - domain: hue
+    device_id: ebe390a7bd0a640ecc048c45b9ca037c
+    type: repeat
+    subtype: 3
+    id: btn3_down
+    trigger: device
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: btn1_on
+      sequence:
+      - target:
+          entity_id: light.alt_lys_i_stuen
+        data:
+          transition: 0.3
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: btn4_off
+      sequence:
+      - target:
+          entity_id: light.alt_lys_i_stuen
+        data:
+          transition: 0.3
+        action: light.turn_off
+    - conditions:
+      - condition: trigger
+        id: btn2_up
+      sequence:
+      - target:
+          entity_id: light.alt_lys_i_stuen
+        data:
+          brightness_step_pct: 5
+          transition: 0.1
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: btn3_down
+      sequence:
+      - target:
+          entity_id: light.alt_lys_i_stuen
+        data:
+          brightness_step_pct: -5
+          transition: 0.1
+        action: light.turn_on
   mode: single

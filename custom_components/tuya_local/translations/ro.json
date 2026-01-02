@@ -204,6 +204,9 @@
                     }
                 }
             },
+            "cold_water": {
+                "name": "Apă rece"
+            },
             "thermostat": {
                 "name": "Termostat",
                 "state_attributes": {
@@ -436,6 +439,9 @@
             }
         },
         "number": {
+            "manual_feed": {
+                "name": "Hrănire manuală"
+            },
             "maximum_temperature": {
                 "name": "Temperatură maximă"
             },
@@ -932,7 +938,15 @@
                     "dry": "Uscat",
                     "comfortable": "Confortabil",
                     "damp": "Umed",
-                    "smoothing": "Netezire"
+                    "smoothing": "Netezire",
+                    "cleaned": "Curățat",
+                    "cold_water_unavailable": "Apă rece indisponibilă",
+                    "drain": "Drenaj",
+                    "drain_cold_water": "Drenare apă rece",
+                    "drain_hot_water": "Drenare apă caldă",
+                    "drain_normal_water": "Drenare apă normală",
+                    "high_temperature_emptying": "Golire la temperatură înaltă",
+                    "high_temperature_emptied": "Golire la temperatură înaltă finalizată"
                 }
             },
             "time_remaining": {
@@ -988,6 +1002,12 @@
             "anti_frost": {
                 "name": "Antigel"
             },
+            "auto_clean": {
+                "name": "Curățare automată"
+            },
+            "auto_light": {
+                "name": "Lumină automată"
+            },
             "breaker": {
                 "name": "Siguranță",
                 "state": {
@@ -1000,6 +1020,9 @@
             },
             "evaporator_cleaning": {
                 "name": "Curățare evaporator"
+            },
+            "flip_image": {
+                "name": "Răsucire imagine"
             },
             "ionizer": {
                 "name": "Ionizator"

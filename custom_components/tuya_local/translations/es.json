@@ -204,6 +204,9 @@
                     }
                 }
             },
+            "cold_water": {
+                "name": "Agua fría"
+            },
             "thermostat": {
                 "name": "Termostato",
                 "state_attributes": {
@@ -436,6 +439,9 @@
             }
         },
         "number": {
+            "manual_feed": {
+                "name": "Alimentación manual"
+            },
             "maximum_temperature": {
                 "name": "Temperatura máxima"
             },
@@ -932,7 +938,15 @@
                     "dry": "Seco",
                     "comfortable": "Cómodo",
                     "damp": "Húmedo",
-                    "smoothing": "Alisando"
+                    "smoothing": "Alisando",
+                    "cleaned": "Limpiado",
+                    "cold_water_unavailable": "Agua fría no disponible",
+                    "drain": "Drenaje",
+                    "drain_cold_water": "Drenar agua fría",
+                    "drain_hot_water": "Drenar agua caliente",
+                    "drain_normal_water": "Drenar agua normal",
+                    "high_temperature_emptying": "Vaciado a alta temperatura",
+                    "high_temperature_emptied": "Vaciado a alta temperatura completado"
                 }
             },
             "time_remaining": {
@@ -988,6 +1002,12 @@
             "anti_frost": {
                 "name": "Antihielo"
             },
+            "auto_clean": {
+                "name": "Limpieza automática"
+            },
+            "auto_light": {
+                "name": "Luz automática"
+            },
             "breaker": {
                 "name": "Disyuntor",
                 "state": {
@@ -1000,6 +1020,9 @@
             },
             "evaporator_cleaning": {
                 "name": "Limpieza del evaporador"
+            },
+            "flip_image": {
+                "name": "Voltear imagen"
             },
             "ionizer": {
                 "name": "Ionizador"

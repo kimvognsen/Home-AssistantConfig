@@ -204,6 +204,9 @@
                     }
                 }
             },
+            "cold_water": {
+                "name": "Chladná voda"
+            },
             "thermostat": {
                 "name": "Termostat",
                 "state_attributes": {
@@ -436,6 +439,9 @@
             }
         },
         "number": {
+            "manual_feed": {
+                "name": "Ruční krmení"
+            },
             "maximum_temperature": {
                 "name": "Maximální teplota"
             },
@@ -932,7 +938,15 @@
                     "dry": "Suchý",
                     "comfortable": "Pohodlný",
                     "damp": "Vlhost",
-                    "smoothing": "Vyhlazování"
+                    "smoothing": "Vyhlazování",
+                    "cleaned": "Vyčištěno",
+                    "cold_water_unavailable": "Studená voda nedostupná",
+                    "drain": "Odtok",
+                    "drain_cold_water": "Odtok studené vody",
+                    "drain_hot_water": "Odtok horké vody",
+                    "drain_normal_water": "Odtok normální vody",
+                    "high_temperature_emptying": "Vysokoteplotní vyprazdňování",
+                    "high_temperature_emptied": "Vysokoteplotní vyprazdněno"
                 }
             },
             "time_remaining": {
@@ -988,6 +1002,12 @@
             "anti_frost": {
                 "name": "Proti mrazu"
             },
+            "auto_clean": {
+                "name": "Automatické čištění"
+            },
+            "auto_light": {
+                "name": "Automatické světlo"
+            },
             "breaker": {
                 "name": "Jistič",
                 "state": {
@@ -997,6 +1017,9 @@
             },
             "do_not_disturb": {
                 "name": "Nerušit"
+            },
+            "flip_image": {
+                "name": "Otočit obraz"
             },
             "evaporator_cleaning": {
                 "name": "Čištění výparníku"

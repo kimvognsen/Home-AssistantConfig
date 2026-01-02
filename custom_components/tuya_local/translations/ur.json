@@ -1,3 +1,4 @@
+
 {
     "title": "ٹویا لوکل",
     "config": {
@@ -205,6 +206,9 @@
                         }
                     }
                 }
+            },
+            "cold_water": {
+                "name": "ٹھنڈا پانی"
             },
             "thermostat": {
                 "name": "تھرموسٹیٹ",
@@ -438,6 +442,9 @@
             }
         },
         "number": {
+            "manual_feed": {
+                "name": "دستی فیڈ"
+            },
             "maximum_temperature": {
                 "name": "زیادہ سے زیادہ درجہ حرارت"
             },
@@ -934,7 +941,15 @@
                     "dry": "خشک",
                     "comfortable": "آرام دہ",
                     "damp": "نم",
-                    "smoothing": "ہموار کرنا"
+                    "smoothing": "ہموار کرنا",
+                    "cleaned": "صاف کیا گیا",
+                    "cold_water_unavailable": "ٹھنڈا پانی دستیاب نہیں",
+                    "drain": "نکاسی",
+                    "drain_cold_water": "ٹھنڈا پانی نکالیں",
+                    "drain_hot_water": "گرم پانی نکالیں",
+                    "drain_normal_water": "عام پانی نکالیں",
+                    "high_temperature_emptying": "اعلی درجہ حرارت خالی کرنا",
+                    "high_temperature_emptied": "اعلی درجہ حرارت خالی ہوگیا"
                 }
             },
             "time_remaining": {
@@ -990,6 +1005,12 @@
             "anti_frost": {
                 "name": "اینٹی فراسٹ"
             },
+            "auto_clean": {
+                "name": "خود کار صفائی"
+            },
+            "auto_light": {
+                "name": "خود کار روشنی"
+            },
             "breaker": {
                 "name": "بریککر",
                 "state": {
@@ -1003,8 +1024,11 @@
             "evaporator_cleaning": {
                 "name": "بخارات کی صفائی"
             },
+            "flip_image": {
+                "name": "تصویر پلٹائیں"
+            },
             "ionizer": {
-                "name": "Ionizer"
+                "name": "آئنائزر"
             },
             "keytone": {
                 "name": "کی پیڈ ٹون"

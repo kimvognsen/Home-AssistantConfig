@@ -205,6 +205,9 @@
                     }
                 }
             },
+            "cold_water": {
+                "name": "Hideg víz"
+            },
             "thermostat": {
                 "name": "Hőmérséklet szabályozó",
                 "state_attributes": {
@@ -437,6 +440,9 @@
             }
         },
         "number": {
+            "manual_feed": {
+                "name": "Kézi etetés"
+            },
             "maximum_temperature": {
                 "name": "Maximális hőmérséklet"
             },
@@ -933,7 +939,15 @@
                     "dry": "Száraz",
                     "comfortable": "Kényelmes",
                     "damp": "Párás",
-                    "smoothing": "Simítás"
+                    "smoothing": "Simítás",
+                    "cleaned": "Tisztított",
+                    "cold_water_unavailable": "Hideg víz nem elérhető",
+                    "drain": "Leeresztés",
+                    "drain_cold_water": "Hideg víz leeresztése",
+                    "drain_hot_water": "Forró víz leeresztése",
+                    "drain_normal_water": "Normál víz leeresztése",
+                    "high_temperature_emptying": "Magas hőmérsékletű ürítés",
+                    "high_temperature_emptied": "Magas hőmérsékletű ürítve"
                 }
             },
             "time_remaining": {
@@ -989,6 +1003,12 @@
             "anti_frost": {
                 "name": "Fagyálló"
             },
+            "auto_clean": {
+                "name": "Automatikus tisztítás"
+            },
+            "auto_light": {
+                "name": "Automatikus fény"
+            },
             "breaker": {
                 "name": "Kismegszakító",
                 "state": {
@@ -1001,6 +1021,9 @@
             },
             "evaporator_cleaning": {
                 "name": "Elpárologtató tisztítása"
+            },
+            "flip_image": {
+                "name": "Kép megfordítása"
             },
             "ionizer": {
                 "name": "Ionizáló"

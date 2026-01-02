@@ -204,6 +204,9 @@
                     }
                 }
             },
+            "cold_water": {
+                "name": "Холодна вода"
+            },
             "thermostat": {
                 "name": "Термостат",
                 "state_attributes": {
@@ -437,6 +440,9 @@
             }
         },
         "number": {
+            "manual_feed": {
+                "name": "Ручне годування"
+            },
             "maximum_temperature": {
                 "name": "Максимальна температура"
             },
@@ -933,7 +939,15 @@
                     "dry": "Сухий",
                     "comfortable": "Комфортний",
                     "damp": "Вогкий",
-                    "smoothing": "Згладжування"
+                    "smoothing": "Згладжування",
+                    "cleaned": "Очищено",
+                    "cold_water_unavailable": "Холодна вода недоступна",
+                    "drain": "Злив",
+                    "drain_cold_water": "Злив холодної води",
+                    "drain_hot_water": "Злив гарячої води",
+                    "drain_normal_water": "Злив нормальної води",
+                    "high_temperature_emptying": "Висока температура спорожнення",
+                    "high_temperature_emptied": "Висока температура спорожнена"
                 }
             },
             "time_remaining": {
@@ -989,6 +1003,12 @@
             "anti_frost": {
                 "name": "Протиморозний"
             },
+            "auto_clean": {
+                "name": "Автоочищення"
+            },
+            "auto_light": {
+                "name": "Автосвітло"
+            },
             "breaker": {
                 "name": "Автоматичний вимикач",
                 "state": {
@@ -1001,6 +1021,9 @@
             },
             "evaporator_cleaning": {
                 "name": "Очищення випарника"
+            },
+            "flip_image": {
+                "name": "Перевернути зображення"
             },
             "ionizer": {
                 "name": "Іонізатор"

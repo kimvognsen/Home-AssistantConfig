@@ -204,6 +204,9 @@
                     }
                 }
             },
+            "cold_water": {
+                "name": "Kallvattenberedare"
+            },
             "thermostat": {
                 "name": "Termostat",
                 "state_attributes": {
@@ -436,6 +439,9 @@
             }
         },
         "number": {
+            "manual_feed": {
+                "name": "Manuell matning"
+            },
             "maximum_temperature": {
                 "name": "Maximal temperatur"
             },
@@ -932,7 +938,15 @@
                     "dry": "Torr",
                     "comfortable": "Bekväm",
                     "damp": "Fuktig",
-                    "smoothing": "Utjämning"
+                    "smoothing": "Utjämning",
+                    "cleaned": "Rengjord",
+                    "cold_water_unavailable": "Kallt vatten otillgängligt",
+                    "drain": "Tömning",
+                    "drain_cold_water": "Töm kallt vatten",
+                    "drain_hot_water": "Töm varmt vatten",
+                    "drain_normal_water": "Töm normalt vatten",
+                    "high_temperature_emptying": "Hög temperatur tömning",
+                    "high_temperature_emptied": "Hög temperatur tömd"
                 }
             },
             "time_remaining": {
@@ -988,6 +1002,12 @@
             "anti_frost": {
                 "name": "Frostskydd"
             },
+            "auto_clean": {
+                "name": "Autorening"
+            },
+            "auto_light": {
+                "name": "Autoljus"
+            },
             "breaker": {
                 "name": "Brytare",
                 "state": {
@@ -1000,6 +1020,9 @@
             },
             "evaporator_cleaning": {
                 "name": "Förångarrengöring"
+            },
+            "flip_image": {
+                "name": "Vänd bild"
             },
             "ionizer": {
                 "name": "Jonisering"

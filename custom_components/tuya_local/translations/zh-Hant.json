@@ -204,6 +204,9 @@
                     }
                 }
             },
+            "cold_water": {
+                "name": "冷水機"
+            },
             "thermostat": {
                 "name": "恆溫器",
                 "state_attributes": {
@@ -437,6 +440,9 @@
             }
         },
         "number": {
+            "manual_feed": {
+                "name": "手動餵食量"
+            },
             "maximum_temperature": {
                 "name": "最高溫度"
             },
@@ -933,7 +939,15 @@
                     "dry": "乾燥",
                     "comfortable": "舒適",
                     "damp": "潮濕",
-                    "smoothing": "平滑處理"
+                    "smoothing": "平滑處理",
+                    "cleaned": "已清潔",
+                    "cold_water_unavailable": "冷水不可用",
+                    "drain": "排水中",
+                    "drain_cold_water": "排冷水中",
+                    "drain_hot_water": "排熱水中",
+                    "drain_normal_water": "排常溫水中",
+                    "high_temperature_emptying": "高溫排空中",
+                    "high_temperature_emptied": "高溫已排空"
                 }
             },
             "time_remaining": {
@@ -989,6 +1003,12 @@
             "anti_frost": {
                 "name": "防凍"
             },
+            "auto_clean": {
+                "name": "自動清潔"
+            },
+            "auto_light": {
+                "name": "自動燈光"
+            },
             "breaker": {
                 "name": "斷路器",
                 "state": {
@@ -1001,6 +1021,9 @@
             },
             "evaporator_cleaning": {
                 "name": "蒸發器清潔"
+            },
+            "flip_image": {
+                "name": "翻轉圖像"
             },
             "ionizer": {
                 "name": "離子產生器"

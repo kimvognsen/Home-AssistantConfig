@@ -105,7 +105,7 @@ entities:
             value: returning
       - id: 9
         type: string
-        name: suction
+        name: fan_speed
         mapping:
           - dps_val: closed
             value: "off"
@@ -283,7 +283,7 @@ entities:
         optional: true
         name: button
   - entity: sensor
-    name: Filter remaining
+    translation_key: filter_life
     class: duration
     category: diagnostic
     dps:
@@ -426,9 +426,8 @@ entities:
         name: sensor
         unit: min
   - entity: text
-    name: Schedule
+    translation_key: schedule
     category: config
-    icon: "mdi:calendar-clock"
     hidden: true
     dps:
       - id: 32

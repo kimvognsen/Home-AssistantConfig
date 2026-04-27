@@ -4,15 +4,17 @@ import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 
 from ..global_variables import GlobalVariables as Gb
-from ..const            import (RED_ALERT, LINK, RLINK, RARROW,
-                                IPHONE, IPAD, WATCH, AIRPODS, ICLOUD, OTHER, HOME, NONE,
+from ..const            import (RED_ALERT, LINK, RLINK, RARROW, CRLF, NL, NBSP6, DOTS, CIRCLE_X,
+                                IPHONE, IPAD, WATCH, AIRPODS, ICLOUD, OTHER, HOME, NONE,INACTIVE_SYMB, MONITOR_SYMB,
                                 DEVICE_TYPE_FNAME, DEVICE_TYPE_FNAMES, MOBAPP, NO_MOBAPP,
-                                INACTIVE_DEVICE, HOME_DISTANCE,
+                                INACTIVE, HOME_DISTANCE,
                                 PICTURE_WWW_STANDARD_DIRS, CONF_PICTURE_WWW_DIRS,
                                 CONF_VERSION,
                                 CONF_EVLOG_CARD_DIRECTORY, CONF_EVLOG_BTNCONFIG_URL,
-                                CONF_APPLE_ACCOUNT, CONF_USERNAME, CONF_PASSWORD, CONF_LOCATE_ALL, CONF_TOTP_KEY,
-                                CONF_DATA_SOURCE, CONF_VERIFICATION_CODE,
+                                CONF_APPLE_ACCOUNT, CONF_USERNAME, CONF_PASSWORD, CONF_LOCATE_ALL,
+                                CONF_AUTH_METHODS, CONF_LAST_METHOD,
+                                PUSH, TEXT_1, TEXT_2, HWKEY_1, HWKEY_2,
+                                CONF_DATA_SOURCE, CONF_AUTH_CODE,
                                 CONF_SERVER_LOCATION, CONF_SERVER_LOCATION_NEEDED,
                                 CONF_TRACK_FROM_ZONES, CONF_LOG_ZONES,
                                 CONF_TRACK_FROM_BASE_ZONE_USED, CONF_TRACK_FROM_BASE_ZONE, CONF_TRACK_FROM_HOME_ZONE,
@@ -34,7 +36,7 @@ from ..const            import (RED_ALERT, LINK, RLINK, RARROW,
                                 CONF_TRACKING_MODE, CONF_INZONE_INTERVAL, CONF_FIXED_INTERVAL,
                                 CONF_AWAY_TIME_ZONE_1_OFFSET, CONF_AWAY_TIME_ZONE_1_DEVICES,
                                 CONF_AWAY_TIME_ZONE_2_OFFSET, CONF_AWAY_TIME_ZONE_2_DEVICES,
-                                CONF_SENSORS_MONITORED_DEVICES,
+                                CONF_SENSORS_MONITORED_DEVICES, MONITOR, INACTIVE,
                                 CONF_SENSORS_DEVICE,
                                 CONF_SENSORS_TRACKING_UPDATE, CONF_SENSORS_TRACKING_TIME, CONF_SENSORS_TRACKING_DISTANCE,
                                 CONF_SENSORS_TRACKING_OTHER, CONF_SENSORS_ZONE,
@@ -42,7 +44,8 @@ from ..const            import (RED_ALERT, LINK, RLINK, RARROW,
                                 CF_PROFILE,
                                 )
 
-from ..utils.utils      import (instr, isbetween, list_to_str, list_add, list_del, is_empty, isnot_empty,
+from ..utils.utils      import (instr, isbetween, list_to_str, list_add, list_del, dict_del,
+                                is_empty, isnot_empty,
                                 zone_dname, decode_password, dict_value_to_list,
                                 six_item_list, six_item_dict, )
 from ..utils.messaging  import (log_exception, log_debug_msg, log_info_msg,
@@ -56,6 +59,8 @@ from .const_form_lists  import *
 from ..configure        import dashboard_builder as dbb
 from ..mobile_app       import mobapp_interface
 from ..startup          import config_file
+from ..utils            import entity_io
+from ..utils            import entity_reg_util as er_util
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #             USER - INITIAL ADD INTEGRATION
@@ -85,6 +90,10 @@ def form_config_option_user(self):
 def form_menu(self):
     menu_title = MENU_PAGE_TITLE[self.menu_page_no]
     menu_action_items = MENU_ACTION_ITEMS.copy()
+    if self.create_device_tracker_sensor_enities_on_exit:
+        list_del(menu_action_items, MENU_KEY_TEXT['exit'])
+        list_add(menu_action_items, MENU_KEY_TEXT['exit_add_dev_trkrs_sensors'])
+
     if self.rebuild_ic3db_dashboards:
         dbb.load_ic3db_dashboards_from_ha_data(self)
 
@@ -125,7 +134,7 @@ def form_confirm_action(self, action_desc=None):
     '''
 
     actions_list = CONFIRM_ACTIONS.copy()
-    actions_list_default = 'confirm_return_no'
+    actions_list_default = 'confirm_action_no'
     action_desc = action_desc if action_desc is not None else\
                     'Do you want to perform the selected action?'
 
@@ -135,7 +144,7 @@ def form_confirm_action(self, action_desc=None):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=[action_desc], mode='list')),
         vol.Required('action_items',
-                    default=utils.action_default_text(actions_list_default)):
+                    default=utils.default_action_text(actions_list_default)):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=actions_list, mode='list')),
         })
@@ -154,11 +163,11 @@ def form_restart_icloud3(self):
 
     self.actions_list.append(ACTION_LIST_OPTIONS['restart_ic3_later'])
 
-    actions_list_default = utils.action_default_text(restart_default)
+    actions_list_default = utils.default_action_text(restart_default)
     if self._inactive_device_cnt() > 0:
         inactive_devices = [conf_device[CONF_IC3_DEVICENAME]
                     for conf_device in Gb.conf_devices
-                    if conf_device[CONF_TRACKING_MODE] == INACTIVE_DEVICE]
+                    if conf_device[CONF_TRACKING_MODE] == INACTIVE]
         inactive_devices_list = \
             ACTION_LIST_OPTIONS['review_inactive_devices'].replace(
                     '^add-text^', list_to_str(inactive_devices))
@@ -181,37 +190,19 @@ def form_restart_icloud3(self):
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def form_review_inactive_devices(self, start_cnt=None):
 
-    self.actions_list = []
-    start_cnt = 0 if start_cnt is None else start_cnt
-    self.inactive_devices_key_text = {}
-    inactive_device_list = [conf_device[CONF_IC3_DEVICENAME]
-                            for conf_device in Gb.conf_devices
-                            if conf_device[CONF_TRACKING_MODE] == INACTIVE_DEVICE]
+    self.actions_list = REVIEW_INACTIVES.copy()
 
-    cnt = 0
-    inactive_device_cnt = len(inactive_device_list)
-    for conf_device in Gb.conf_devices[start_cnt:start_cnt+5]:
-        if conf_device[CONF_TRACKING_MODE] != INACTIVE_DEVICE:
-            continue
-        cnt += 1
-
-        self.inactive_devices_key_text.update({
-                conf_device[CONF_IC3_DEVICENAME]: self._format_device_list_item(conf_device)})
-
-    if inactive_device_cnt > start_cnt + 5 and start_cnt == 0:
-        next_4_devicenames = list_to_str(inactive_device_list[start_cnt+5:])
-        next_4_msg = (f" #{start_cnt+6}-#{inactive_device_cnt} ({next_4_devicenames})")
-        next_page_msg = ACTION_LIST_OPTIONS['next_page_devices'].replace('^add-text^', next_4_msg)
-        self.actions_list.append(next_page_msg)
-
-    self.actions_list.extend(REVIEW_INACTIVE_DEVICES)
+    self.inactive_devices_key_text = {
+        conf_device[CONF_IC3_DEVICENAME]: lists.format_device_list_item(self, conf_device)
+                                for conf_device in Gb.conf_devices
+                                if conf_device[CONF_TRACKING_MODE] == INACTIVE}
     return vol.Schema({
         vol.Required('inactive_devices',
                     default=[]):
                     cv.multi_select(self.inactive_devices_key_text),
 
         vol.Required('action_items',
-                    default=utils.action_default_text('goto_previous')):
+                    default=utils.default_action_text('goto_previous')):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -242,7 +233,9 @@ def form_data_source(self):
         self.apple_acct_items_displayed = self.apple_acct_items_list
     else:
         _build_apple_accts_displayed_over_5(self)
-    list_add(self.apple_acct_items_displayed, '➤ ADD A NEW APPLE ACCOUNT')
+
+    if Gb.internet_error is False:
+        list_add(self.apple_acct_items_displayed, '➤ ADD A NEW APPLE ACCOUNT')
 
     default_key  = self.aa_page_item[self.aa_page_no]
     default_item = self.apple_acct_items_by_username.get(default_key)
@@ -252,16 +245,11 @@ def form_data_source(self):
     if instr(Gb.conf_tracking[CONF_DATA_SOURCE], MOBAPP):
         if is_empty(Gb.devicenames_x_mobapp_dnames):
             mobapp_interface.get_mobile_app_integration_device_info()
-        # if is_empty(Gb.devicenames_x_mobapp_dnames):
-        #     self.errors['data_source_mobapp'] = 'mobile_app_error'
 
     return vol.Schema({
         vol.Optional('data_source_mobapp',
                     default=mobile_app_used_default):
                     cv.multi_select([MOBILE_APP_USED_HEADER]),
-        # vol.Optional('data_source',
-        #             default=Gb.conf_tracking[CONF_DATA_SOURCE].replace(' ', '').split(',')):
-        #             cv.multi_select(DATA_SOURCE_OPTIONS),
         vol.Optional('data_source_apple_acct',
                     default=apple_acct_used_default):
                     cv.multi_select([APPLE_ACCT_USED_HEADER]),
@@ -270,7 +258,7 @@ def form_data_source(self):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.apple_acct_items_displayed, mode='list')),
         vol.Required('action_items',
-                    default=utils.action_default_text(default_action)):
+                    default=utils.default_action_text(default_action)):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -305,17 +293,13 @@ def form_data_source_parameters(self):
     self.actions_list = ACTION_LIST_ITEMS_BASE.copy()
 
     return vol.Schema({
-        # vol.Required(CONF_PASSWORD_SRP_ENABLED,
-        #             default=Gb.conf_tracking[CONF_PASSWORD_SRP_ENABLED]):
-        #             # cv.boolean,
-        #             selector.BooleanSelector(),
         vol.Required(CONF_SERVER_LOCATION_NEEDED,
                     default=Gb.conf_tracking[CONF_SERVER_LOCATION_NEEDED]):
                     # cv.boolean,
                     selector.BooleanSelector(),
 
         vol.Required('action_items',
-                    default=utils.action_default_text('save')):
+                    default=utils.default_action_text('save')):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -327,7 +311,8 @@ def form_data_source_parameters(self):
 def form_update_apple_acct(self):
     lists.build_apple_accounts_list(self)
 
-    retry_login_AA = [AA for AA in Gb.AppleAcct_error_by_username.values() if AA.error_next_retry_secs > 0]
+    retry_login_AA = [AA    for AA in Gb.AppleAcct_error_by_username.values()
+                            if AA.error_next_retry_secs > 0]
     if isnot_empty(retry_login_AA):
         self.actions_list = [ACTION_LIST_OPTIONS['stop_login_retry']]
     else:
@@ -335,16 +320,15 @@ def form_update_apple_acct(self):
     self.actions_list.extend(USERNAME_PASSWORD_ACTIONS)
 
     if Gb.internet_error:
-        action_default = 'cancel_goto_previous'
+        default_action = 'cancel_goto_previous'
     else:
-        action_default = 'save_log_into_apple_acct'
+        default_action = 'save_log_into_apple_acct'
 
     errs_ui = self.errors_user_input
     username   = errs_ui.get(CONF_USERNAME)   or self.conf_apple_acct[CONF_USERNAME] or ' '
     password   = errs_ui.get(CONF_PASSWORD)   or self.conf_apple_acct[CONF_PASSWORD] or ' '
     password   = decode_password(password)
     locate_all = errs_ui.get(CONF_LOCATE_ALL) or self.conf_apple_acct[CONF_LOCATE_ALL]
-    totp_key   = errs_ui.get(CONF_TOTP_KEY)   or self.conf_apple_acct[CONF_TOTP_KEY] or ' '
 
     if (password.strip() == ''
             or self.add_apple_acct_flag
@@ -365,7 +349,7 @@ def form_update_apple_acct(self):
         elif instr(apple_acct_info, NOT_LOGGED_IN):
             self.errors[CONF_USERNAME] = 'apple_acct_not_logged_into'
         elif instr(apple_acct_info, 'authentication needed'):
-            self.errors[CONF_USERNAME] = 'verification_code_needed'
+            self.errors[CONF_USERNAME] = 'auth_code_needed'
         elif instr(apple_acct_info, 'terms of use'):
             self.errors[CONF_USERNAME] = 'apple_acct_terms_of_use_update_needed'
         self.errors.pop('account_selected', None)
@@ -406,7 +390,7 @@ def form_update_apple_acct(self):
                     default=locate_all):
                     cv.boolean,
         vol.Required('action_items',
-                    default=utils.action_default_text(action_default)):
+                    default=utils.default_action_text(default_action)):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -444,7 +428,7 @@ def form_delete_apple_acct(self):
                             options=dict_value_to_list(DELETE_APPLE_ACCT_DEVICE_ACTION_OPTIONS),
                             mode='list')),
         vol.Required('action_items',
-                    default=utils.action_default_text('cancel_goto_previous')):
+                    default=utils.default_action_text('cancel_goto_previous')):
                     selector.SelectSelector(
                         selector.SelectSelectorConfig(options=self.actions_list, mode='list')),
         })
@@ -454,119 +438,82 @@ def form_delete_apple_acct(self):
 #            REAUTH
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def form_reauth(self, reauth_username=None):
-    lists.build_apple_accounts_list(self)
+    lists.build_apple_accounts_auth_list(self)
 
     terms_of_use_update_needed = False
-    auth_2fa_code_needed       = False
-    request_2fa_code_needed    = False
-    for AppleAcct in Gb.AppleAcct_by_username.values():
-        if AppleAcct.terms_of_use_update_needed:
-            terms_of_use_update_needed = True
-        else:
-            if AppleAcct.auth_2fa_code_needed or AppleAcct.username == reauth_username:
-                auth_2fa_code_needed = True
-            if AppleAcct.is_challenge_required:
-                request_2fa_code_needed = True
+    is_auth_code_needed        = False
+    was_auth_code_requested    = False
 
-    self.actions_list     = []
+    AppleAcct = None
+    for _AppleAcct in Gb.AppleAcct_by_username.values():
+        is_auth_code_needed = (_AppleAcct.is_auth_code_needed or _AppleAcct.is_challenge_required)
+        if _AppleAcct.terms_of_use_update_needed:
+            terms_of_use_update_needed = True
+        if _AppleAcct.username == reauth_username or _AppleAcct == Gb.AppleAcct_needing_reauth_via_ha:
+            AppleAcct = _AppleAcct
+        elif is_auth_code_needed and AppleAcct is None:
+            AppleAcct = _AppleAcct
+        elif AppleAcct is None:
+            AppleAcct = _AppleAcct
+    self.AppleAcct = AppleAcct
+
+    if AppleAcct:
+        reauth_username = self.apple_acct_reauth_username = AppleAcct.username
+        was_auth_code_requested = AppleAcct.was_auth_code_requested
+        is_auth_code_needed     = (AppleAcct.is_auth_code_needed
+                                    or AppleAcct.is_challenge_required)
+
+    self.actions_list = []
     if terms_of_use_update_needed:
         self.actions_list.append(ACTION_LIST_OPTIONS['accept_terms_of_use'])
     self.actions_list.extend(REAUTH_ACTIONS)
 
-    if Gb.internet_error:
-        action_list_default = 'goto_previous'
+    if (Gb.internet_error
+            or AppleAcct is None
+            or is_auth_code_needed is False):
+        default_action = 'goto_previous'
     elif terms_of_use_update_needed:
-        action_list_default = 'accept_terms_of_use'
-    elif auth_2fa_code_needed:
-        action_list_default = 'send_verification_code'
-    elif request_2fa_code_needed:
-        action_list_default = 'request_verification_code'
+        default_action = 'accept_terms_of_use'
+
+    elif was_auth_code_requested is False:
+        default_action = 'request_auth_code'
+    elif is_auth_code_needed or was_auth_code_requested:
+        default_action = 'send_auth_code'
     else:
-        action_list_default = 'goto_previous'
-
-
-    # Get the first acct (No Apple accts are set up or no Apple acct is selected)
-    # or get the acct that needs to be authenticated
-    # Requesting a new code will set the selected acct. Use it to deselect the acct
-    if reauth_username is not None and reauth_username != '':
-        self.apple_acct_reauth_username = reauth_username
-        self.conf_apple_acct, self.aa_idx = \
-                        config_file.conf_apple_acct(reauth_username)
-
-    elif (instr(str(self.apple_acct_items_by_username), 'AUTHENTICATION')
-            or instr(str(self.apple_acct_items_by_username), 'TERMS OF USE')):
-        usernames = [username
-                        for username, acct_info in self.apple_acct_items_by_username.items()
-                        if (instr(acct_info, 'AUTHENTICATION')
-                                or instr(acct_info, 'TERMS OF USE'))]
-        self.apple_acct_reauth_username = usernames[0]
-        self.conf_apple_acct, self.aa_idx = \
-                        config_file.conf_apple_acct(self.apple_acct_reauth_username)
-
-    elif (is_empty(self.apple_acct_items_by_username)
-            or is_empty(Gb.conf_apple_accounts)
-            or self.apple_acct_reauth_username not in self.apple_acct_items_by_username):
-        self.conf_apple_acct, self.aa_idx = \
-                        config_file.conf_apple_acct(0)
-        self.apple_acct_reauth_username = self.conf_apple_acct[CONF_USERNAME]
-
-
-    elif isnot_empty(self.conf_apple_acct):
-        self.apple_acct_reauth_username = self.conf_apple_acct[CONF_USERNAME]
-
-    else:
-        self.conf_apple_acct, self.aa_idx = config_file.conf_apple_acct(0)
-        self.apple_acct_reauth_username = self.conf_apple_acct[CONF_USERNAME]
-
-    # Set the default list from the username list or an error
-    default_acct_selected = ''
-    if self.apple_acct_reauth_username in Gb.AppleAcct_by_username:
-        default_acct_selected = self.apple_acct_items_by_username[self.apple_acct_reauth_username]
-        AppleAcct = Gb.AppleAcct_by_username.get(self.apple_acct_reauth_username)
-
-        if AppleAcct and AppleAcct.login_successful is False:
-            action_list_default = 'log_into_apple_acct'
+        default_action = 'goto_previous'
 
     # If No Apple accts are set up yet
-    elif is_empty(self.apple_acct_items_by_username):
+    if AppleAcct is None or is_empty(self.apple_acct_auth_items_by_username):
         default_acct_selected = 'No Apple Accounts have been set up'
-        self.apple_acct_items_by_username = {'.noacctssetup': default_acct_selected}
-        self.errors[CONF_USERNAME] = 'apple_acct_not_set_up'
-        action_list_default = 'goto_previous'
+        self.apple_acct_auth_items_by_username = {'.noacctssetup': default_acct_selected}
+        self.errors['base'] = 'apple_acct_not_set_up'
+        default_action = 'goto_previous'
         AppleAcct = None
 
     else:
-        default_acct_selected = list(self.apple_acct_items_by_username.values())[0]
-        action_list_default = 'goto_previous'
-        AppleAcct = self.AppleAcct or None
-
-    # _log(f'{AppleAcct=} {AppleAcct.fido2_key_names=}')
-    if Gb.fido2_security_keys_enabled is False:
-        self.reauth_form_fido2_key_names_list = [
-                        'Not Available > Security Key Authentication has not been implemented']
-    elif AppleAcct.fido2_key_names:
-        self.reauth_form_fido2_key_names_list = AppleAcct.fido2_key_names.copy()
-    else:
-        self.reauth_form_fido2_key_names_list = [
-                        'None or Expired > Refresh Security Key List if using Security Keys']
+        default_acct_selected = self.apple_acct_auth_items_by_username[reauth_username]
 
     schema = ({
         vol.Optional('account_selected',
                     default=default_acct_selected):
                     selector.SelectSelector(selector.SelectSelectorConfig(
-                        options=dict_value_to_list(self.apple_acct_items_by_username),
+                        options=dict_value_to_list(self.apple_acct_auth_items_by_username),
                         mode='dropdown')),
-            vol.Optional(CONF_VERIFICATION_CODE, default=' '):
+            vol.Optional(CONF_AUTH_CODE, default=' '):
                     selector.TextSelector(),
+            # vol.Optional('auth_method',
+            #         default=auth_methods[default_auth_method]):
+            #         selector.SelectSelector(selector.SelectSelectorConfig(
+            #             options=dict_value_to_list(auth_methods), mode='dropdown')),
     })
 
-    if Gb.fido2_security_keys_enabled:
-        schema.update({
-            vol.Required('fido2_key_name',
-                    default=self.reauth_form_fido2_key_names_list[0]):
-                    selector.SelectSelector(selector.SelectSelectorConfig(
-                        options=self.reauth_form_fido2_key_names_list, mode='dropdown')),
-        })
+    # if Gb.fido2_security_keys_enabled:
+    #     schema.update({
+    #         vol.Required('fido2_key_name',
+    #                 default=self.reauth_form_fido2_key_names_list[0]):
+    #                 selector.SelectSelector(selector.SelectSelectorConfig(
+    #                     options=self.reauth_form_fido2_key_names_list, mode='dropdown')),
+    #     })
 
     if terms_of_use_update_needed:
         schema.update({
@@ -577,7 +524,68 @@ def form_reauth(self, reauth_username=None):
 
     schema.update({
         vol.Optional('action_items',
-                    default=utils.action_default_text(action_list_default)):
+                    default=utils.default_action_text(default_action)):
+                    selector.SelectSelector(selector.SelectSelectorConfig(
+                        options=self.actions_list, mode='list')),
+        })
+
+    return vol.Schema(schema)
+
+
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+#            REAUTH CODE BY SIGNING INTO APPLE.COM
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+def form_reauth_code_from_applecom_login(self):
+    '''
+    Get an auth code by signing into your apple account. Then enter it and send to
+    Apple
+    '''
+    self.actions_list = REAUTH_CODE_FROM_APPLECOM_LOGIN.copy()
+    # default_action = 'reset_trust_token_return'
+    default_action = 'send_auth_code'
+
+    return vol.Schema({
+        vol.Optional(CONF_AUTH_CODE, default=' '):
+                    selector.TextSelector(),
+
+        vol.Required('action_items',
+                    default=utils.default_action_text(default_action)):
+                    selector.SelectSelector(selector.SelectSelectorConfig(
+                        options=self.actions_list, mode='list')),
+    })
+
+
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+#            REAUTH CHANGE AUTH METHOD
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+def form_reauth_change_auth_method(self, account_selected=None):
+    default_acct_selected = self.apple_acct_auth_items_by_username[account_selected]
+    self.actions_list = CHANGE_AUTH_METHOD.copy()
+    default_action = 'save'
+    _log(f'{account_selected=} {default_acct_selected=}')
+    _log(f'{self.AppleAcct=}')
+    _log(f'{self.username=} {self.AppleAcct.conf_apple_acct=}')
+
+    lists.build_aa_auth_methods_list(self, self.AppleAcct)
+
+
+    default_auth_method = self.AppleAcct.auth_method
+    if default_auth_method not in self.aa_auth_methods_by_auth_method:
+        default_auth_method = 'push'
+
+    schema = ({
+        vol.Optional('account_selected',
+                    default=default_acct_selected):
+                    selector.SelectSelector(selector.SelectSelectorConfig(
+                        options=[default_acct_selected],
+                        mode='dropdown')),
+        vol.Optional('auth_method',
+                    default=self.aa_auth_methods_by_auth_method[default_auth_method]):
+                    selector.SelectSelector(selector.SelectSelectorConfig(
+                        options=dict_value_to_list(self.aa_auth_methods_by_auth_method),
+                        mode='list')),
+        vol.Optional('action_items',
+                    default=utils.default_action_text(default_action)):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -589,21 +597,22 @@ def form_reauth(self, reauth_username=None):
 #            DEVICE LIST
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def form_device_list(self):
-    action_default = 'update_device'
+    default_action = 'update_device'
     self.actions_list = DEVICE_LIST_ACTIONS.copy()
 
     # Build list of all devices
-    self.device_items_list = [device_item for device_item in self.device_items_by_devicename.values()]
+    self.device_items_list = [device_item
+                        for device_item in self.device_items_by_devicename.values()]
 
     if is_empty(self.device_items_list):
         pass
     elif len(self.device_items_list) <= 6:
         self.device_items_displayed = self.device_items_list
     else:
-        _build_device_items_displayed_over_5(self)
+        _build_device_items_displayed_over_6(self)
     list_add(self.device_items_displayed, '➤ ADD A NEW DEVICE')
 
-    default_key  = self.dev_page_item[self.dev_page_no]
+    default_key  = self.dev_page_last_selected_devicename[self.dev_page_no]
     default_item = self.device_items_by_devicename.get(default_key)
     if default_item not in self.device_items_displayed:
         default_item = self.device_items_displayed[0]
@@ -614,32 +623,45 @@ def form_device_list(self):
                         selector.SelectSelector(selector.SelectSelectorConfig(
                             options=self.device_items_displayed, mode='list')),
             vol.Required('action_items',
-                    default=utils.action_default_text(action_default)):
+                    default=utils.default_action_text(default_action)):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
     })
 
 #................................................................................................
-def _build_device_items_displayed_over_5(self):
+def _build_device_items_displayed_over_6(self):
     '''
-    Build the display page and next page line for the Apple Accts list
-    when more than 5 apple accounts
+    Build the display page and next page line for the devicrs list
+    when more than 6 devices
     '''
-    # Build the list of apple accts to display on this page
-    list_from_idx = self.dev_page_no * 5
-    self.device_items_displayed = self.device_items_list[list_from_idx:list_from_idx+5]
+    # Build the list of devices to display on this page
+    if self.dev_page_no == 0:
+        display_from_idx, display_to_idx = [0, 6]
+        other_from_idx, other_to_idx     = [6, len(self.device_items_list)]
+    else:
+        display_from_idx, display_to_idx = [6, len(self.device_items_list)]
+        other_from_idx, other_to_idx     = [0, 6]
 
-    # Build the list of devices to display on the next page
-    list_from_idx = list_from_idx + 5
-    if list_from_idx >= len(self.device_items_list):
-        list_from_idx = 0
+    # Set displayed devicenames
+    self.device_items_displayed = self.device_items_list[display_from_idx:display_to_idx]
 
     # Extract fname (devicename) from the devices list (Gary (gary_iphone) → ...))
-    device_fnames = [device_item.split(RARROW)[0]
-                            for device_item in self.device_items_list]
-    device_fnames_next_page = (f"➤ OTHER DEVICES{RARROW}"
-                                f"{', '.join(device_fnames[list_from_idx:list_from_idx+5])}")
-    list_add(self.device_items_displayed, device_fnames_next_page)
+    device_fnames = []
+    for device_item in self.device_items_list:
+        monitor_inactive_symb = (MONITOR_SYMB if instr(device_item, MONITOR_SYMB) else
+                                INACTIVE_SYMB if instr(device_item, INACTIVE_SYMB) else
+                                '')
+
+        device_fname = f"{device_item.split(' (')[0]}{monitor_inactive_symb}"
+        list_add(device_fnames, device_fname)
+
+
+    other_item_fnames =(f"➤ OTHER DEVICES{RARROW}"
+                        f"{list_to_str(device_fnames[other_from_idx:other_to_idx])}")
+    # device_fnames = [device_item.split(' (')[0]
+    #                             f"{list_to_str(device_fnames[other_from_idx:other_to_idx])}")
+    # Set other devices item fnames (either the main page items (#1-#6) or the second page (#7 to the end))
+    list_add(self.device_items_displayed, other_item_fnames)
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #            ADD DEVICE
@@ -704,7 +726,7 @@ def form_add_device(self):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=dict_value_to_list(TRACKING_MODE_OPTIONS), mode='dropdown')),
         vol.Required('action_items',
-                default=utils.action_default_text('add_device')):
+                default=utils.default_action_text('add_device')):
                 selector.SelectSelector(selector.SelectSelectorConfig(
                     options=self.actions_list, mode='list')),
         })
@@ -794,7 +816,7 @@ def form_update_device(self):
     elif self.errors != {}:
         self.errors['base'] = 'unknown_value'
 
-    if utils.parm_or_device(self, CONF_TRACKING_MODE) == INACTIVE_DEVICE:
+    if utils.parm_or_device(self, CONF_TRACKING_MODE) == INACTIVE:
         self.errors[CONF_TRACKING_MODE] = 'inactive_device'
 
     log_zones_key_text = {'none': 'None'}
@@ -838,7 +860,7 @@ def form_update_device(self):
 
     schema.update({
         vol.Required('action_items',
-                default=utils.action_default_text('save')):
+                default=utils.default_action_text('save')):
                 selector.SelectSelector(selector.SelectSelectorConfig(
                     options=self.actions_list, mode='list')),
         })
@@ -887,7 +909,7 @@ def form_update_other_device_parameters(self):
                         options=dict_value_to_list(self.zone_name_key_text), mode='dropdown')),
 
         vol.Required('action_items',
-                    default=utils.action_default_text('save')):
+                    default=utils.default_action_text('save')):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -900,7 +922,7 @@ def form_update_other_device_parameters(self):
 def form_dashboard_builder(self):
     dbname = self.ui_selected_dbname
     self.actions_list = []
-    action_default = 'create_dashboard'
+    default_action = 'create_dashboard'
     self.actions_list.append(ACTION_LIST_OPTIONS['create_dashboard'])
     self.actions_list.append(ACTION_LIST_OPTIONS['cancel_goto_menu'])
 
@@ -934,7 +956,7 @@ def form_dashboard_builder(self):
                     cv.multi_select(six_item_dict(self.dbf_main_view_devices_key_text)),
 
         vol.Required('action_items',
-                    default=utils.action_default_text(action_default)):
+                    default=utils.default_action_text(default_action)):
                     selector.SelectSelector(
                         selector.SelectSelectorConfig(options=self.actions_list, mode='list')),
         })
@@ -945,7 +967,7 @@ def form_dashboard_builder(self):
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def form_tools(self):
     self.actions_list = TOOL_LIST_ITEMS.copy()
-    action_default = 'goto_menu'
+    default_action = 'goto_menu'
 
     lists.build_log_level_devices_list(self)
     if Gb.conf_general[CONF_LOG_LEVEL_DEVICES] != 'all':
@@ -965,21 +987,99 @@ def form_tools(self):
                     cv.multi_select(six_item_dict(self.log_level_devices_key_text)),
 
         vol.Required('action_items',
-                    default=utils.action_default_text(action_default)):
+                    default=utils.default_action_text(default_action)):
                     selector.SelectSelector(
                         selector.SelectSelectorConfig(options=self.actions_list, mode='list')),
         })
+
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+#           TOOLS ENTITY REGISTRY MAINTENANCE
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+def form_tools_entity_registry_cleanup(self, user_input=None):
+    self.actions_list = ACTIONS_REPAIR_ENTITY_ERRORS.copy()
+    self.actions_list_default = 'delete_device_sensors'
+    if self.tools_entity_reg_check_all:
+        list_del(self.actions_list, 'check_all')
+    else:
+        list_del(self.actions_list, 'check_none')
+    if self.tools_entity_reg_show_sensor_names_all:
+        list_del(self.actions_list, 'show_sensor_names_all')
+    else:
+        list_del(self.actions_list, 'show_sensor_names_some')
+
+    if user_input is None:
+        self.repair_entity_show_check_all = False
+        er_util.scan_entity_reg_for_icloud3_items()
+
+    # Build the base form_entities that will be displaed on the form
+    #   - form_entoties['deleted'] = keys to each device
+    selected_devicename_by_status = {}     # Divice display lines for each error type
+    checked_device_sensors        = {}     # Checked devices for each error type
+    for status, devicename_sensors in Gb.entity_reg_items_by_status.items():
+        checked_device_sensors[status] = []     # Checked devices for each error type
+        selected_devicename_by_status[status] = []
+        if is_empty(devicename_sensors):
+            continue
+
+        for devicename, device_sensors in devicename_sensors.items():
+            sensors = [sensor for sensor in device_sensors.keys()]
+            sensors_str = list_to_str(sensors)
+            if self.tools_entity_reg_show_sensor_names_all:
+                hdr_bar = f"{'_'*100}"
+            else:
+                hdr_bar = ''
+                if len(sensors_str) > 140-len(devicename):
+                    sensors_str = f"{sensors_str[0:(140-len(devicename))]}, {DOTS}"
+
+            if self.tools_entity_reg_check_all:
+                list_add(checked_device_sensors[status], devicename)
+
+
+            if (sensors_str.startswith('.dr:')
+                    and len(device_sensors) == 1):
+                device_or_sensor = 'Device'
+            else:
+                device_or_sensor = 'Sensors'
+
+            devicename_msg =  ( f"{hdr_bar} {devicename.upper()} > "
+                                f"{len(device_sensors)} {device_or_sensor} ({sensors_str})")
+
+            item = {'value': devicename, 'label': devicename_msg}
+            selected_devicename_by_status[status].append(item)
+
+    self.tools_entity_reg_check_all = None
+
+    schema = {}
+    for status in er_util.ENTITY_STATUS_TYPES:
+        if status not in selected_devicename_by_status:
+            continue
+
+        schema.update({
+            vol.Required(status,
+                    default=checked_device_sensors[status]):
+                    selector.SelectSelector(selector.SelectSelectorConfig(
+                        options=selected_devicename_by_status[status],
+                        multiple=True,
+                        mode='list'))})
+
+    schema.update({
+        vol.Required('action_items',
+                default=self.actions_list_default):
+                selector.SelectSelector(selector.SelectSelectorConfig(
+                    options=utils.actions_list(self), mode='list')),})
+
+    return vol.Schema(schema)
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #            ACTIONS
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def form_actions(self):
     debug_OPTIONS = ACTIONS_DEBUG_ITEMS.copy()
-    if Gb.log_debug_flag:
+    if Gb.is_log_level_debug:
         debug_OPTIONS.pop('debug_start')
     else:
         debug_OPTIONS.pop('debug_stop')
-    if Gb.log_rawdata_flag:
+    if Gb.is_log_level_rawdata:
         debug_OPTIONS.pop('rawdata_start')
     else:
         debug_OPTIONS.pop('rawdata_stop')
@@ -1055,7 +1155,7 @@ def form_tracking_parameters(self):
                         options=dict_value_to_list(TRAVEL_TIME_INTERVAL_MULTIPLIER_KEY_TEXT), mode='dropdown')),
 
         vol.Required('action_items',
-                    default=utils.action_default_text('save')):
+                    default=utils.default_action_text('save')):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -1110,7 +1210,7 @@ def form_format_settings(self):
                     selector.TextSelector(),
 
         vol.Required('action_items',
-                    default=utils.action_default_text('save')):
+                    default=utils.default_action_text('save')):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -1131,7 +1231,7 @@ def form_change_device_order(self):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.cdo_devicenames, mode='list')),
         vol.Required('action_items',
-                    default=utils.action_default_text(self.actions_list_default)):
+                    default=utils.default_action_text(self.actions_list_default)):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -1208,7 +1308,7 @@ def form_picture_dir_filter(self):
 
     schema.update({
         vol.Required('action_items',
-                default=utils.action_default_text('save')):
+                default=utils.default_action_text('save')):
                 selector.SelectSelector(selector.SelectSelectorConfig(
                     options=self.actions_list, mode='list')),})
 
@@ -1239,7 +1339,7 @@ def form_away_time_zone(self):
                         options=dict_value_to_list(self.away_time_zone_hours_key_text), mode='dropdown')),
 
         vol.Required('action_items',
-                    default=utils.action_default_text('save')):
+                    default=utils.default_action_text('save')):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -1275,7 +1375,7 @@ def form_display_text_as(self):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=dta_page_display_list)),
         vol.Required('action_items',
-                    default=utils.action_default_text('select_text_as')):
+                    default=utils.default_action_text('select_text_as')):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -1304,7 +1404,7 @@ def form_display_text_as_update(self):
                     default=text_to):
                     selector.TextSelector(),
         vol.Required('action_items',
-                    default=utils.action_default_text('save')):
+                    default=utils.default_action_text('save')):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -1342,7 +1442,7 @@ def form_inzone_intervals(self):
                         min=5, max=480, step=5, unit_of_measurement='minutes')),
 
         vol.Optional('action_items',
-                    default=utils.action_default_text('save')):
+                    default=utils.default_action_text('save')):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -1389,7 +1489,7 @@ def form_waze_main(self):
                         options=dict_value_to_list(WAZE_HISTORY_TRACK_DIRECTION_OPTIONS), mode='dropdown')),
 
         vol.Required('action_items',
-                    default=utils.action_default_text('save')):
+                    default=utils.default_action_text('save')):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -1446,7 +1546,7 @@ def form_special_zones(self):
                         selector.BooleanSelector(),
 
             vol.Required('action_items',
-                        default=utils.action_default_text('save')):
+                        default=utils.default_action_text('save')):
                         selector.SelectSelector(selector.SelectSelectorConfig(
                             options=self.actions_list, mode='list')),
             })
@@ -1457,13 +1557,12 @@ def form_special_zones(self):
 #            SENSORS
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def form_sensors(self, user_input=None):
-    self.actions_list = []
-    self.actions_list.append(ACTION_LIST_OPTIONS['exclude_sensors'])
-    self.actions_list.append(ACTION_LIST_OPTIONS['set_to_default_sensors'])
-    self.actions_list.extend(ACTION_LIST_ITEMS_BASE)
+    self.actions_list = SENSORS_ACTIONS.copy()
+
 
     self.set_default_sensors(Gb.conf_sensors)
-    sensors = user_input if user_input is not None else Gb.conf_sensors
+    sensors = user_input if user_input is not None else Gb.conf_sensors.copy()
+    sensors[CONF_EXCLUDED_SENSORS] = self.excluded_sensors
 
     if HOME_DISTANCE not in Gb.conf_sensors[CONF_SENSORS_TRACKING_DISTANCE]:
         Gb.conf_sensors[CONF_SENSORS_TRACKING_DISTANCE].append(HOME_DISTANCE)
@@ -1497,12 +1596,13 @@ def form_sensors(self, user_input=None):
                     default=sensors[CONF_SENSORS_TRACKING_OTHER]):
                     cv.multi_select(CONF_SENSORS_TRACKING_OTHER_KEY_TEXT),
         vol.Optional(CONF_EXCLUDED_SENSORS,
-                    default=sensors[CONF_EXCLUDED_SENSORS]):
+                    default=self.excluded_sensors):
                     selector.SelectSelector(selector.SelectSelectorConfig(
-                        options=Gb.conf_sensors[CONF_EXCLUDED_SENSORS], mode='list', multiple=True)),
+                        options=self.excluded_sensors,
+                        mode='list', multiple=True)),
 
         vol.Required('action_items',
-                    default=utils.action_default_text('save')):
+                    default=utils.default_action_text('save_stay')):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -1514,10 +1614,12 @@ def form_exclude_sensors(self):
     self.actions_list = SENSORS_EXCLUDE_ACTIONS_.copy()
 
     if self.sensors_list_filter == '?':
+        default_action_item = 'filter_sensors'
         filtered_sensors_fname_list = [f"None Displayed - Enter a Filter or `all` \
                         to display all sensors ({len(self.sensors_fname_list)} Sensors)"]
         filtered_sensors_list_default = []
     else:
+        default_action_item = 'update_sensor_list'
         self.sensors_list_filter.replace('?', '')
         if self.sensors_list_filter.lower() == 'all':
             filtered_sensors_fname_list = [sensor_fname
@@ -1535,6 +1637,7 @@ def form_exclude_sensors(self):
 
         filtered_sensors_fname_list.sort()
         if filtered_sensors_fname_list == []:
+            default_action_item = 'filter_sensors'
             filtered_sensors_fname_list = [f"No Sensors found containing \
                                                 '{self.sensors_list_filter}'"]
 
@@ -1552,7 +1655,7 @@ def form_exclude_sensors(self):
                         options=filtered_sensors_fname_list, mode='list', multiple=True)),
 
         vol.Required('action_items',
-                    default=utils.action_default_text('filter_sensors')):
+                    default=utils.default_action_text(default_action_item)):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -1567,9 +1670,14 @@ def form_restart_ha(self):
     self.actions_list.append(ACTION_LIST_OPTIONS['restart_ha'])
     # self.actions_list.append(ACTION_LIST_OPTIONS['restart_icloud3'])
     self.actions_list.append(ACTION_LIST_OPTIONS['goto_menu'])
-    self.actions_list.append(ACTION_LIST_OPTIONS['exit'])
+    if self.create_device_tracker_sensor_enities_on_exit:
+        self.actions_list.append(ACTION_LIST_OPTIONS['exit_add_dev_trkrs_sensors'])
+    elif self.rebuild_ic3db_dashboards:
+        self.actions_list.append(ACTION_LIST_OPTIONS['exit_update_dashboards'])
+    else:
+        self.actions_list.append(ACTION_LIST_OPTIONS['exit'])
 
-    actions_list_default = utils.action_default_text('restart_ha')
+    actions_list_default = utils.default_action_text('restart_ha')
 
     return vol.Schema({
         vol.Required('action_items',
@@ -1584,11 +1692,11 @@ def form_restart_ha(self):
 def form_restart_ha_reload_icloud3(self):
 
     self.actions_list = []
+    self.actions_list.append(ACTION_LIST_OPTIONS['reload_icloud3'])
     self.actions_list.append(ACTION_LIST_OPTIONS['restart_ha'])
-    # self.actions_list.append(ACTION_LIST_OPTIONS['reload_icloud3'])
     self.actions_list.append(ACTION_LIST_OPTIONS['exit'])
 
-    actions_list_default = utils.action_default_text('exit')
+    actions_list_default = utils.default_action_text('exit')
 
     return vol.Schema({
         vol.Required('action_items',

@@ -25,7 +25,7 @@
       state: "{{ states('sensor.currentwaterconsumption') | float(0) | round(2) }}"
       unit_of_measurement: L
       device_class: water
-      state_class: total_increasing
+      state_class: total
       icon: mdi:water
       availability: >
         {{ states('sensor.currentwaterconsumption') not in ['unknown','unavailable',''] }}

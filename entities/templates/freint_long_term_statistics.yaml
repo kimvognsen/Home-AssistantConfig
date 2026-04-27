@@ -49,30 +49,31 @@
       unique_id: frient_long_term_statistics
       unit_of_measurement: "kWh"
       device_class: energy
-      state_class: total_increasing
+      state_class: total
       availability: >
         {{ states('sensor.energiforbrug_total') not in ['unknown','unavailable','none',''] }}
       state: >
         {{ states('sensor.energiforbrug_total') | float }}
 
     # Frient øjeblikseffekt (fra attribute 'power' på energiforbrug_total)
+    # NB, tjek om det er samme som ovenover
     - name: "Frient Total Power Real Time"
       unique_id: sensor.frient_energiforbrug_total_power
       unit_of_measurement: "W"
       device_class: power
       state_class: measurement
       availability: >
-        {{ states('sensor.energiforbrug_total') not in [none, 'unknown', 'unavailable'] }}
+        {{ states('sensor.frient_energiforbrug_total_power') not in [none, 'unknown', 'unavailable'] }}
       state: >
-        {{ states('sensor.energiforbrug_total') | float(0) }}
+        {{ states('sensor.frient_energiforbrug_total_power') | float(0) }}
 
     # Alias af total (hvis du ønsker denne separat)
     - name: "Frient Total Consumption"
       unique_id: frient_total_consumption
       unit_of_measurement: "kWh"
       device_class: energy
-      state_class: total_increasing
+      state_class: total
       availability: >
-        {{ states('sensor.energiforbrug_total') not in ['unknown','unavailable','none',''] }}
+        {{ states('sensor.frient_energiforbrug_total_power') not in ['unknown','unavailable','none',''] }}
       state: >
-        {{ states('sensor.energiforbrug_total') | float }}
+        {{ states('sensor.frient_energiforbrug_total_power') | float }}

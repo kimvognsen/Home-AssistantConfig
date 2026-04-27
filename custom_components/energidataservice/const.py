@@ -27,6 +27,9 @@ ATTR_RAW_TOMORROW = "raw_tomorrow"
 ATTR_TODAY_MIN = "today_min"
 ATTR_TODAY_MAX = "today_max"
 ATTR_TODAY_MEAN = "today_mean"
+ATTR_TODAY_REMAINING_MIN = "today_remaining_min"
+ATTR_TODAY_REMAINING_MAX = "today_remaining_max"
+ATTR_TODAY_REMAINING_MEAN = "today_remaining_mean"
 ATTR_TOMORROW_MIN = "tomorrow_min"
 ATTR_TOMORROW_MAX = "tomorrow_max"
 ATTR_TOMORROW_MEAN = "tomorrow_mean"
@@ -37,6 +40,8 @@ ATTR_NET_OPERATOR = "net_operator"
 ATTR_TARIFFS = "tariffs"
 ATTR_RESOLUTION_60MIN = True
 ATTR_RESOLUTION_15MIN = False
+
+CARNOT_URL = "https://www.carnot.dk"
 
 CONF_AREA = "area"
 CONF_COUNTRY = "country"
@@ -58,7 +63,14 @@ CONF_RESOLUTION = "resolution"
 DATA = "data"
 DEFAULT_NAME = "Energidataservice"
 DEFAULT_TEMPLATE = "{{0.0|float}}"
+
+DK_NETOPERATORS = (
+    "https://greenpowerdenmark.dk/vejledning-teknik/nettilslutning/find-netselskab"
+)
+
 DOMAIN = "energidataservice"
+
+GITHUB_URL = "https://github.com/mtrab/energidataservice"
 
 INTERVAL = namedtuple("Interval", "price time")
 CO2INTERVAL = namedtuple("CO2Interval", "value time")

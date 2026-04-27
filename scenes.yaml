@@ -182,26 +182,41 @@
   name: Normal lys i Hall
   entities:
     light.bordlampe_i_hall:
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
       supported_color_modes:
       - brightness
-      friendly_name: Bordlampe i Hall
-      supported_features: 40
-      is_deconz_group: false
+      effect:
       color_mode: brightness
       brightness: 156
+      friendly_name: Bordlampe i Hall
+      supported_features: 44
       state: 'on'
   icon: mdi:lamp
+  metadata: {}
 - id: '1623234385778'
   name: 'Dæmpet lys i Hall '
   entities:
     light.bordlampe_i_hall:
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
       supported_color_modes:
       - brightness
-      friendly_name: Bordlampe i Hall
-      supported_features: 40
-      is_deconz_group: false
+      effect:
       color_mode: brightness
       brightness: 5
+      friendly_name: Bordlampe i Hall
+      supported_features: 44
       state: 'on'
   icon: mdi:weather-night
   metadata: {}

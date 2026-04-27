@@ -5,6 +5,7 @@ products:
     model: Enviroflo
 entities:
   - entity: water_heater
+    translation_only_key: hot_water
     dps:
       - id: 1
         type: boolean
@@ -64,9 +65,8 @@ entities:
         type: boolean
         name: lock
   - entity: text
-    name: Schedule
+    translation_key: schedule
     category: config
-    icon: "mdi:calendar-clock"
     hidden: true
     dps:
       - id: 15
@@ -88,9 +88,8 @@ entities:
         type: bitfield
         name: fault_code
   - entity: sensor
-    name: Ambient temperature
+    translation_key: ambient_temperature
     class: temperature
-    category: diagnostic
     dps:
       - id: 101
         type: integer

@@ -3,6 +3,12 @@ products:
   - id: tebc75erlgslgpn5
     manufacturer: Feit
     name: Dimmer
+  - id: wfdsj5zxjwmcqezm
+    manufacturer: Moes
+    model: WS-SY-EUD-WH-MS
+  - id: aahxaxzdyuriashj
+    manufacturer: Treatlife
+    name: Smart Dimmer Switch
 entities:
   - entity: light
     dps:

@@ -1,257 +1,428 @@
 {
-    "config": {
-        "abort": {
-            "already_exists": "Det här användarkontot har redan konfigurerats"
-        },
-        "error": {
-            "cannot_connect": "Misslyckades med att ansluta",
-            "invalid_auth": "Fel vid autentisering",
-            "too_many_requests": "För många API-förfrågningar. Försök igen om 24 timmar",
-            "unknown": "Oväntat fel"
-        },
-        "step": {
-            "user": {
-                "data": {
-                    "email": "E-post",
-                    "password": "Lösenord",
-                    "type": "Modell"
-                },
-                "title": "Anslut till ditt Landroid Cloud-konto"
-            }
+  "config": {
+    "step": {
+      "user": {
+        "title": "Anslut till molntjänster",
+        "description": "Ange dina molnuppgifter och välj din molnleverantör.",
+        "data": {
+          "email": "E-post",
+          "password": "Lösenord",
+          "cloud": "Molnleverantör"
         }
+      }
     },
-    "entity": {
-        "lawn_mower": {
-            "landroid_cloud": {
-                "state": {
-                    "edgecut": "Kantklippning",
-                    "escaped_digital_fence": "Utanför digital gräns",
-                    "idle": "Inaktiv",
-                    "initializing": "Initierar",
-                    "locked": "Låst",
-                    "mowing": "Klipper",
-                    "offline": "Offline",
-                    "rain_delay": "Regnfördröjning",
-                    "returning": "Återvänder hem",
-                    "searching_zone": "Söker efter zon",
-                    "starting": "Startar",
-                    "unknown": "Okänt",
-                    "zoning": "Zonträning"
-                }
-            }
-        },
-        "sensor": {
-            "landroid_cloud_error": {
-                "state": {
-                    "battery_low": "Låg batterinivå",
-                    "battery_temperature_error": "Fel på batteriets temperatur",
-                    "battery_trunk_open_timeout": "Batterilucka öppen tidsgräns",
-                    "blade_height_adjustment_blocked": "Justering av bladhöjd blockerad",
-                    "blade_motor_blocked": "Bladmotorn är blockerad",
-                    "camera_error": "Fel på kameran",
-                    "charge_error": "Fel vid laddning",
-                    "charging_station_docking_error": "Fel vid dockning av laddstation",
-                    "close_door_to_go_home": "Stäng dörren för att köra hem",
-                    "close_door_to_mow": "Stäng dörren för att klippa",
-                    "excessive_slope": "För stor lutning upptäckt",
-                    "hbi_error": "HBI fel",
-                    "headlight_error": "Fel på strålkastare",
-                    "insufficient_sensor_data": "Otillräcklig sensordata",
-                    "lifted": "Gräsklipparen har lyfts",
-                    "locked": "Gräsklipparen är låst",
-                    "map_error": "Fel på kartan",
-                    "mapping_exploration_failed": "Kartläggning misslyckades",
-                    "mapping_exploration_required": "Kartläggning krävs",
-                    "missing_charging_station": "Saknar laddstation",
-                    "no_error": "Inget fel",
-                    "ota_error": "Fel på trådlös uppdatering",
-                    "outside_wire": "Utanför begränsningskabeln",
-                    "rain_delay": "Regnfördröjning aktiv",
-                    "reverse_wire": "Begränsningskabeln är felvänd",
-                    "rfid_reader_error": "RFID läsfel",
-                    "timeout_finding_home": "Kunde inte återvända hem inom tidsgränsen",
-                    "training_start_disallowed": "Ej möjligt att starta träning",
-                    "trapped": "Instängd",
-                    "trapped_timeout": "Instängd längre än tidsgränsen",
-                    "unknown": "Okänt",
-                    "unreachable_charging_station": "Laddstation som inte kan nås",
-                    "unreachable_zone": "Zon inte tillgänglig",
-                    "upside_down": "Gräsklipparen är upp och ner",
-                    "wheel_motor_blocked": "Hjulmotorn är blockerad",
-                    "wire_missing": "Begränsningskabel saknas",
-                    "wire_sync": "Trådsynkronisering"
-                }
-            }
-        }
+    "error": {
+      "cannot_connect": "Misslyckades med att ansluta",
+      "invalid_auth": "Fel vid autentisering",
+      "too_many_requests": "För många API-förfrågningar. Försök igen om 24 timmar",
+      "api_error": "Moln-API:t avvisade begäran",
+      "timeout": "Tidsgräns för anslutning överskreds",
+      "unknown": "Oväntat fel"
     },
-    "services": {
-        "config": {
-            "description": "Ställ enhets inställning",
-            "fields": {
-                "multizone_distances": {
-                    "description": "Ställ multizone avstånd i meter. 0=Av. Fortmat: 15, 80, 120, 155",
-                    "name": "Multi zon avstånd"
-                },
-                "multizone_probabilities": {
-                    "description": "Ställ multizon sannolikhets upställning. Format: 50, 10, 20, 20",
-                    "name": "Multizon sannolikheter"
-                },
-                "raindelay": {
-                    "description": "Ställ in regnfördröjning. Tid i minuter från 0 till 300. 0 = Inaktiverad",
-                    "name": "Regnfördröjning"
-                },
-                "timeextension": {
-                    "description": "Ställ in förlängning av arbetstiden. Förlängning i % från -100 till 100",
-                    "name": "Förlängning av arbetstiden."
-                }
-            },
-            "name": "Ställ zon"
-        },
-        "edgecut": {
-            "description": "Starta kantklippning (om det stöds)",
-            "name": "Kantklippning"
-        },
-        "ots": {
-            "description": "Starta en gångs schema ( Om stöttad )",
-            "fields": {
-                "boundary": {
-                    "description": "Klipp gränsen",
-                    "name": "Gräns"
-                },
-                "runtime": {
-                    "description": "Körtid i minuter innan återvänder till laddstationen",
-                    "name": "Kör tid"
-                }
-            },
-            "name": "Engångsschema"
-        },
-        "restart": {
-            "description": "Startar om enheten",
-            "name": "Starta om enheten"
-        },
-        "schedule": {
-            "description": "Ställ eller ändra schema för klipparen",
-            "fields": {
-                "friday_boundary": {
-                    "description": "Ska vi börja detta schema med att skära gränsen (kant/gränssnitt)?",
-                    "name": "Fredags gräns"
-                },
-                "friday_end": {
-                    "description": "När ska schemat sluta på fredagar?",
-                    "name": "Fredag, Slut"
-                },
-                "friday_start": {
-                    "description": "Starttid för fredagar",
-                    "name": "Fredag, Start"
-                },
-                "monday_boundary": {
-                    "description": "Ska vi börja detta schema genom att skära gränsen (kant-/gränssnitt)?",
-                    "name": "Måndag, Gräns"
-                },
-                "monday_end": {
-                    "description": "När ska schemat sluta på måndagar?",
-                    "name": "Måndag, Slut"
-                },
-                "monday_start": {
-                    "description": "Starttid för måndagar",
-                    "name": "Måndag, Start"
-                },
-                "saturday_boundary": {
-                    "description": "Ska vi starta schemat med att klippa gränsen?",
-                    "name": "Lördags, Gräns"
-                },
-                "saturday_end": {
-                    "description": "När ska schemat sluta på Lördagar?",
-                    "name": "Lördags, Slut"
-                },
-                "saturday_start": {
-                    "description": "Starttid för Lördagar",
-                    "name": "Lördag, Start"
-                },
-                "sunday_boundary": {
-                    "description": "Ska vi starta schemat med att klippa gränsen?",
-                    "name": "Söndags gräns"
-                },
-                "sunday_end": {
-                    "description": "När ska schemat sluta på söndagar?",
-                    "name": "Söndag, Slut"
-                },
-                "sunday_start": {
-                    "description": "Starttid för Söndagar",
-                    "name": "Söndag, Start"
-                },
-                "thursday_boundary": {
-                    "description": "Ska vi börja detta schema med att skära gränsen (kant/gränssnitt)?",
-                    "name": "Torsdag, Gräns"
-                },
-                "thursday_end": {
-                    "description": "När ska schemat sluta på torsdagar?",
-                    "name": "Torsdag, Slut"
-                },
-                "thursday_start": {
-                    "description": "Starttid för torsdagar",
-                    "name": "Torsdag, Start"
-                },
-                "tuesday_boundary": {
-                    "description": "Ska vi börja detta schema genom att skära gränsen (kant-/gränssnitt)?",
-                    "name": "Tisdag, Gräns"
-                },
-                "tuesday_end": {
-                    "description": "När ska schemat sluta på tisdagar?",
-                    "name": "Tisdag, Slut"
-                },
-                "tuesday_start": {
-                    "description": "Starttid för tisdagar",
-                    "name": "Tisdag, Start"
-                },
-                "type": {
-                    "description": "Ändra primär eller sekundär schema?",
-                    "name": "Schematyp"
-                },
-                "wednesday_boundary": {
-                    "description": "Ska vi börja detta schema genom att skära gränsen (kant-/gränssnitt)?",
-                    "name": "Onsdag, Gräns"
-                },
-                "wednesday_end": {
-                    "description": "När ska schemat sluta på onsdagar?",
-                    "name": "Onsdag, Slut"
-                },
-                "wednesday_start": {
-                    "description": "Starttid för onsdagar",
-                    "name": "Onsdag, Start"
-                }
-            },
-            "name": "Ställ eller uppdatera schema"
-        },
-        "send_raw": {
-            "description": "Skicka ett JSON kommando till enheten",
-            "fields": {
-                "json": {
-                    "description": "Skicka data, Korrekt JSON format",
-                    "name": "JSON information"
-                }
-            },
-            "name": "Skicka RAW kommando"
-        },
-        "setzone": {
-            "description": "Ställ vilken zon som ska bli klippt härnäst",
-            "fields": {
-                "zone": {
-                    "description": "Sätt zon nummer, från 0 till 3, som ska bli klippt härnäst",
-                    "name": "Zon"
-                }
-            },
-            "name": "Sätt zon"
-        },
-        "torque": {
-            "description": "Ställ in hjulens vridmoment (om det stöds)",
-            "fields": {
-                "torque": {
-                    "description": "Ställ in hjulens vridmoment. Från -50 % till 50 %",
-                    "name": "Hjulens vridmoment"
-                }
-            },
-            "name": "Vridmoment"
-        }
+    "abort": {
+      "already_exists": "Det här användarkontot har redan konfigurerats",
+      "already_in_progress": "Konfigurationsflödet pågår redan"
     }
+  },
+  "selector": {
+    "cloud": {
+      "options": {
+        "worx": "Worx",
+        "kress": "Kress",
+        "landxcape": "LandXcape"
+      }
+    },
+    "days_of_week": {
+      "options": {
+        "monday": "Måndag",
+        "tuesday": "Tisdag",
+        "wednesday": "Onsdag",
+        "thursday": "Torsdag",
+        "friday": "Fredag",
+        "saturday": "Lördag",
+        "sunday": "Söndag"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Landroid Cloud-alternativ",
+        "data": {
+          "command_timeout": "Timeout för kommando (sekunder)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {
+        "name": "Batteri"
+      },
+      "status": {
+        "name": "Status"
+      },
+      "error": {
+        "name": "Fel",
+        "state": {
+          "unknown": "Okänt",
+          "no_error": "Inget fel",
+          "trapped": "Instängd",
+          "lifted": "Gräsklipparen har lyfts",
+          "wire_missing": "Begränsningskabel saknas",
+          "outside_wire": "Utanför begränsningskabeln",
+          "rain_delay": "Regnfördröjning aktiv",
+          "close_door_to_mow": "Stäng dörren för att klippa",
+          "close_door_to_go_home": "Stäng dörren för att köra hem",
+          "blade_motor_blocked": "Bladmotorn är blockerad",
+          "wheel_motor_blocked": "Hjulmotorn är blockerad",
+          "trapped_timeout": "Instängd längre än tidsgränsen",
+          "upside_down": "Gräsklipparen är upp och ner",
+          "battery_low": "Låg batterinivå",
+          "reverse_wire": "Begränsningskabeln är felvänd",
+          "charge_error": "Fel vid laddning",
+          "timeout_finding_home": "Kunde inte återvända hem inom tidsgränsen",
+          "locked": "Gräsklipparen är låst",
+          "battery_temperature_error": "Fel på batteriets temperatur",
+          "battery_trunk_open_timeout": "Batterilucka öppen tidsgräns",
+          "wire_sync": "Trådsynkronisering",
+          "charging_station_docking_error": "Fel vid dockning av laddstation",
+          "hbi_error": "HBI fel",
+          "ota_error": "Fel på trådlös uppdatering",
+          "map_error": "Fel på kartan",
+          "excessive_slope": "För stor lutning upptäckt",
+          "unreachable_zone": "Zon inte tillgänglig",
+          "unreachable_charging_station": "Laddstation som inte kan nås",
+          "insufficient_sensor_data": "Otillräcklig sensordata",
+          "training_start_disallowed": "Ej möjligt att starta träning",
+          "camera_error": "Fel på kameran",
+          "mapping_exploration_required": "Kartläggning krävs",
+          "mapping_exploration_failed": "Kartläggning misslyckades",
+          "rfid_reader_error": "RFID läsfel",
+          "headlight_error": "Fel på strålkastare",
+          "missing_charging_station": "Saknar laddstation",
+          "blade_height_adjustment_blocked": "Justering av bladhöjd blockerad"
+        }
+      },
+      "rssi": {
+        "name": "Signalstyrka"
+      },
+      "daily_progress": {
+        "name": "Daglig framdrift"
+      },
+      "next_schedule": {
+        "name": "Nästa schema"
+      },
+      "rain_delay_remaining": {
+        "name": "Återstående regnfördröjning"
+      },
+      "last_update": {
+        "name": "Senaste uppdatering"
+      },
+      "battery_charge_cycles_total": {
+        "name": "Totalt antal batteriladdningscykler"
+      },
+      "battery_charge_cycles_current": {
+        "name": "Batteriladdningscykler sedan återställning"
+      },
+      "battery_temperature": {
+        "name": "Batteritemperatur"
+      },
+      "battery_voltage": {
+        "name": "Batterispänning"
+      },
+      "blade_runtime_total": {
+        "name": "Total knivdrifttid"
+      },
+      "blade_runtime_current": {
+        "name": "Knivdrifttid sedan återställning"
+      },
+      "blade_runtime_reset_at": {
+        "name": "Knivdrifttid vid senaste återställning"
+      },
+      "blade_runtime_reset_time": {
+        "name": "Tidpunkt för återställning av knivdrifttid"
+      },
+      "distance_driven_total": {
+        "name": "Total körd sträcka"
+      },
+      "mower_runtime_total": {
+        "name": "Total drifttid för klipparen"
+      },
+      "pitch": {
+        "name": "Pitch"
+      },
+      "roll": {
+        "name": "Roll"
+      },
+      "yaw": {
+        "name": "Yaw"
+      },
+      "auto_schedule_nutrition": {
+        "name": "Auto schedule: Nutrition"
+      },
+      "auto_schedule_exclusion_schedules": {
+        "name": "Auto schedule: Exclusion schedules"
+      }
+    },
+    "binary_sensor": {
+      "rain_sensor": {
+        "name": "Regnsensor"
+      },
+      "charging": {
+        "name": "Laddar"
+      }
+    },
+    "switch": {
+      "lock": {
+        "name": "Lås"
+      },
+      "off_limits": {
+        "name": "Off Limits"
+      },
+      "off_limits_shortcut": {
+        "name": "Off Limits-genvägar"
+      },
+      "acs": {
+        "name": "ACS"
+      },
+      "auto_schedule": {
+        "name": "Auto schedule"
+      },
+      "firmware_auto_update": {
+        "name": "Automatisk firmwareuppdatering"
+      },
+      "auto_schedule_irrigation": {
+        "name": "Auto schedule: Irrigation"
+      },
+      "auto_schedule_exclude_nights": {
+        "name": "Auto schedule: Exclude nights"
+      },
+      "party_mode": {
+        "name": "Pausläge"
+      }
+    },
+    "button": {
+      "edge_cut": {
+        "name": "Kantklippning"
+      },
+      "reset_blade_time": {
+        "name": "Återställ knivdrifttid"
+      },
+      "reset_battery_cycles": {
+        "name": "Återställ battericykler"
+      }
+    },
+    "number": {
+      "rain_delay": {
+        "name": "Regnfördröjning"
+      },
+      "cutting_height": {
+        "name": "Klipphöjd"
+      },
+      "time_extension": {
+        "name": "Tidsförlängning"
+      },
+      "torque": {
+        "name": "Vridmoment"
+      },
+      "lawn_size": {
+        "name": "Lawn size"
+      },
+      "lawn_perimeter": {
+        "name": "Lawn perimeter"
+      }
+    },
+    "select": {
+      "zone": {
+        "name": "Zon"
+      },
+      "auto_schedule_boost": {
+        "name": "Auto schedule: Boost",
+        "state": {
+          "0": "0",
+          "1": "1",
+          "2": "2"
+        }
+      },
+      "auto_schedule_grass_type": {
+        "name": "Auto schedule: Grass type",
+        "state": {
+          "mixed_species": "Mixed species",
+          "festuca_arundinacea": "Tall fescue",
+          "lolium_perenne": "Perennial ryegrass",
+          "poa_pratensis": "Kentucky bluegrass",
+          "festuca_rubra": "Red fescue",
+          "agrostis_stolonifera": "Creeping bentgrass"
+        }
+      },
+      "auto_schedule_soil_type": {
+        "name": "Auto schedule: Soil type",
+        "state": {
+          "clay": "Clay",
+          "silt": "Silt",
+          "sand": "Sand",
+          "ignore": "Unknown"
+        }
+      }
+    },
+    "update": {
+      "firmware": {
+        "name": "Firmware"
+      }
+    },
+    "lawn_mower": {
+      "mower": {
+        "state": {
+          "edgecut": "Kantklippning",
+          "escaped_digital_fence": "Utanför det digitala staketet",
+          "idle": "Inaktiv",
+          "searching_zone": "Söker efter zon",
+          "starting": "Startar",
+          "zoning": "Zonträning",
+          "rain_delayed": "Regnfördröjning"
+        }
+      }
+    }
+  },
+  "device_automation": {
+    "action_type": {
+      "start_mowing": "Låt {entity_name} börja klippa",
+      "pause": "Pausa {entity_name}",
+      "dock": "Låt {entity_name} köra tillbaka till laddstationen"
+    },
+    "condition_type": {
+      "is_mowing": "{entity_name} klipper",
+      "is_docked": "{entity_name} står i laddstationen",
+      "has_error": "{entity_name} har ett fel",
+      "is_returning": "{entity_name} är på väg tillbaka till laddstationen",
+      "is_edgecut": "{entity_name} utför kantklippning",
+      "is_starting": "{entity_name} startar",
+      "is_zoning": "{entity_name} tränar en zon",
+      "is_searching_zone": "{entity_name} söker efter en zon",
+      "is_idle": "{entity_name} är inaktiv",
+      "is_escaped_digital_fence": "{entity_name} är utanför det digitala staketet",
+      "is_rain_delayed": "{entity_name} är i regnfördröjning"
+    },
+    "trigger_type": {
+      "mowing": "{entity_name} började klippa",
+      "docked": "{entity_name} körde in i laddstationen",
+      "error": "{entity_name} gick in i felläge",
+      "returning": "{entity_name} började köra tillbaka till laddstationen",
+      "edgecut": "{entity_name} började med kantklippning",
+      "starting": "{entity_name} började starta",
+      "zoning": "{entity_name} började zonträningen",
+      "searching_zone": "{entity_name} började söka efter en zon",
+      "idle": "{entity_name} blev inaktiv",
+      "escaped_digital_fence": "{entity_name} kom utanför det digitala staketet",
+      "rain_delayed": "{entity_name} gick in i regnfördröjning"
+    },
+    "extra_fields": {
+      "for": "[%key:common::device_automation::extra_fields::for%]"
+    }
+  },
+  "services": {
+    "set_nutrition": {
+      "name": "Set nutrition",
+      "description": "Set auto-schedule nutrition values.",
+      "fields": {
+        "n": {
+          "name": "Nitrogen (N)",
+          "description": "Nitrogen value for auto-schedule nutrition."
+        },
+        "p": {
+          "name": "Phosphorus (P)",
+          "description": "Phosphorus value for auto-schedule nutrition."
+        },
+        "k": {
+          "name": "Potassium (K)",
+          "description": "Potassium value for auto-schedule nutrition."
+        }
+      }
+    },
+    "clear_nutrition": {
+      "name": "Clear nutrition",
+      "description": "Clear auto-schedule nutrition values."
+    },
+    "set_exclusion_day": {
+      "name": "Set exclusion day",
+      "description": "Exclude or include one weekday in auto schedule.",
+      "fields": {
+        "day": {
+          "name": "Day",
+          "description": "Day to update in the exclusion scheduler."
+        },
+        "exclude_day": {
+          "name": "Exclude day",
+          "description": "Whether the selected day should be fully excluded."
+        }
+      }
+    },
+    "add_exclusion_schedule": {
+      "name": "Add exclusion schedule",
+      "description": "Add an exclusion schedule entry to auto schedule.",
+      "fields": {
+        "day": {
+          "name": "Day",
+          "description": "Day of week for the new exclusion schedule entry."
+        },
+        "start": {
+          "name": "Start",
+          "description": "Start time in HH:MM format."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "Duration in minutes."
+        },
+        "reason": {
+          "name": "Reason",
+          "description": "Reason for the exclusion schedule entry."
+        }
+      }
+    },
+    "edit_exclusion_schedule": {
+      "name": "Edit exclusion schedule",
+      "description": "Replace an existing exclusion schedule entry in auto schedule.",
+      "fields": {
+        "current_day": {
+          "name": "Current day",
+          "description": "Day for the exclusion schedule you want to change."
+        },
+        "current_start": {
+          "name": "Current start",
+          "description": "Start time for the exclusion schedule you want to change."
+        },
+        "day": {
+          "name": "Day",
+          "description": "New day of week for the exclusion schedule entry."
+        },
+        "start": {
+          "name": "Start",
+          "description": "New start time in HH:MM format."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "New duration in minutes."
+        },
+        "reason": {
+          "name": "Reason",
+          "description": "Reason for the exclusion schedule entry."
+        }
+      }
+    },
+    "delete_exclusion_schedule": {
+      "name": "Delete exclusion schedule",
+      "description": "Delete an exclusion schedule entry from auto schedule.",
+      "fields": {
+        "day": {
+          "name": "Day",
+          "description": "Day for the exclusion schedule you want to delete."
+        },
+        "start": {
+          "name": "Start",
+          "description": "Use this if the selected day has more than one exclusion schedule and you need to choose one by time."
+        }
+      }
+    }
+  }
 }

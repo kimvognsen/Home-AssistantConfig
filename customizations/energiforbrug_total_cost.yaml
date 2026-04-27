@@ -1,18 +1,8 @@
-#sensor.energiforbrug_total_cost:
-#  device_class: monetary
-#  unit_of_measurement: DKK
- # state_class: total_increasing
-
-
-#sensor.aktuel_el_forbrug_i_dag:
-#  unit_of_measurement: "DKK"
-#  device_class: monetary
-#  state_class: total
-
-# sensor.el_omkostning_rate:
-#  unit_of_measurement: "DKK/h"
-#  device_class: monetary
-#  state_class: measurement
+sensor.energiforbrug_total_cost:
+  device_class: monetary
+  unit_of_measurement: DKK
+  state_class: total
+# old  state_class: total_increasing
 
 sensor.aktuel_el_forbrug_i_dag:
   unit_of_measurement: "DKK"
@@ -22,5 +12,10 @@ sensor.aktuel_el_forbrug_i_dag:
 sensor.el_omkostning_rate:
   unit_of_measurement: "DKK/h"
   device_class: monetary
-  # ingen state_class her – det er kun en “rate”
+  state_class: measurement
+
+#sensor.el_omkostning_rate:
+#  unit_of_measurement: "DKK/h"
+#  device_class: monetary
+#  # ingen state_class her – det er kun en “rate”
 

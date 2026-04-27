@@ -54,8 +54,7 @@ entities:
             value: sleep
 
   - entity: sensor
-    name: Filter Life
-    icon: mdi:air-filter
+    translation_key: filter_life
     dps:
       - id: 5
         name: sensor
@@ -106,7 +105,7 @@ entities:
         type: boolean
 
   - entity: switch
-    name: Mute
+    translation_key: sound
     category: config
     dps:
       - id: 28
@@ -114,9 +113,9 @@ entities:
         type: boolean
         mapping:
           - dps_val: true
-            icon: mdi:volume-variant-off
+            value: false
           - dps_val: false
-            icon: mdi:volume-medium
+            value: true
 
   - entity: light
     translation_key: display

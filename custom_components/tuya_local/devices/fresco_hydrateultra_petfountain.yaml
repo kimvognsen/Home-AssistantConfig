@@ -57,8 +57,7 @@ entities:
             value: true
 
   - entity: sensor
-    name: Filter life
-    icon: "mdi:air-filter"
+    translation_key: filter_life
     category: diagnostic
     class: duration
     dps:
@@ -116,8 +115,7 @@ entities:
         optional: true
 
   - entity: sensor
-    name: Water level
-    icon: "mdi:water"
+    translation_key: water_level
     category: diagnostic
     dps:
       - id: 108

@@ -2,30 +2,32 @@
 #
 #
 #
-#
+# NB ! Disalbed, da jeg ikke ved om den bliver brugt mere
+# skal den bruges, skal sensor rettet til sensor.frient_energiforbrug_total_energy
+# 2/1-2026
 #Frient måler
-hourly_energy:
-  source: sensor.energiforbrug_total
-  unique_id: 'hourly_energy'
-  name: Hourly Energy
-  cycle: hourly
+#hourly_energy:
+#  source: sensor.frient_energiforbrug_total_energy
+#  unique_id: 'hourly_energy'
+#  name: Hourly Energy
+#  cycle: hourly
 daily_energy:
-  source: sensor.energiforbrug_total
+  source: sensor.frient_energiforbrug_total_energy
   unique_id: 'daily_energy'
   name: Daily Energy
   cycle: daily
-weekly_energy:
-  source: sensor.energiforbrug_total
-  unique_id: 'weekly_energy'
-  name: Weekly Energy
-  cycle: weekly
+#weekly_energy:
+#  source: sensor.frient_energiforbrug_total_energy
+#  unique_id: 'weekly_energy'
+#  name: Weekly Energy
+#  cycle: weekly
 monthly_energy:
-  source: sensor.energiforbrug_total
+  source: sensor.frient_energiforbrug_total_energy
   unique_id: 'monthly_energy'
   name: Monthly Energy
   cycle: monthly
 yearly_energy:
-  source: sensor.energiforbrug_total
+  source: sensor.frient_energiforbrug_total_energyl
   unique_id: 'yearly_energy'
   name: Yearly Energy
   cycle: yearly
@@ -34,4 +36,11 @@ aktuel_el_forbrug_i_dag:
   source: sensor.energiforbrug_total_cost
   unique_id: 'aktuel_el_forbrug_i_dag'
   name: Aktuel el-forbrug i dag
+  cycle: daily
+
+#skal tjekke om denne er rigtig - kopi af ovennævnte
+aktuel_el_forbrug_i_dag_med_frient:
+  source: sensor.frient_energiforbrug_total_energy_cost
+  unique_id: 'aktuel_el_forbrug_i_dag_med_frient'
+  name: Aktuel el-forbrug i dag med Frient
   cycle: daily

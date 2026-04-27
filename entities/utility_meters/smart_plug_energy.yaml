@@ -1,0 +1,191 @@
+---
+#
+# 
+# 
+#
+# Unifi Bryggers på Tuya Smart plug 2
+unifi_bryggers_daily_energy:
+  source: sensor.tuya_smart_plug2_total_energy
+  unique_id: 'unifi_bryggers_daily_energ'
+  name: Unifi bryggers Daily Energy
+  cycle: daily
+
+unifi_bryggers_monthly_energy:
+  source: sensor.tuya_smart_plug2_total_energy
+  unique_id: 'unifi_bryggers_monthly_energy'
+  name: Unifi bryggers Monthly Energy
+  cycle: monthly
+unifi_bryggers_yearly_energy:
+  source: sensor.tuya_smart_plug2_total_energy
+  unique_id: 'unifi_bryggers_yearly_energy'
+  name: Unifi bryggers Yearly Energy
+  cycle: yearly
+
+# Gittes computer Shelly plug 
+gittes_computer_daily_energy:
+  source: sensor.shelly_plug_9_energy
+  unique_id: 'gittes_computer_daily_energy'
+  name: Gittes computer Daily Energy
+  cycle: daily
+
+gittes_computer_monthly_energy:
+  source: sensor.shelly_plug_9_energy
+  unique_id: 'gittes_computer_monthly_energy'
+  name: Gittes computer Monthly Energy
+  cycle: monthly
+gittes_computer_yearly_energy:
+  source: sensor.shelly_plug_9_energy
+  unique_id: 'gittes_computer_yearly_energy'
+  name: Gittes computer YTD (løbende året-til-dato)
+  cycle: yearly
+
+# Værksted-køleskab computer Shelly plug 
+varksted_koleskab_daily_energy:
+  source: sensor.shelly_plug_8_energy
+  unique_id: 'varksted_koleskab_daily_energy'
+  name: Værksted-køleskab Daily Energy
+  cycle: daily
+
+varksted_koleskab_monthly_energy:
+  source: sensor.shelly_plug_8_energy
+  unique_id: 'varksted_koleskab_monthly_energy'
+  name: Værksted-køleskab Monthly Energy
+  cycle: monthly
+varksted_koleskab_yearly_energy:
+  source: sensor.shelly_plug_8_energy
+  unique_id: 'varksted_koleskab_yearly_energy'
+  name: Værksted-køleskab Yearly Energy
+  cycle: yearly
+
+# varksted-radiator computer Shelly plug 
+varksted_radiator_daily_energy:
+  source: sensor.shelly_plug_7_energy
+  unique_id: 'varksted_radiator_daily_energy'
+  name: Værksted-radiator Daily Energy
+  cycle: daily
+
+varksted_radiator_monthly_energy:
+  source: sensor.shelly_plug_7_energy
+  unique_id: 'varksted_radiator_monthly_energy'
+  name: Værksted-radiator Monthly Energy
+  cycle: monthly
+
+varksted_radiator_yearly_energy:
+  source: sensor.shelly_plug_7_energy
+  unique_id: 'varksted_radiator_yearly_energy'
+  name: Værksted-radiator Yearly Energy
+  cycle: yearly
+
+# 3D printer Shelly plug 
+3dprinter_daily_energy:
+  source: sensor.shelly_plug_6_energy
+  unique_id: '3d_print_daily_energ'
+  name: 3D printer Daily Energy
+  cycle: daily
+
+3dprinter_monthly_energy:
+  source: sensor.shelly_plug_6_energy
+  unique_id: '3d_print_monthly_energy'
+  name: 3D printer Monthly Energy
+  cycle: monthly
+
+3dprinter_yearly_energy:
+  source: sensor.shelly_plug_6_energy
+  unique_id: '3d_print_yearly_energy'
+  name: 3D printer Yearly Energy
+  cycle: yearly
+
+# terrasselyskæde Shelly plug 
+terasselyskaede_daily_energy:
+  source: sensor.shelly_plug_5_energy
+  unique_id: 'terasselyskaede_daily_energy'
+  name: Terasselyskæde Daily Energy
+  cycle: daily
+
+terasselyskaede_monthly_energy:
+  source: sensor.shelly_plug_5_energy
+  unique_id: 'terasselyskaede_monthly_energy'
+  name: Terasselyskæde Monthly Energy
+  cycle: monthly
+
+terasselyskaede_yearly_energy:
+  source: sensor.shelly_plug_5_energy
+  unique_id: 'terasselyskaede_yearly_energy'
+  name: Terasselyskæde Yearly Energy
+  cycle: yearly
+
+# rackskab computer Shelly plug 
+rackskab_daily_energy:
+  source: sensor.shelly_plug_4_energy
+  unique_id: 'rackskab_daily_energ'
+  name: Rackskab Daily Energy
+  cycle: daily
+
+rackskab_monthly_energy:
+  source: sensor.shelly_plug_4_energy
+  unique_id: 'rackskab_monthly_energy'
+  name: Rackskab Monthly Energy
+  cycle: monthly
+
+rackskab_yearly_energy:
+  source: sensor.shelly_plug_4_energy
+  unique_id: 'rackskab_yearly_energy'
+  name: Rackskab Yearly Energy
+  cycle: yearly
+
+# Matias computer Shelly plug 
+matias_daily_energy:
+  source: sensor.shelly_plug_3_energy
+  unique_id: 'matias_daily_energy'
+  name: Matias Daily Energy
+  cycle: daily
+
+matias_monthly_energy:
+  source: sensor.shelly_plug_3_energy
+  unique_id: 'matias_monthly_energy'
+  name: Matias Monthly Energy
+  cycle: monthly
+
+matias_yearly_energy:
+  source: sensor.shelly_plug_3_energy
+  unique_id: 'matias_yearly_energy'
+  name: Matias Yearly Energy
+  cycle: yearly
+
+# Jonatans computer Shelly plug 
+jonatans_daily_energy:
+  source: sensor.shelly_plug_2_energy
+  unique_id: 'jonatans_daily_energy'
+  name: Jonatans Daily Energy
+  cycle: daily
+
+jonatans_monthly_energy:
+  source: sensor.shelly_plug_2_energy
+  unique_id: 'jonatans_monthly_energy'
+  name: Jonatans Monthly Energy
+  cycle: monthly
+
+jonatans_yearly_energy:
+  source: sensor.shelly_plug_2_energy
+  unique_id: 'jonatans_yearly_energy'
+  name: Jonatans Yearly Energy
+  cycle: yearly
+
+# kims computer Shelly plug 
+kims_daily_energy:
+  source: sensor.shelly_plug_1_energy
+  unique_id: 'kims_daily_energy'
+  name: Kims computer Daily Energy
+  cycle: daily
+
+kims_monthly_energy:
+  source: sensor.shelly_plug_1_energy
+  unique_id: 'kims_monthly_energy'
+  name: Kims computer Monthly Energy
+  cycle: monthly
+  
+kims_yearly_energy:
+  unique_id: 'kims_yearly_energy'
+  source: sensor.shelly_plug_1_energy
+  name: Kims computer Yearly Energy
+  cycle: yearly

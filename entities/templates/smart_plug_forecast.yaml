@@ -1,0 +1,81 @@
+
+- sensor:
+
+  - name: "Jonatan forecast kWh/år"
+    unique_id: jonatan_forecast_kwh_year
+    unit_of_measurement: "kWh"
+    device_class: energy
+    state: >
+      {% set ytd = states('sensor.jonatans_yearly_energy')|float(0) %}
+      {% set day = now().timetuple().tm_yday %}
+      {{ (ytd / max(day,1) * 365) | round(1) }}
+
+  - name: "Matias forecast kWh/år"
+    unique_id: matias_forecast_kwh_year
+    unit_of_measurement: "kWh"
+    device_class: energy
+    state: >
+      {% set ytd = states('sensor.matias_yearly_energy')|float(0) %}
+      {% set day = now().timetuple().tm_yday %}
+      {{ (ytd / max(day,1) * 365) | round(1) }}
+
+
+  - name: "Værksted radiator forecast kWh/år"
+    unique_id: vaerksted_radiator_forecast_kwh_year
+    unit_of_measurement: "kWh"
+    device_class: energy
+    state: >
+      {% set ytd = states('sensor.vaerksted_radiator_yearly_energy')|float(0) %}
+      {% set day = now().timetuple().tm_yday %}
+      {{ (ytd / max(day,1) * 365) | round(1) }}
+
+  - name: "Værksted køleskab forecast kWh/år"
+    unique_id: vaerksted_koleskab_forecast_kwh_year
+    unit_of_measurement: "kWh"
+    device_class: energy
+    state: >
+      {% set ytd = states('sensor.vaerksted_koleskab_yearly_energy')|float(0) %}
+      {% set day = now().timetuple().tm_yday %}
+      {{ (ytd / max(day,1) * 365) | round(1) }}
+
+  - name: "Samsung fryser forecast kWh/år"
+    unique_id: samsung_fryser_forecast_kwh_year
+    unit_of_measurement: "kWh"
+    device_class: energy
+    state: >
+      {% set ytd = states('sensor.samsung_fryser_energy')|float(0) %}
+      {% set day = now().timetuple().tm_yday %}
+      {{ (ytd / max(day,1) * 365) | round(1) }}
+
+  - name: "Samsung køleskab forecast kWh/år"
+    unique_id: samsumg_koleskab_forecast_kwh_year
+    unit_of_measurement: "kWh"
+    device_class: energy
+    state: >
+      {% set ytd = states('sensor.samsung_koleskab_energy')|float(0) %}
+      {% set day = now().timetuple().tm_yday %}
+      {{ (ytd / max(day,1) * 365) | round(1) }}
+
+  - name: "Jonatan YTD vs sidste år (kWh)"
+    unique_id: jonatan_ytd_vs_last_year_kwh
+    unit_of_measurement: "kWh"
+    state: >
+      {{ (states('sensor.jonatans_yearly_energy')|float(0) - states('input_number.jonatan_last_year_kwh')|float(0)) | round(1) }}
+
+  - name: "Matias YTD vs sidste år (kWh)"
+    unique_id: matias_ytd_vs_last_year_kwh
+    unit_of_measurement: "kWh"
+    state: >
+      {{ (states('sensor.matias_yearly_energy')|float(0) - states('input_number.matias_last_year_kwh')|float(0)) | round(1) }}
+
+  - name: "Værksted radiator YTD vs sidste år (kWh)"
+    unique_id: vaerksted_radiator_ytd_vs_last_year_kwh
+    unit_of_measurement: "kWh"
+    state: >
+      {{ (states('sensor.vaerksted_radiator_yearly_energy')|float(0) - states('input_number.vaerksted_radiator_last_year_kwh')|float(0)) | round(1) }}
+
+  - name: "Værksted køleskab YTD vs sidste år (kWh)"
+    unique_id: vaerksted_koleskab_ytd_vs_last_year_kwh
+    unit_of_measurement: "kWh"
+    state: >
+      {{ (states('sensor.vaerksted_koleskab_yearly_energy')|float(0) - states('input_number.vaerksted_koleskab_last_year_kwh')|float(0)) | round(1) }}

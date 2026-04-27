@@ -23,6 +23,19 @@ class Printers(StrEnum):
     X1C = "X1C"
     X1 = "X1"
 
+class WikiPrinterTag(StrEnum):
+    A1 = "a1"
+    A1MINI = "a1-mini"
+    P1P = "p1"
+    P1S = "p1"
+    P2S = "p2"
+    H2C = "h2"
+    H2D = "h2"
+    H2DPRO = "h2"
+    H2S = "h2"
+    X1E = "x1"
+    X1C = "x1"
+    X1 = "x1"
 
 class Features(IntEnum):
     AUX_FAN = 1,
@@ -49,6 +62,10 @@ class Features(IntEnum):
     MQTT_ENCRYPTION_FIRMWARE = 22,
     AIRDUCT_MODE = 23,
     SUPPORTS_EARLY_FTP_DOWNLOAD = 24,
+    SECONDARY_AUX_FAN = 25,
+    HOTEND_RACK = 26,
+    ACTIVE_CHAMBER_HEATER = 27,
+    AMS_DRYING_SETTINGS = 28,
 
 
 class FansEnum(IntEnum):
@@ -56,11 +73,13 @@ class FansEnum(IntEnum):
     AUXILIARY = 2,
     CHAMBER = 3,
     HEATBREAK = 4,
+    SECONDARY_AUXILIARY = 5,
 
 
 class TempEnum(IntEnum):
     HEATBED = 1,
-    NOZZLE = 2
+    NOZZLE = 2,
+    CHAMBER = 3
 
 
 CURRENT_STAGE_IDS = {
@@ -68,7 +87,7 @@ CURRENT_STAGE_IDS = {
     0: "printing",
     1: "auto_bed_leveling",
     2: "heatbed_preheating",
-    3: "sweeping_xy_mech_mode",
+    3: "sweeping_xy_mech_mode", # Vibration compensation
     4: "changing_filament",
     5: "m400_pause",
     6: "paused_filament_runout",
@@ -117,6 +136,22 @@ CURRENT_STAGE_IDS = {
     49: "heating_chamber",
     50: "heated_bedcooling",
     51: "print_calibration_lines",
+    52: "check_material",
+    53: "calibrating_live_view_camera",
+    54: "waiting_for_heatbed_temperature",
+    55: "check_material_position",
+    56: "calibrating_cutter_model_offset",
+    57: "measuring_surface",
+    58: "thermal_preconditioning",
+    59: "homing_blade_holder",
+    60: "calibrating_camera_offset",
+    61: "calibrating_blade_holder_position",
+    62: "hotend_pick_place_test",
+    63: "waiting_chamber_temperature_equalize",
+    64: "preparing_hotend",
+    65: "calibrating_detection_nozzle_clumping",
+    66: "purifying_chamber_air",
+    77: "preparing_ams",
     # X1 returns -1 for idle
     -1: "idle",  # DUPLICATED
     # P1 returns 255 for idle
@@ -151,6 +186,12 @@ SPEED_PROFILE = {
     4: "ludicrous"
 }
 
+AIRDUCT_MODES = {
+    0: "cooling",
+    1: "heating",
+    2: "laser",
+}
+
 PRINT_TYPE_OPTIONS = {
     "cloud",
     "local",
@@ -159,6 +200,25 @@ PRINT_TYPE_OPTIONS = {
     "unknown"
 }
 
+AMS_DRYING_MODELS = [
+    "AMS 2 Pro",
+    "AMS HT"
+]
+
+AMS_MODELS = [
+    "AMS",
+    "AMS Lite",
+    "AMS 2 Pro",
+    "AMS HT"
+]
+
+AMS_MODELS_AND_EXTERNAL_SPOOL = [
+    "AMS",
+    "AMS Lite",
+    "AMS 2 Pro",
+    "AMS HT",
+    "External Spool"
+]
 
 def load_dict(filename: str) -> dict:
     with open(filename) as f:

@@ -3,6 +3,9 @@ products:
   - id: tyjxq8vanjxpn7kb
     manufacturer: Petlibro
     model: PLAF103
+  - id: e6x31cbr0cwhavv1
+    manufacturer: Petlibro
+    model: PLAF103
 entities:
   - entity: sensor
     translation_key: status
@@ -26,7 +29,7 @@ entities:
           - dps_val: feed_end
             value: feeding_complete
   - entity: text
-    name: Meal plan
+    translation_key: meal_plan
     category: config
     hidden: true
     dps:

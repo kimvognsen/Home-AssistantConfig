@@ -1,147 +1,147 @@
-"""Adds support for Landroid Cloud compatible devices."""
+"""Config flow for Landroid Cloud."""
 
 from __future__ import annotations
 
-from homeassistant import config_entries, core, exceptions
-from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, CONF_TYPE
+import asyncio
+from typing import Any
+
+import voluptuous as vol
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
+from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig
 from pyworxcloud import WorxCloud
-from pyworxcloud.exceptions import AuthorizationError, TooManyRequestsError
+from pyworxcloud.exceptions import (
+    APIException,
+    AuthorizationError,
+    ForbiddenError,
+    InternalServerError,
+    NoConnectionError,
+    NotFoundError,
+    RequestError,
+    ServiceUnavailableError,
+    TooManyRequestsError,
+)
 
-from .const import DOMAIN, LOGLEVEL
-from .scheme import DATA_SCHEMA
-from .utils.logger import LandroidLogger, LoggerType, LogLevel
+from .awsiot import async_prime_awsiot_metrics
+from .const import (
+    CONF_CLOUD,
+    CONF_COMMAND_TIMEOUT,
+    DEFAULT_CLOUD,
+    DEFAULT_COMMAND_TIMEOUT,
+    DOMAIN,
+    MAX_COMMAND_TIMEOUT,
+    MIN_COMMAND_TIMEOUT,
+)
 
-LOGGER = LandroidLogger(name=__name__, log_level=LOGLEVEL)
+STEP_USER_DATA_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_EMAIL): str,
+        vol.Required(CONF_PASSWORD): str,
+        vol.Required(CONF_CLOUD, default=DEFAULT_CLOUD): SelectSelector(
+            SelectSelectorConfig(
+                options=["worx", "kress", "landxcape"],
+                translation_key="cloud",
+            )
+        ),
+    }
+)
 
 
-async def validate_input(hass: core.HomeAssistant, data):
-    """Validate the user input allows us to connect.
-
-    Data has the keys from DATA_SCHEMA with values provided by the user.
-    """
-
-    LOGGER.log(LoggerType.CONFIG, "data: %s", data)
-
-    worx = WorxCloud(
-        data.get(CONF_EMAIL), data.get(CONF_PASSWORD), data.get(CONF_TYPE).lower()
+async def _validate_input(user_input: dict[str, Any]) -> dict[str, Any]:
+    """Validate the user input allows us to connect."""
+    cloud = WorxCloud(
+        user_input[CONF_EMAIL],
+        user_input[CONF_PASSWORD],
+        user_input[CONF_CLOUD],
     )
+
     try:
-        auth = await hass.async_add_executor_job(worx.authenticate)
-    except TooManyRequestsError:
-        raise TooManyRequests from None
-    except AuthorizationError:
-        raise InvalidAuth from None
+        await cloud.authenticate()
+        await async_prime_awsiot_metrics()
+        connected = await asyncio.wait_for(cloud.connect(), timeout=30)
+        if not connected:
+            return {"title": user_input[CONF_EMAIL], "device_count": 0}
 
-    if not auth:
-        raise InvalidAuth
-
-    return {"title": f"{data[CONF_TYPE]} - {data[CONF_EMAIL]}"}
-
-
-class InvalidAuth(exceptions.HomeAssistantError):
-    """Error to indicate there is invalid auth."""
+        return {
+            "title": f"{user_input[CONF_EMAIL]} ({user_input[CONF_CLOUD]})",
+            "device_count": len(cloud.devices),
+        }
+    finally:
+        await cloud.disconnect()
 
 
-class CannotConnect(exceptions.HomeAssistantError):
-    """Error to indicate we cannot connect."""
-
-
-class TooManyRequests(exceptions.HomeAssistantError):
-    """Error to indicate we made too many requests."""
-
-
-class LandroidCloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class LandroidCloudConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Landroid Cloud."""
 
-    VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_PUSH
+    VERSION = 2
 
-    def check_for_existing(self, data):
-        """Check whether an existing entry is using the same URLs."""
-        return any(
-            entry.data.get(CONF_EMAIL) == data.get(CONF_EMAIL)
-            and entry.data.get(CONF_TYPE).lower()
-            == (
-                data.get(CONF_TYPE).lower()
-                if not isinstance(data.get(CONF_TYPE), type(None))
-                else "worx"
-            )
-            for entry in self._async_current_entries()
-        )
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle the initial step."""
+        errors: dict[str, str] = {}
 
-    def __init__(self):
-        """Initialize the config flow."""
-        self._errors = {}
-
-    async def async_step_user(self, user_input=None):
-        """Handle the initial Landroid Cloud step."""
-        self._errors = {}
         if user_input is not None:
-            if self.check_for_existing(user_input):
-                return self.async_abort(reason="already_exists")
+            unique_id = f"{user_input[CONF_EMAIL].lower()}::{user_input[CONF_CLOUD]}"
+            await self.async_set_unique_id(unique_id)
+            self._abort_if_unique_id_configured()
 
             try:
-                validated = await validate_input(self.hass, user_input)
-            except CannotConnect:
-                self._errors["base"] = "cannot_connect"
-            except InvalidAuth:
-                self._errors["base"] = "invalid_auth"
-            except TooManyRequests:
-                self._errors["base"] = "too_many_requests"
-            except Exception as ex:  # pylint: disable=broad-except
-                LOGGER.log(
-                    LoggerType.CONFIG,
-                    "Unexpected exception: %s",
-                    ex,
-                    log_level=LogLevel.ERROR,
-                )
-                self._errors["base"] = "unknown"
-
-            if "base" not in self._errors:
-                await self.async_set_unique_id(
-                    f"{user_input[CONF_EMAIL]}_{user_input[CONF_TYPE]}"
-                )
-
-                return self.async_create_entry(
-                    title=validated["title"],
-                    data=user_input,
-                    description=f"API connector for {validated['title']} cloud",
-                )
+                info = await _validate_input(user_input)
+            except AuthorizationError:
+                errors["base"] = "invalid_auth"
+            except TooManyRequestsError:
+                errors["base"] = "too_many_requests"
+            except NoConnectionError, ServiceUnavailableError:
+                errors["base"] = "cannot_connect"
+            except RequestError, ForbiddenError, NotFoundError, InternalServerError:
+                errors["base"] = "api_error"
+            except APIException:
+                errors["base"] = "unknown"
+            except TimeoutError:
+                errors["base"] = "timeout"
+            else:
+                return self.async_create_entry(title=info["title"], data=user_input)
 
         return self.async_show_form(
-            step_id="user", data_schema=DATA_SCHEMA, errors=self._errors
+            step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
 
-    async def async_step_import(self, import_config):
-        """Import a config entry."""
-        if import_config is not None:
-            if self.check_for_existing(import_config):
-                LOGGER.log(
-                    LoggerType.CONFIG_IMPORT,
-                    "Landroid_cloud configuration for %s already imported, you can "
-                    "safely remove the entry from your configuration.yaml as this "
-                    "is no longer used",
-                    import_config.get(CONF_EMAIL),
-                    log_level=LogLevel.WARNING,
-                )
-                return self.async_abort(reason="already_exists")
+    @staticmethod
+    def async_get_options_flow(config_entry):
+        """Get the options flow for this handler."""
+        return LandroidCloudOptionsFlow(config_entry)
 
-            try:
-                await validate_input(self.hass, import_config)
-            except CannotConnect:
-                self._errors["base"] = "cannot_connect"
-            except InvalidAuth:
-                self._errors["base"] = "invalid_auth"
-            except Exception:  # pylint: disable=broad-except
-                LOGGER.log(
-                    LoggerType.CONFIG_IMPORT,
-                    "Unexpected exception",
-                    log_level=LogLevel.ERROR,
-                )
-                self._errors["base"] = "unknown"
 
-            if "base" not in self._errors:
-                return self.async_create_entry(
-                    title=f"Import - {import_config.get(CONF_EMAIL)}",
-                    data=import_config,
-                )
+class LandroidCloudOptionsFlow(OptionsFlow):
+    """Handle Landroid Cloud options."""
+
+    def __init__(self, config_entry) -> None:
+        """Initialize options flow."""
+        self._config_entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage options."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        current = self._config_entry.options.get(
+            CONF_COMMAND_TIMEOUT, DEFAULT_COMMAND_TIMEOUT
+        )
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_COMMAND_TIMEOUT, default=current): vol.All(
+                        vol.Coerce(float),
+                        vol.Range(
+                            min=MIN_COMMAND_TIMEOUT,
+                            max=MAX_COMMAND_TIMEOUT,
+                        ),
+                    )
+                }
+            ),
+        )

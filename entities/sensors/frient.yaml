@@ -12,20 +12,21 @@
   round: 2
 
 - platform: statistics
-  entity_id: sensor.energiforbrug_total
+  entity_id: sensor.frient_energiforbrug_total_energy
   name: Frient El Monthly Statistics
   state_characteristic: mean
   sampling_size: 50
   max_age:
     days: 30
 
-- platform: statistics
-  entity_id: sensor.energiforbrug_total
-  name: Frient Seas Monthly Statistics
-  state_characteristic: mean
-  sampling_size: 50
-  max_age:
-    days: 30
+#denner er hvis den samme som ovenvoer, huks sensor er ændret til sensor.frient_energiforbrug_total_power
+#    - platform: statistics
+#  entity_id: sensor.energiforbrug_total
+#  name: Frient Seas Monthly Statistics
+#  state_characteristic: mean
+#  sampling_size: 50
+#  max_age:
+#    days: 30
 
 - platform: history_stats
   name: TT1 frient total history stats

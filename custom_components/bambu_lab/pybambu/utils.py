@@ -22,6 +22,7 @@ from .const import (
     BAMBU_URL,
     FansEnum,
     Printers,
+    WikiPrinterTag,
     TempEnum
 )
 from .commands import SEND_GCODE_TEMPLATE, UPGRADE_CONFIRM_TEMPLATE
@@ -52,6 +53,8 @@ def fan_percentage_to_gcode(fan: FansEnum, percentage: int):
         fanString = "P2"
     elif fan == FansEnum.CHAMBER:
         fanString = "P3"
+    elif fan == FansEnum.SECONDARY_AUXILIARY:
+        fanString = "P10"
 
     percentage = round(percentage / 10) * 10
     speed = math.ceil(255 * percentage / 100)
@@ -60,12 +63,22 @@ def fan_percentage_to_gcode(fan: FansEnum, percentage: int):
     return command
 
 
-def set_temperature_to_gcode(temp: TempEnum, temperature: int):
+def set_temperature_to_gcode(temp: TempEnum, temperature: int, device_type: Printers | str = ""):
     """Converts a temperature to the gcode command to set that"""
     if temp == TempEnum.NOZZLE:
         tempCommand = "M104"
     elif temp == TempEnum.HEATBED:
         tempCommand = "M140"
+    elif temp == TempEnum.CHAMBER:
+        command = SEND_GCODE_TEMPLATE
+        if device_type == Printers.X1E:
+            # X1E has no airduct; M141 alone controls the chamber heater.
+            command['print']['param'] = f"M141 S{temperature}\n"
+        elif temperature > 40:
+            command['print']['param'] = f"M145 P1\nM141 S{temperature}\n"
+        else:
+            command['print']['param'] = f"M141 S{temperature}\nM145 P0\n"
+        return command
 
     command = SEND_GCODE_TEMPLATE
     command['print']['param'] = f"{tempCommand} S{temperature}\n"
@@ -80,6 +93,8 @@ def to_whole(number):
 
 def get_filament_name(idx, custom_filaments: dict):
     """Converts a filament idx to a human-readable name"""
+    if idx == "":
+        return "Empty"
     result = FILAMENT_NAMES.get(idx, "unknown")
     if result == "unknown" and idx != "":
         custom = custom_filaments.get(idx, None)
@@ -274,7 +289,7 @@ def get_printer_type(modules, default):
       return 'H2D'
 
     if len(search(modules, lambda x: x.get('product_name', "") == "Bambu Lab H2D Pro")):
-      return 'H2DP'
+      return 'H2DPRO'
 
     if len(search(modules, lambda x: x.get('product_name', "") == "Bambu Lab H2S")):
       return 'H2S'
@@ -316,12 +331,24 @@ def get_sw_version(modules, default):
         return ota.get("sw_ver")
     return default
 
+def safe_int(part):
+    """Safely convert a version string segment to an integer."""
+    try:
+        return int(part)
+    except ValueError:
+        # Extract leading digits for version parts like '0b1' or '1a2'
+        match = re.match(r'^\d+', part)
+        if match:
+            return int(match.group(0))
+        return 0
+
+
 def compare_version(version_max, version_min):
     if version_max == "unknown":
         # Happens unavoidably during startup when we don't yet know the current printer firmware version.
         return False
-    maxver = list(map(int, version_max.split('.')))
-    minver = list(map(int, version_min.split('.')))
+    maxver = list(map(safe_int, version_max.split('.')))
+    minver = list(map(safe_int, version_min.split('.')))
 
     # Returns 1 if max > min, -1 if max < min, 0 if equal
     return (maxver > minver) - (maxver < minver)
@@ -398,3 +425,9 @@ def safe_json_loads(raw_bytes):
         LOGGER.error(f"Failed to decode JSON payload: '{text}'")
         LOGGER.error(f"Exception. Type: {type(e)} Args: {e}")
         raise
+
+def get_wiki_url_for_hms_error(hms_code: str, device_type: Printers):
+    wiki_tag = WikiPrinterTag[device_type]
+    lang = "en" # Only English wiki content seems to exist
+    return f"https://wiki.bambulab.com/{lang}/{wiki_tag}/troubleshooting/hmscode/{hms_code}"
+

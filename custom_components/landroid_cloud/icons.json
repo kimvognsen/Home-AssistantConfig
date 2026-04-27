@@ -1,12 +1,34 @@
 {
-    "services": {
-      "restart": "mdi:restart",
-      "edgecut": "mdi:robot-mower",
-      "setzone": "mdi:map-clock",
-      "config": "mdi:cog",
-      "ots": "mdi:robot-mower",
-      "schedule": "mdi:calendar-clock",
-      "torque": "mdi:arm-flex",
-      "send_raw": "mdi:send-circle"
+  "services": {
+    "ots": {
+      "service": "mdi:calendar-play"
+    },
+    "add_schedule": {
+      "service": "mdi:calendar-plus"
+    },
+    "edit_schedule": {
+      "service": "mdi:calendar-edit"
+    },
+    "delete_schedule": {
+      "service": "mdi:calendar-remove"
+    },
+    "set_nutrition": {
+      "service": "mdi:leaf"
+    },
+    "clear_nutrition": {
+      "service": "mdi:leaf-off"
+    },
+    "set_exclusion_day": {
+      "service": "mdi:calendar-minus"
+    },
+    "add_exclusion_schedule": {
+      "service": "mdi:calendar-plus"
+    },
+    "edit_exclusion_schedule": {
+      "service": "mdi:calendar-edit"
+    },
+    "delete_exclusion_schedule": {
+      "service": "mdi:calendar-remove"
     }
   }
+}

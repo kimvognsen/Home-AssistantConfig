@@ -8,6 +8,9 @@ products:
     model: SP111-A
   - id: kOKEJBFoF9VNB5FR
     model: HYS-U1S-13A
+  - id: bWBb4e6BTZGie0Lv
+    manufacturer: TopGreener
+    model: TGWF115PRM
 entities:
   - entity: switch
     class: outlet
@@ -77,20 +80,3 @@ entities:
         range:
           min: 0
           max: 86400
-  - entity: number
-    category: config
-    class: duration
-    translation_key: timer
-    # 2025-07-20
-    deprecated: time.timer
-    dps:
-      - id: 2
-        type: integer
-        name: value
-        unit: min
-        range:
-          min: 0
-          max: 86400
-        mapping:
-          - scale: 60
-            step: 60

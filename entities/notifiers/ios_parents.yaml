@@ -9,5 +9,5 @@ services:
   - service: mobile_app_kims_iphone
   - service: mobile_app_gittes_iphone
   #- service: mobile_app_gittes_iphone_app
-  #- service: ios_kims_iphone
+  #- service: ios_kims_iphone_17
 

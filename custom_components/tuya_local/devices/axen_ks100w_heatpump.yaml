@@ -31,18 +31,17 @@ entities:
         optional: true
         name: fault_flag
   - entity: switch
-    name: Mute
-    icon: "mdi:volume-mute"
-    icon_priority: 2
+    translation_key: sound
     category: config
     dps:
       - id: 101
         type: boolean
         name: switch
         mapping:
+          - dps_val: true
+            value: false
           - dps_val: false
-            icon: "mdi:volume-high"
-            icon_priority: 1
+            value: true
   - entity: climate
     dps:
       - id: 1
@@ -161,7 +160,7 @@ entities:
         mapping:
           - scale: 10
   - entity: water_heater
-    translation_only_key: water_air
+    translation_only_key: hot_water
     dps:
       - id: 1
         type: boolean
@@ -258,9 +257,8 @@ entities:
         type: boolean
         name: sensor
   - entity: sensor
-    name: Ambient temperature
+    translation_key: ambient_temperature
     class: temperature
-    category: diagnostic
     dps:
       - id: 118
         type: integer

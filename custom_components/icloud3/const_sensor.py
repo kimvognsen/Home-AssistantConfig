@@ -27,13 +27,19 @@ from .const     import (CONF_SENSORS_DEVICE, CONF_SENSORS_TRACKING_UPDATE, CONF_
                         TFZ_TRAVEL_TIME,TFZ_TRAVEL_TIME_MIN, TFZ_TRAVEL_TIME_HHMM, TFZ_ARRIVAL_TIME,
                         TOWARDS, AWAY_FROM, TOWARDS_HOME, AWAY_FROM_HOME, INZONE, INZONE_HOME, INZONE_STATZONE,
                         SENSOR_EVENT_LOG_NAME, SENSOR_ALERTS_NAME, SENSOR_WAZEHIST_TRACK_NAME,
+                        CONF_SENSORS_MONITORED_DEVICES, CONF_SENSORS_TRACK_FROM_ZONES,
+                        CONF_EXCLUDED_SENSORS,
                         )
 
-HA_EXCLUDE_SENSORS =    [SENSOR_EVENT_LOG_NAME, SENSOR_ALERTS_NAME, SENSOR_WAZEHIST_TRACK_NAME, ]
+# HA_EXCLUDE_SENSORS =    [SENSOR_EVENT_LOG_NAME, SENSOR_ALERTS_NAME, SENSOR_WAZEHIST_TRACK_NAME, ]
                         # '*_zone_datetime', '*_trigger', '*_info',
                         # '*_next_update', '*_last_update', '*_last_located', '*_interval',
                         # ]
 
+ICLOUD3_INTERNAL_SENSORS_ID = [
+                        'sensor.icloud3_alerts',
+                        'sensor.icloud3_event_log',
+                        'sensor.icloud3_wazehist_track', ]
 ICLOUD3_SENSORS    =    {SENSOR_EVENT_LOG_NAME: 'iCloud3 Event Log',
                         SENSOR_ALERTS_NAME: 'iCloud3 Alerts',
                         SENSOR_WAZEHIST_TRACK_NAME: 'iCloud3 Waze History Track',}
@@ -66,8 +72,9 @@ SENSOR_LIST_DISTANCE =  [DISTANCE, ZONE_DISTANCE, ZONE_DISTANCE_M, ZONE_DISTANCE
                         ]
 
 SENSOR_LIST_ALWAYS =    [BATTERY, ARRIVAL_TIME, TRAVEL_TIME, HOME_DISTANCE, NEXT_UPDATE,]
-CONF_FILE_GROUPS =      [CONF_SENSORS_DEVICE, CONF_SENSORS_TRACKING_UPDATE, CONF_SENSORS_TRACKING_TIME,
-                        CONF_SENSORS_TRACKING_TIME, CONF_SENSORS_TRACKING_OTHER, CONF_SENSORS_OTHER]
+CONF_NON_TRACKING_GROUPS = [CONF_SENSORS_MONITORED_DEVICES, CONF_SENSORS_TRACK_FROM_ZONES,
+                        CONF_EXCLUDED_SENSORS]
+
 SENSOR_GROUPS = {
         'default':      [BATTERY, ARRIVAL_TIME, TRAVEL_TIME, HOME_DISTANCE, NEXT_UPDATE, 'md_battery'],
         'battery':      [BATTERY, BATTERY_STATUS],

@@ -39,6 +39,7 @@ from .utils import (
     set_temperature_to_gcode,
     get_upgrade_url,
     upgrade_template,
+    get_wiki_url_for_hms_error,
 )
 from .const import (
     LOGGER,
@@ -50,6 +51,7 @@ from .const import (
     SPEED_PROFILE,
     GCODE_STATE_OPTIONS,
     PRINT_TYPE_OPTIONS,
+    AIRDUCT_MODES,
     TempEnum, Print_Fun_Values,
 )
 from .commands import (
@@ -59,9 +61,12 @@ from .commands import (
     CHAMBER_LIGHT_2_OFF,
     PROMPT_SOUND_ENABLE,
     PROMPT_SOUND_DISABLE,
-    AIRDUCT_SET_COOLING,
-    AIRDUCT_SET_HEATING_FILTER,
-    SPEED_PROFILE_TEMPLATE, BUZZER_SET_SILENT, BUZZER_SET_ALARM, BUZZER_SET_BEEPING, HEATBED_LIGHT_ON,
+    AIRDUCT_SET_MODE_TEMPLATE,
+    SPEED_PROFILE_TEMPLATE,
+    BUZZER_SET_SILENT,
+    BUZZER_SET_ALARM,
+    BUZZER_SET_BEEPING,
+    HEATBED_LIGHT_ON,
     HEATBED_LIGHT_OFF,
 )
 
@@ -84,6 +89,7 @@ class Device:
         self.home_flag = HomeFlag(client=client)
         self.extruder = Extruder(client=client)
         self.extruder_tool = ExtruderTool(client=client)
+        self.hotend_rack = HotendRack(client=client)
         self.push_all_data = None
         self.get_version_data = None
         self.chamber_image = ChamberImage(client = client)
@@ -111,6 +117,7 @@ class Device:
         send_event = send_event | self.home_flag.print_update(data = data)
         send_event = send_event | self.print_fun.print_update(data = data)
         send_event = send_event | self.extruder_tool.print_update(data = data)
+        send_event = send_event | self.hotend_rack.print_update(data = data)
 
         if data.get("command") == "push_status":
             if data.get("msg", 0) == 0:
@@ -146,22 +153,24 @@ class Device:
             self.lights.observe_system_command(data)
 
     def supports_feature(self, feature):
+        a1_printers = {Printers.A1, Printers.A1MINI}
+        h2_printers = {Printers.H2C, Printers.H2D, Printers.H2DPRO, Printers.H2S}
+        p1_printers = {Printers.P1P, Printers.P1S}
+        p2_printers = {Printers.P2S}
+        x1_printer  = {Printers.X1, Printers.X1C}
+        x1e_printer = {Printers.X1E} # Firmware versioning is independent of X1/X1C.
+        dual_nozzle_printers = {Printers.H2C, Printers.H2D, Printers.H2DPRO}
+        model = self.info.device_type
 
-        # First check known early feature check scenarios:
+        # First check known early feature check scenarios. These are features that can be checked as part of
+        # processing the mqtt payload and so may be called before full initialization is complete as it processes
+        # the very first payload.
         if feature == Features.CAMERA_RTSP:
-            return (self.info.device_type == Printers.H2C or
-                    self.info.device_type == Printers.H2D or
-                    self.info.device_type == Printers.H2DPRO or
-                    self.info.device_type == Printers.H2S or
-                    self.info.device_type == Printers.P2S or
-                    self.info.device_type == Printers.X1 or
-                    self.info.device_type == Printers.X1C or
-                    self.info.device_type == Printers.X1E)
+            return model in (h2_printers | p2_printers | x1_printer | x1e_printer)
         elif feature == Features.CAMERA_IMAGE:
-            return (self.info.device_type == Printers.A1 or
-                    self.info.device_type == Printers.A1MINI or
-                    self.info.device_type == Printers.P1P or
-                    self.info.device_type == Printers.P1S)
+            return model in (a1_printers | p1_printers)
+        elif feature == Features.SUPPORTS_EARLY_FTP_DOWNLOAD:
+            return model in (a1_printers | p1_printers)
 
         # Now check that we have a version. All tests after this are expected to only be called after the
         # first full set of data from the printer has been received and so version will be available.
@@ -171,195 +180,125 @@ class Device:
 
         # All following features should only be every checked after full initialization data is available.
         if feature == Features.AUX_FAN:
-            return not (self.info.device_type == Printers.A1 or
-                        self.info.device_type == Printers.A1MINI)
+            return model not in a1_printers
         elif feature == Features.CHAMBER_FAN:
             # The P1P may not have a fan but we don't have a perfectly reliable way to detect that. The p1s upgrade
             # flag would largely be good though but not accessible here.
-            return not (self.info.device_type == Printers.A1 or
-                        self.info.device_type == Printers.A1MINI)
+            return model not in a1_printers
         elif feature == Features.CHAMBER_TEMPERATURE:
-            return (self.info.device_type == Printers.H2C or
-                    self.info.device_type == Printers.H2D or
-                    self.info.device_type == Printers.H2DPRO or
-                    self.info.device_type == Printers.H2S or
-                    self.info.device_type == Printers.P2S or
-                    self.info.device_type == Printers.X1 or
-                    self.info.device_type == Printers.X1C or
-                    self.info.device_type == Printers.X1E)
+            return model in (h2_printers | p2_printers | x1_printer | x1e_printer)
         elif feature == Features.AMS:
             return len(self.ams.data) != 0
         elif feature == Features.K_VALUE:
-            return (self.info.device_type == Printers.A1 or
-                    self.info.device_type == Printers.A1MINI or
-                    self.info.device_type == Printers.P1P or
-                    self.info.device_type == Printers.P1S)
+            return model in (a1_printers | p1_printers)
         elif feature == Features.AMS_TEMPERATURE:
-            if (self.info.device_type == Printers.A1 or
-                self.info.device_type == Printers.A1MINI):
+            if model in a1_printers:
                 return self.supports_sw_version("01.06.10.33")
-            elif (self.info.device_type == Printers.H2C or
-                  self.info.device_type == Printers.H2D or
-                  self.info.device_type == Printers.H2DPRO or
-                  self.info.device_type == Printers.H2S or 
-                  self.info.device_type == Printers.P2S or
-                  self.info.device_type == Printers.X1 or
-                  self.info.device_type == Printers.X1C or
-                  self.info.device_type == Printers.X1E):
-                return True
-            elif (self.info.device_type == Printers.P1S or
-                  self.info.device_type == Printers.P1P):
+            if model in p1_printers:
                 return self.supports_sw_version("01.07.50.18")
-            return False
+            return True
         elif feature == Features.AIRDUCT_MODE:
-            # Airduct mode (Filter/Heating and Cooling) is currently only present on P2S
-            if self.info.device_type == Printers.P2S:
-                return True
-            
-            return False
+            # Airduct mode (Filter/Heating and Cooling) is present on P2S and H2 series
+            return model in (h2_printers | p2_printers)
         elif feature == Features.HYBRID_MODE_BLOCKS_CONTROL:
-            if (self.info.device_type == Printers.P1S or
-                self.info.device_type == Printers.P1P):
+            if model in p1_printers:
                 # Not sure what the first version that did this was. At least this - could be earlier.
                 return self.supports_sw_version("01.07.00.00")
             # Only the P1 firmware did this as far as I know. Not the A1.
             return False
         elif feature == Features.DOOR_SENSOR:
-            if (self.info.device_type in [Printers.X1,
-                                          Printers.X1C]):
+            if model in (h2_printers | p2_printers):
+                return True
+            if model in x1e_printer:
+                return self.supports_sw_version("01.01.02.00")
+            if model in x1_printer:
                 return self.supports_sw_version("01.07.00.00")
-            return (self.info.device_type == Printers.H2C or
-                    self.info.device_type == Printers.H2D or
-                    self.info.device_type == Printers.H2DPRO or
-                    self.info.device_type == Printers.H2S or
-                    self.info.device_type == Printers.P2S or
-                    self.info.device_type == Printers.X1E)
+            return False
         elif feature == Features.AMS_READ_RFID_COMMAND:
-            if (self.info.device_type == Printers.A1 or
-                self.info.device_type == Printers.A1MINI):
+            if model in a1_printers:
                 return self.supports_sw_version("01.06.00.00")
-            if (self.info.device_type == Printers.P1P or
-                self.info.device_type == Printers.P1S):
+            if model in p1_printers:
                 return self.supports_sw_version("01.08.01.00")
-            if (self.info.device_type == Printers.X1 or
-                self.info.device_type == Printers.X1C or
-                self.info.device_type == Printers.X1E):
+            if model in x1e_printer:
+                # Do not know if the X1E supports this, or at what version support was added.
+                return False
+            if model in x1_printer:
                 return self.supports_sw_version("01.09.00.00")
             return True
         elif feature == Features.AMS_FILAMENT_REMAINING:
-            if (self.info.device_type == Printers.A1 or
-                self.info.device_type == Printers.A1MINI):
+            if model in a1_printers:
                 # Technically this is not the AMS Lite but that's currently tied to only these printer types.
                 # This needs fixing now the A1 printers support the other AMS models.
-                return False
+                return self.supports_sw_version("01.06.10.33")
             return True
         elif feature == Features.PROMPT_SOUND:
-            if (self.info.device_type == Printers.A1 or
-                self.info.device_type == Printers.A1MINI or
-                self.info.device_type == Printers.H2C or
-                self.info.device_type == Printers.H2D or
-                self.info.device_type == Printers.H2DPRO or
-                self.info.device_type == Printers.H2S or
-                self.info.device_type == Printers.P2S):
+            if model in (a1_printers | h2_printers | p2_printers):
                 return not self.print_fun.mqtt_signature_required
             return False
         elif feature == Features.AMS_SWITCH_COMMAND:
-            if (self.info.device_type == Printers.A1 or
-                self.info.device_type == Printers.A1MINI or
-                self.info.device_type == Printers.H2C or
-                self.info.device_type == Printers.H2D or
-                self.info.device_type == Printers.H2DPRO or
-                self.info.device_type == Printers.P2S or
-                self.info.device_type == Printers.X1E):
-                return True
-            elif (self.info.device_type == Printers.P1S or
-                  self.info.device_type == Printers.P1P):
+            if model in p1_printers:
                 return self.supports_sw_version("01.02.99.10")
-            elif (self.info.device_type == Printers.X1 or
-                  self.info.device_type == Printers.X1C):
+            if model in x1e_printer:
+                # Do not know if the X1E supports this, or at what version support was added.
+                return False
+            if model in x1_printer:
                 return self.supports_sw_version("01.05.06.01")
-            return False
+            return True
         elif feature == Features.AMS_HUMIDITY:
-            if (self.info.device_type == Printers.A1 or
-                self.info.device_type == Printers.A1MINI):
+            if model in a1_printers:
                 return self.supports_sw_version("01.06.10.33")
-            elif (self.info.device_type == Printers.H2C or
-                  self.info.device_type == Printers.H2D or
-                  self.info.device_type == Printers.H2DPRO or
-                  self.info.device_type == Printers.H2S or
-                  self.info.device_type == Printers.P2S):
-                return True
-            elif (self.info.device_type == Printers.X1 or
-                  self.info.device_type == Printers.X1C):
-                return self.supports_sw_version("01.08.50.18")
-            elif (self.info.device_type == Printers.P1S or
-                  self.info.device_type == Printers.P1P):
+            if model in p1_printers:
                 return self.supports_sw_version("01.07.50.18")
-            return False
+            if model in x1e_printer:
+                # Do not know if the X1E supports this, or at what version support was added.
+                return False
+            if model in x1_printer:
+                return self.supports_sw_version("01.08.50.18")
+            return True
         elif feature == Features.AMS_DRYING:
-            if (self.info.device_type == Printers.A1 or
-                  self.info.device_type == Printers.A1MINI):
+            if model in a1_printers:
                 return self.supports_sw_version("01.06.10.33")
-            elif (self.info.device_type == Printers.H2C or
-                self.info.device_type == Printers.H2D or
-                self.info.device_type == Printers.H2DPRO or
-                self.info.device_type == Printers.H2S or
-                self.info.device_type == Printers.P2S):
-                return True
-            elif (self.info.device_type == Printers.X1 or
-                  self.info.device_type == Printers.X1C):
-                return self.supports_sw_version("01.08.50.18")
-            elif (self.info.device_type == Printers.P1S or
-                  self.info.device_type == Printers.P1P):
+            if model in p1_printers:
                 return self.supports_sw_version("01.07.50.18")
-            # This needs fixing now the A1 printers support the other AMS models.
+            if model in x1e_printer:
+                # Do not know if the X1E supports this, or at what version support was added.
+                return False
+            if model in x1_printer:
+                return self.supports_sw_version("01.08.50.18")
+            return True
+        elif feature == Features.AMS_DRYING_SETTINGS:
+            if model in p2_printers:
+                return self.supports_sw_version("01.01.50.40")
             return False
         elif feature == Features.CHAMBER_LIGHT_2:
-            return (self.info.device_type == Printers.H2C or
-                    self.info.device_type == Printers.H2D or
-                    self.info.device_type == Printers.H2DPRO or
-                    self.info.device_type == Printers.H2S)
+            return model in h2_printers
         elif feature == Features.DUAL_NOZZLES:
-            return (self.info.device_type == Printers.H2C or
-                    self.info.device_type == Printers.H2D or
-                    self.info.device_type == Printers.H2DPRO)
+            return model in dual_nozzle_printers
         elif feature == Features.EXTRUDER_TOOL:
-            return (self.info.device_type == Printers.H2C or
-                    self.info.device_type == Printers.H2D or
-                    self.info.device_type == Printers.H2DPRO or
-                    self.info.device_type == Printers.H2S)
+            return model in h2_printers
         elif feature == Features.MQTT_ENCRYPTION_FIRMWARE:
-            if (self.info.device_type == Printers.A1 or
-                self.info.device_type == Printers.A1MINI):
+            if model in a1_printers:
                 return self.supports_sw_version("01.05.00.00")
-            elif (self.info.device_type == Printers.H2D):
-                return self.supports_sw_version("01.01.01.00")
-            elif (self.info.device_type == Printers.H2DPRO):
-                return self.supports_sw_version("01.01.01.00")
-            elif (self.info.device_type == Printers.H2S or
-                  self.info.device_type == Printers.P2S):
-                return True
-            elif (self.info.device_type == Printers.P1S or
-                  self.info.device_type == Printers.P1P):
+            if model in (Printers.H2D, Printers.H2DPRO):
+                return self.supports_sw_version("01.01.00.00")
+            if model in p1_printers:
                 return self.supports_sw_version("01.08.02.00")
-            elif (self.info.device_type == Printers.X1 or 
-                  self.info.device_type == Printers.X1C):
+            if model in x1e_printer:
+                # Do not know if the X1E requires this, or at what version support was added.
+                return False
+            if model in x1_printer:
                 return self.supports_sw_version("01.08.50.32")
-            return False
+            return True
         elif feature == Features.FIRE_ALARM_BUZZER:
-            return (self.info.device_type == Printers.H2D or
-                    self.info.device_type == Printers.H2DPRO or
-                    self.info.device_type == Printers.H2S)
+            return model in h2_printers
         elif feature == Features.HEATBED_LIGHT:
-            return (self.info.device_type == Printers.H2C or
-                    self.info.device_type == Printers.H2D or
-                    self.info.device_type == Printers.H2DPRO or
-                    self.info.device_type == Printers.H2S)
-        elif feature == Features.SUPPORTS_EARLY_FTP_DOWNLOAD:
-            return (self.info.device_type == Printers.A1 or
-                    self.info.device_type == Printers.A1MINI or
-                    self.info.device_type == Printers.P1P or
-                    self.info.device_type == Printers.P1S)
+            return model in h2_printers
+        elif feature == Features.SECONDARY_AUX_FAN:
+            return model in p2_printers
+        elif feature == Features.HOTEND_RACK:
+            return model == Printers.H2C and len(self.hotend_rack.hotends) > 0
+        elif feature == Features.ACTIVE_CHAMBER_HEATER:
+            return model in (x1e_printer | h2_printers)
         return False
     
     def supports_sw_version(self, version: str) -> bool:
@@ -526,15 +465,16 @@ class Temperature:
     target_bed_temp: int
     chamber_temp: int
     nozzle_temps: dict
-    nozzle_target_temps: dict
+    target_nozzle_temps: dict
 
     def __init__(self, client):
         self._client = client
         self.bed_temp = 0
         self.target_bed_temp = 0
         self.chamber_temp = 0
-        self.nozzle_temps = { 0: 0, 1: 0}
-        self.target_nozzle_temps = { 0:0, 1: 0}
+        self.target_chamber_temp = 0
+        self.nozzle_temps = { 0: 0, 1: 0, 15: 0}
+        self.target_nozzle_temps = { 0:0, 1: 0, 15: 0}
 
     @property
     def active_nozzle_temperature(self):
@@ -595,6 +535,7 @@ class Temperature:
         chamber_temp = data.get("device", {}).get("ctc", {}).get("info", {}).get("temp", None)
         if chamber_temp is not None:
             self.chamber_temp = chamber_temp & 0xFFFF
+            self.target_chamber_temp = (chamber_temp >> 16) & 0xFFFF
         else:
             self.chamber_temp = round(data.get("chamber_temper", self.chamber_temp))
 
@@ -630,7 +571,7 @@ class Temperature:
         return (old_data != f"{self.__dict__}")
 
     def set_target_temp(self, temp: TempEnum, temperature: int):
-        command = set_temperature_to_gcode(temp, temperature)
+        command = set_temperature_to_gcode(temp, temperature, self._client._device.info.device_type)
 
         # if type == TempEnum.HEATBED:
         #     self.bed_temp = temperature
@@ -660,6 +601,10 @@ class Fans:
     _cooling_fan_speed_override_time: datetime
     _heatbreak_fan_speed_percentage: int
     _heatbreak_fan_speed: int
+    _secondary_aux_fan_speed_percentage: int
+    _secondary_aux_fan_speed: int
+    _secondary_aux_fan_speed_override: int
+    _secondary_aux_fan_speed_override_time: datetime
 
     def __init__(self, client):
         self._client = client
@@ -677,6 +622,10 @@ class Fans:
         self._cooling_fan_speed_override_time = None
         self._heatbreak_fan_speed_percentage = 0
         self._heatbreak_fan_speed = 0
+        self._secondary_aux_fan_speed_percentage = 0
+        self._secondary_aux_fan_speed = 0
+        self._secondary_aux_fan_speed_override = 0
+        self._secondary_aux_fan_speed_override_time = None
 
     def print_update(self, data) -> bool:
         old_data = f"{self.__dict__}"
@@ -701,7 +650,15 @@ class Fans:
                 self._cooling_fan_speed_override_time = None
         self._heatbreak_fan_speed = data.get("heatbreak_fan_speed", self._heatbreak_fan_speed)
         self._heatbreak_fan_speed_percentage = fan_percentage(self._heatbreak_fan_speed)
-        
+        if data.get('device') and data["device"].get('airduct') and data["device"]["airduct"].get('parts') and next((item for item in data["device"]["airduct"]["parts"] if item["id"] == 160), None):
+            fan_part = next(item for item in data["device"]["airduct"]["parts"] if item["id"] == 160)
+            self._secondary_aux_fan_speed = fan_part.get("value", self._secondary_aux_fan_speed)
+            self._secondary_aux_fan_speed_percentage = fan_percentage(self._secondary_aux_fan_speed)
+        if self._secondary_aux_fan_speed_override_time is not None:
+            delta = datetime.now() - self._secondary_aux_fan_speed_override_time
+            if delta.seconds > 5:
+                self._cooling_fan_speed_override_time = None
+
         return (old_data != f"{self.__dict__}")
 
     def set_fan_speed(self, fan: FansEnum, percentage: int):
@@ -718,6 +675,9 @@ class Fans:
         elif fan == FansEnum.CHAMBER:
             self._chamber_fan_speed_override = percentage
             self._chamber_fan_speed_override_time = datetime.now()
+        elif fan == FansEnum.SECONDARY_AUXILIARY:
+            self._secondary_aux_fan_speed_override = percentage
+            self._secondary_aux_fan_speed_override_time = datetime.now()
 
         LOGGER.debug(command)
         self._client.publish(command)
@@ -742,7 +702,10 @@ class Fans:
                 return self._chamber_fan_speed_percentage
         elif fan == FansEnum.HEATBREAK:
             return self._heatbreak_fan_speed_percentage
-
+        elif fan == FansEnum.SECONDARY_AUXILIARY:
+            if self._secondary_aux_fan_speed_override_time is not None:
+                return self._chamber_fan_speed_override
+            return self._chamber_fan_speed_percentage
 
 @dataclass
 class Upgrade:
@@ -908,7 +871,7 @@ class PrintJob:
     file_type_icon: str
     gcode_file: str
     gcode_file_downloaded: str
-    subtask_name: str
+    _subtask_name: str
     start_time: datetime
     end_time: datetime
     remaining_time: int
@@ -918,7 +881,7 @@ class PrintJob:
     print_weight: float
     print_length: int
     print_bed_type: str
-    print_type: str
+    _print_type: str
     _ams_print_weights: float
     _ams_print_lengths: float
     _skipped_objects: list
@@ -935,7 +898,7 @@ class PrintJob:
         self.gcode_state = "unknown"
         self.gcode_file = ""
         self.gcode_file_downloaded = ""
-        self.subtask_name = ""
+        self._subtask_name = ""
         self.start_time = None
         self.end_time = None
         self.remaining_time = 0
@@ -949,7 +912,7 @@ class PrintJob:
         self.print_length = 0
         self.print_bed_type = "unknown"
         self.file_type_icon = "mdi:file"
-        self.print_type = ""
+        self._print_type = ""
         self._printable_objects = {}
         self._skipped_objects = []
         self._gcode_file_prepare_percent = -1
@@ -999,6 +962,14 @@ class PrintJob:
                     ams_tray = (i % 4) + 1
                     values[f"AMS {ams_index} Tray {ams_tray}"] = self._ams_print_lengths[i]
         return values
+    
+    @property
+    def subtask_name(self) -> str:
+        return None if self._subtask_name == "" else self._subtask_name
+    
+    @property
+    def print_type(self) -> str:
+        return "unknown" if self._print_type == "" else self._print_type
 
     def print_update(self, data) -> bool:
         old_data = f"{self.__dict__}"
@@ -1035,16 +1006,16 @@ class PrintJob:
         self.gcode_file = data.get("gcode_file", self.gcode_file)
         if old_gcode_file != self.gcode_file:
             LOGGER.debug(f"GCODE_FILE: {self.gcode_file}")
-        self.print_type = data.get("print_type", self.print_type)
-        if self.print_type.lower() not in PRINT_TYPE_OPTIONS:
-            if self.print_type != "":
-                LOGGER.debug(f"Unknown print_type. Please log an issue : '{self.print_type}'")
-            self.print_type = "unknown"
-        old_subtask_name = self.subtask_name
-        self.subtask_name = data.get("subtask_name", self.subtask_name)
-        if old_subtask_name != self.subtask_name:
-            LOGGER.debug(f"SUBTASK_NAME: {self.subtask_name}")
-        self.file_type_icon = "mdi:file" if self.print_type != "cloud" else "mdi:cloud-outline"
+        self._print_type = data.get("print_type", self._print_type)
+        if self._print_type.lower() not in PRINT_TYPE_OPTIONS:
+            if self._print_type != "":
+                LOGGER.debug(f"Unknown print_type. Please log an issue : '{self._print_type}'")
+            self._print_type = "unknown"
+        old_subtask_name = self._subtask_name
+        self._subtask_name = data.get("subtask_name", self._subtask_name)
+        if old_subtask_name != self._subtask_name:
+            LOGGER.debug(f"SUBTASK_NAME: {self._subtask_name}")
+        self.file_type_icon = "mdi:file" if self._print_type != "cloud" else "mdi:cloud-outline"
         self.current_layer = data.get("layer_num", self.current_layer)
         self.total_layers = data.get("total_layer_num", self.total_layers)
         self.ams_mapping = data.get("ams_mapping", self.ams_mapping)
@@ -1341,16 +1312,16 @@ class PrintJob:
         filenames_to_try = []
 
         # First test if the subtaskname exists as a 3mf
-        if self.subtask_name != '':
-            if self.subtask_name.endswith('.3mf'):
-                filenames_to_try.append(self.subtask_name)
+        if self._subtask_name != '':
+            if self._subtask_name.endswith('.3mf'):
+                filenames_to_try.append(self._subtask_name)
             else:
-                filenames_to_try.append(f"{self.subtask_name}.3mf")
-                filenames_to_try.append(f"{self.subtask_name}.gcode.3mf")
+                filenames_to_try.append(f"{self._subtask_name}.3mf")
+                filenames_to_try.append(f"{self._subtask_name}.gcode.3mf")
 
 
         # If we didn't find it then try the gcode file
-        if (self.gcode_file != '') and (self.subtask_name != self.gcode_file):
+        if (self.gcode_file != '') and (self._subtask_name != self.gcode_file):
             if self.gcode_file.endswith('.3mf'):
                 filenames_to_try.append(self.gcode_file)
             else:
@@ -1363,7 +1334,7 @@ class PrintJob:
             if model_file is not None:
                 return model_file
 
-        if self.subtask_name == "":
+        if self._subtask_name == "":
             # Fall back to find the latest file by timestamp but only if we don't have a subtask name set - printer must have been rebooted.
             LOGGER.debug("Falling back to searching for latest 3mf file.")
             model_path = self._find_latest_file(ftp, self.ftp_search_paths, ['.3mf'])
@@ -1455,6 +1426,10 @@ class PrintJob:
                         return file[1]
 
         return None
+
+    async def async_prune_print_history_files(self):
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self.prune_print_history_files)
     
     def prune_print_history_files(self):
         if self._client._test_mode:
@@ -1464,6 +1439,10 @@ class PrintJob:
                               extensions=['.3mf'],
                               keep=self._client._print_cache_count,
                               extra_extensions=['.jpg', '.png', '.slice_info.config', '.gcode'])
+
+    async def async_prune_timelapse_files(self):
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self.prune_timelapse_files)
 
     def prune_timelapse_files(self):
         if self._client._test_mode:
@@ -2118,12 +2097,13 @@ class Info:
         self.online = False
         self.new_version_state = 0
         self.mqtt_mode = "local" if self._client._local_mqtt else "bambu_cloud"
-        self.nozzle_diameters = {0: None, 1: None}
-        self.nozzle_types = {0: None, 1: None}
+        self.nozzle_diameters = {0: None, 1: None, 15: None}
+        self.nozzle_types = {0: None, 1: None, 15: None}
         self.usage_hours = client._usage_hours
         self.extruder_filament_state = False
         self.door_open = False
         self.airduct_mode = 0
+        self.airduct_modes_available = []
         self._ip_address = client.host
         self._force_ip = client.settings.get('force_ip', False)                
 
@@ -2311,7 +2291,7 @@ class Info:
         # H2 example:
         #   "stat": "46258008",  # closed
         #   "stat": "46A58008",  # open
-        if self.device_type in [Printers.X1, Printers.X1C]:
+        if self.device_type in [Printers.X1, Printers.X1C, Printers.X1E]:
             if "home_flag" in data:
                 self.door_open = (data["home_flag"] & Home_Flag_Values.DOOR_OPEN) != 0
         elif "stat" in data:
@@ -2320,10 +2300,16 @@ class Info:
 
 
         # Airduct mode is provided under print/device/airduct
-        # P2S example:
-        #   "modeCur": 0, // 0 = Cooling only, 1 = Heating/Filter
-        #   "modeFunc": 0, // 0 = Cooling only, 1 = Heating/Filter        
-        self.airduct_mode = data.get("device", {}).get("airduct", {}).get("modeCur", self.airduct_mode)
+        airduct_data = data.get("device", {}).get("airduct", {})
+        self.airduct_mode = airduct_data.get("modeCur", self.airduct_mode)
+
+        mode_list = airduct_data.get("modeList")
+        if mode_list is not None:
+            self.airduct_modes_available = [
+                AIRDUCT_MODES[entry["modeId"]]
+                for entry in mode_list
+                if entry.get("modeId") in AIRDUCT_MODES
+            ]
 
         # Compute if there's a delta before we check the wifi_signal value.
         changed = (old_data != f"{self.__dict__}")
@@ -2386,11 +2372,11 @@ class Info:
         else:
             self._client.publish(PROMPT_SOUND_DISABLE)
             
-    def set_airduct_mode(self, enable: bool):
-        if enable:
-            self._client.publish(AIRDUCT_SET_COOLING)            
-        else:
-            self._client.publish(AIRDUCT_SET_HEATING_FILTER)            
+    def set_airduct_mode(self, option: str):
+        mode_id = next((k for k, v in AIRDUCT_MODES.items() if v == option), 0)
+        command = AIRDUCT_SET_MODE_TEMPLATE.copy()
+        command["print"] = {**command["print"], "modeId": mode_id}
+        self._client.publish(command)
             
 
     def buzzer_silence(self):
@@ -2424,6 +2410,137 @@ class Info:
         return flow_prefix + _MATERIALS.get(material_code, "unknown")
 
 
+class Hotend:
+    """Represents a single hotend in the Hotend Rack."""
+
+    def __init__(self, hotend_id: int):
+        self.id = hotend_id
+        self.diameter: float = 0.0
+        self.type_code: str = ""
+        self.type_name: str = "unknown"
+        self.serial: str = ""
+        self.tm: int = 0
+        self.wear: int = 0
+        self.stat: int = 0
+        self.color_m: str = "00000000"
+        self.fila_id: str = ""
+        self._active: bool = False
+
+    @property
+    def active(self) -> bool:
+        return self._active
+
+    @active.setter
+    def active(self, value: bool):
+        self._active = value
+
+    @property
+    def flow_type(self) -> str:
+        if not self.type_code or len(self.type_code) < 2:
+            return "Unknown"
+        return "High Flow" if self.type_code[1] == "H" else "Standard"
+
+    @property
+    def status_name(self) -> str:
+        status_bits = (self.stat >> 1) & 0x3
+        return {0: "normal", 1: "abnormal", 2: "unknown"}.get(status_bits, "unknown")
+
+    def print_update(self, data: dict) -> bool:
+        old_data = f"{self.__dict__}"
+        self.diameter = data.get("diameter", self.diameter)
+        type_code = data.get("type", self.type_code)
+        if type_code != self.type_code:
+            self.type_code = type_code
+            self.type_name = Info._nozzle_type_name(type_code) if type_code else "unknown"
+        self.serial = data.get("sn", self.serial)
+        self.tm = data.get("tm", self.tm)
+        self.wear = data.get("wear", self.wear)
+        self.stat = data.get("stat", self.stat)
+        self.color_m = data.get("color_m", self.color_m)
+        self.fila_id = data.get("fila_id", self.fila_id)
+        return old_data != f"{self.__dict__}"
+
+
+class HotendRack:
+    """Manages the Hotend Rack (Vortek tool changer) system."""
+
+    RACK_SLOT_IDS = range(16, 22)  # IDs 16-21
+
+    def __init__(self, client):
+        self._client = client
+        self.hotends: dict[int, Hotend] = {}
+        self.exist_bitmask: int = 0
+        self.state: int = 0
+        self.src_id: int = 0
+        self.tar_id: int = 0
+        self.holder_pos: int = 0
+        self.holder_stat: int = 0
+
+    def is_slot_occupied(self, slot_id: int) -> bool:
+        """Check if a rack slot physically has a hotend."""
+        return bool(self.exist_bitmask & (1 << slot_id))
+
+    def _is_vortek_system(self, exist_bitmask: int, nozzle_info: list | None) -> bool:
+        """Check if any hotend ID >= 16 exists in the bitmask or info array."""
+        if exist_bitmask >= (1 << 16):
+            return True
+        if nozzle_info is not None and isinstance(nozzle_info, list):
+            return any(entry.get("id", 0) >= 16 for entry in nozzle_info)
+        return False
+
+    def print_update(self, data) -> bool:
+        changed = False
+
+        nozzle_data = data.get("device", {}).get("nozzle", {})
+        if not nozzle_data:
+            return False
+
+        exist = nozzle_data.get("exist", self.exist_bitmask)
+        nozzle_info = nozzle_data.get("info")
+
+        if not self._is_vortek_system(exist, nozzle_info):
+            return False
+
+        if self.exist_bitmask != exist:
+            self.exist_bitmask = exist
+            changed = True
+
+        for attr, key in [("state", "state"), ("src_id", "src_id"), ("tar_id", "tar_id")]:
+            value = nozzle_data.get(key)
+            if value is not None and value != getattr(self, attr):
+                setattr(self, attr, value)
+                changed = True
+
+        # Initialize rack slots that don't exist yet
+        for slot_id in self.RACK_SLOT_IDS:
+            if slot_id not in self.hotends:
+                self.hotends[slot_id] = Hotend(slot_id)
+
+        # Update hotend data from info array
+        if nozzle_info is not None and isinstance(nozzle_info, list):
+            for entry in nozzle_info:
+                nid = entry.get("id")
+                if nid is not None and nid in self.hotends:
+                    # Rack slot data (IDs 16-21)
+                    if self.hotends[nid].print_update(entry):
+                        changed = True
+                elif nid is not None and nid < 16 and entry.get("type") and entry.get("sn", "N/A") != "N/A" and self.tar_id in self.hotends:
+                    # Extruder nozzle with valid serial — update the mounted hotend's rack slot
+                    if self.hotends[self.tar_id].print_update(entry):
+                        changed = True
+
+        # Holder data
+        holder_data = data.get("device", {}).get("holder", {})
+        if holder_data:
+            for attr, key in [("holder_pos", "pos"), ("holder_stat", "stat")]:
+                value = holder_data.get(key)
+                if value is not None and value != getattr(self, attr):
+                    setattr(self, attr, value)
+                    changed = True
+
+        return changed
+
+
 @dataclass
 class AMSInstance:
     """Return all AMS instance related info"""
@@ -2439,6 +2556,9 @@ class AMSInstance:
     humidity: int = 0
     temperature: int = 0
     remaining_drying_time: int = 0
+    drying_temperature: int = 0
+    drying_duration: int = 0
+    drying_filament: str = ""
 
     def __init__(self, client, model, index):
         self.model = model
@@ -2469,8 +2589,8 @@ class AMSList:
 
     def __init__(self, client):
         self._client = client
-        self._nozzle_tray_index = { 0: 0, 1: 0}
-        self._nozzle_ams_index = { 0: 0, 1: 0}
+        self._nozzle_tray_index = { 0: 0, 1: 0, 15: 0}
+        self._nozzle_ams_index = { 0: 0, 1: 0, 15: 0}
         self.data = {}
 
     @property
@@ -2691,6 +2811,20 @@ class AMSList:
                 if self.data[index].remaining_drying_time != int(ams.get('dry_time', 0)):
                     self.data[index].remaining_drying_time = int(ams.get('dry_time', 0))
 
+                dry_setting = ams.get('dry_setting', {})
+                if dry_setting:
+                    temp = dry_setting.get('dry_temperature', -1)
+                    if self.data[index].drying_temperature != max(temp, 0):
+                        self.data[index].drying_temperature = max(temp, 0)
+
+                    duration = dry_setting.get('dry_duration', -1)
+                    if self.data[index].drying_duration != max(duration, 0):
+                        self.data[index].drying_duration = max(duration, 0)
+
+                    filament = dry_setting.get('dry_filament', "")
+                    if self.data[index].drying_filament != filament:
+                        self.data[index].drying_filament = filament
+
                 tray_list = ams['tray']
                 for tray in tray_list:
                     tray_id = int(tray['id'])
@@ -2724,6 +2858,11 @@ class AMSTray:
     tray_uuid: str
     tray_weight: int
     _active: bool
+    cols: list
+    ctype: int
+    dry_temp = int
+    dry_time = int
+    bed_temp = int
 
     def __init__(self, client):
         self._client = client
@@ -2741,6 +2880,11 @@ class AMSTray:
         self.tray_uuid = ""
         self.tray_weight = 0
         self._active = False
+        self.cols = []
+        self.ctype = 0
+        self.dry_temp = 0
+        self.dry_time = 0
+        self.bed_temp = 0
 
     @property
     def remain(self) -> int:
@@ -2761,14 +2905,22 @@ class AMSTray:
     def print_update(self, data) -> bool:
         old_data = f"{self.__dict__}"
 
-        if len(data) <= 2:
-            # If the data just id + state then the tray is empty.
+        # Detect empty tray notifications by checking if payload contains ONLY metadata fields.
+        # Empty trays send just {"id": "X"} or {"id": "X", "state": Y} with no filament data.
+        # Any other field beyond id/state indicates filament data (works for both X1 full
+        # payloads and P1 delta payloads, and is future-proof if Bambu adds new fields).
+        METADATA_ONLY_FIELDS = {'id', 'state'}
+        payload_fields = set(data.keys())
+        is_empty_notification = ('id' in data) and payload_fields.issubset(METADATA_ONLY_FIELDS)
+
+        if is_empty_notification:
+            # Tray is empty - reset all fields to defaults
             self.empty = True
             self.idx = ""
             self.name = "Empty"
             self.type = "Empty"
             self.sub_brands = ""
-            self.color = "00000000"  # RRGGBBAA
+            self.color = "00000000"
             self.nozzle_temp_min = 0
             self.nozzle_temp_max = 0
             self._remain = -1
@@ -2776,11 +2928,21 @@ class AMSTray:
             self.tray_uuid = ""
             self.k = 0
             self.tray_weight = 0
+            self.cols = []
+            self.ctype = 0
+            self.dry_temp = 0
+            self.dry_time = 0
+            self.bed_temp = 0
         else:
+            # Tray has filament data - update fields normally
+            # Using .get() preserves existing values for delta updates
             self.empty = False
             self.idx = data.get('tray_info_idx', self.idx)
             self.name = get_filament_name(self.idx, self._client.slicer_settings.custom_filaments)
             self.type = data.get('tray_type', self.type)
+            if self.name == "unknown":
+                # Fallback to the type if the name is unknown
+                self.name = self.type
             self.sub_brands = data.get('tray_sub_brands', self.sub_brands)
             self.color = data.get('tray_color', self.color)
             self.nozzle_temp_min = data.get('nozzle_temp_min', self.nozzle_temp_min)
@@ -2790,9 +2952,12 @@ class AMSTray:
             self.tray_uuid = data.get('tray_uuid', self.tray_uuid)
             self.k = data.get('k', self.k)
             self.tray_weight = data.get('tray_weight', self.tray_weight)
-            if self.name == "unknown":
-                # Fallback to the type if the name is unknown
-                self.name = self.type
+            self.cols = data.get('cols', self.cols)
+            self.ctype = data.get('ctype', self.ctype)
+            self.dry_temp = data.get('tray_temp', self.dry_temp)
+            self.dry_time = data.get('tray_time', self.dry_time)
+            self.bed_temp = data.get('bed_temp', self.bed_temp)
+        
         return (old_data != f"{self.__dict__}")
 
 
@@ -3019,7 +3184,7 @@ class HMSList:
                 LOGGER.debug("Updating HMS error list.")
                 self._errors = errors
                 if self._errors["Count"] != 0:
-                    LOGGER.warning(f"HMS ERRORS: {errors}")
+                    LOGGER.debug(f"HMS ERRORS: {errors}")
                 self._client.callback("event_printer_error")
                 return True
         
@@ -3115,8 +3280,7 @@ class HMSNotification:
     @property
     def wiki_url(self):
         if self.attr > 0 and self.code > 0:
-            # Only English wiki content seems to exist
-            return f"https://wiki.bambulab.com/en/x1/troubleshooting/hmscode/{self.hms_code}"
+            return get_wiki_url_for_hms_error(self.hms_code, self._device_type)
         return ""
 
 

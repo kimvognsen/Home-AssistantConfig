@@ -2,6 +2,9 @@ name: Pet fountain
 products:
   - id: akln8rb04cav403q
     manufacturer: Kanchou
+  - id: cafirr70niv1hj2x
+    manufacturer: Fontanna Smart
+    model: FONT7-SMART-B
 entities:
   - entity: select
     translation_key: activation_mode
@@ -16,8 +19,7 @@ entities:
           - dps_val: night
             value: night
   - entity: sensor
-    name: Filter remaining
-    icon: "mdi:air-filter"
+    translation_key: filter_life
     class: duration
     category: diagnostic
     dps:

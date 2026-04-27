@@ -5,7 +5,7 @@ products:
     model: PW58410
 entities:
   - entity: water_heater
-    translation_only_key: water_air
+    translation_only_key: hot_water
     dps:
       - id: 1
         type: boolean
@@ -36,6 +36,7 @@ entities:
                00000000FFFFFFFF00000000000000000000000000000000\
                000000000000000000000000000000000000000000000000\
                0000000000000000"
+        mask_signed: true
       - id: 118
         type: string
         optional: true
@@ -197,6 +198,7 @@ entities:
                000000000000000000000000000000000000000000000000\
                000000000000000000000000000000000000000000000000\
                0000000000000000"
+        mask_signed: true
       - id: 6
         type: string
         name: unit
@@ -217,6 +219,7 @@ entities:
                000000000000000000000000000000000000000000000000\
                000000000000000000000000000000000000000000000000\
                0000000000000000"
+        mask_signed: true
       - id: 6
         type: string
         name: unit
@@ -225,9 +228,8 @@ entities:
             value: F
           - value: C
   - entity: sensor
-    name: Ambient temperature
+    translation_key: ambient_temperature
     class: temperature
-    category: diagnostic
     dps:
       - id: 101
         type: base64
@@ -237,6 +239,7 @@ entities:
                000000000000000000000000000000000000000000000000\
                000000000000000000000000000000000000000000000000\
                0000000000000000"
+        mask_signed: true
       - id: 6
         type: string
         name: unit
@@ -257,6 +260,7 @@ entities:
                000000000000000000000000000000000000000000000000\
                000000000000000000000000000000000000000000000000\
                0000000000000000"
+        mask_signed: true
       - id: 6
         type: string
         name: unit
@@ -277,6 +281,7 @@ entities:
                000000000000000000000000000000000000000000000000\
                000000000000000000000000000000000000000000000000\
                0000000000000000"
+        mask_signed: true
       - id: 6
         type: string
         name: unit
@@ -297,6 +302,7 @@ entities:
                000000000000000000000000000000000000000000000000\
                000000000000000000000000000000000000000000000000\
                0000000000000000"
+        mask_signed: true
       - id: 6
         type: string
         name: unit
@@ -317,6 +323,7 @@ entities:
                FFFFFFFF0000000000000000000000000000000000000000\
                000000000000000000000000000000000000000000000000\
                0000000000000000"
+        mask_signed: true
       - id: 6
         type: string
         name: unit
@@ -375,6 +382,7 @@ entities:
                0000000000000000000000000000000000000000FFFFFFFF\
                000000000000000000000000000000000000000000000000\
                0000000000000000"
+        mask_signed: true
       - id: 6
         type: string
         name: unit
@@ -462,6 +470,7 @@ entities:
                000000000000000000000000000000000000000000000000\
                0000000000000000000000000000000000000000FFFFFFFF\
                0000000000000000"
+        mask_signed: true
       - id: 6
         type: string
         name: unit

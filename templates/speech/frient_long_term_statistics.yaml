@@ -10,10 +10,10 @@
   - sensor: 
     - name: "Frient Long Term Statistics"
       unit_of_measurement: kWh
-      state: "{{ states('sensor.energiforbrug_total') }}"
+      state: "{{ states('sensor.frient_energiforbrug_total_power') }}"
       attributes: 
         device_class: energy
         state_class: measurement
-        last_reset: "{{ state_attr('sensor.energiforbrug_total', 'metering_date') }}"
+        last_reset: "{{ state_attr('sensor.frient_energiforbrug_total_power', 'metering_date') }}"
 
 

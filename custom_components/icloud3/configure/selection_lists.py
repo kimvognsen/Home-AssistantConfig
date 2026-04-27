@@ -1,14 +1,17 @@
 
 
 from ..global_variables import GlobalVariables as Gb
-from ..const            import (RARROW, PHDOT, CRLF_DOT, DOT, HDOT, PHDOT, CIRCLE_STAR, RED_X,
-                                YELLOW_ALERT, RED_ALERT, EVLOG_NOTICE, EVLOG_ALERT, EVLOG_ERROR, LINK, LLINK, RLINK,
+from ..const            import (RARROW, CRLF_DOT, DOT, HDOT, CIRCLE_STAR, RED_X, INACTIVE_SYMB, MONITOR_SYMB,
+                                YELLOW_ALERT, RED_ALERT, YELLOW_WARNING,
+                                EVLOG_NOTICE, EVLOG_ALERT, EVLOG_ERROR, LINK, LLINK, RLINK,
                                 IPHONE_FNAME, IPHONE, IPAD, WATCH, MAC, AIRPODS, ICLOUD, OTHER, HOME, FAMSHR,
                                 DEVICE_TYPES, DEVICE_TYPE_FNAME, DEVICE_TYPE_FNAMES, DEVICE_TRACKER_DOT,
-                                TRACK_DEVICE, MONITOR_DEVICE, INACTIVE_DEVICE,
-                                CONF_APPLE_ACCOUNTS, CONF_APPLE_ACCOUNT, CONF_TOTP_KEY,
+                                TRACK, MONITOR, INACTIVE,
+                                CONF_APPLE_ACCOUNTS, CONF_APPLE_ACCOUNT,
+                                CONF_AUTH_METHODS, CONF_LAST_METHOD,
+                                PUSH, TEXT, TEXT_1, TEXT_2, HWKEY, HWKEY_1, HWKEY_2,
                                 CONF_USERNAME, CONF_PASSWORD, CONF_DEVICES, CONF_SETUP_ICLOUD_SESSION_EARLY,
-                                CONF_DATA_SOURCE, CONF_VERIFICATION_CODE, CONF_LOCATE_ALL,
+                                CONF_DATA_SOURCE, CONF_AUTH_CODE, CONF_LOCATE_ALL,
                                 CONF_TRACK_FROM_ZONES, CONF_PICTURE_WWW_DIRS,
                                 CONF_TRACK_FROM_BASE_ZONE_USED, CONF_TRACK_FROM_BASE_ZONE, CONF_TRACK_FROM_HOME_ZONE,
                                 CONF_PICTURE, CONF_DEVICE_TYPE, CONF_INZONE_INTERVALS,
@@ -55,46 +58,121 @@ def build_apple_accounts_list(self):
     '''
 
     self.apple_acct_items_by_username = {}
-    self.is_verification_code_needed = False
+    self.is_auth_code_needed = False
 
     aa_idx = -1
-    for apple_account in Gb.conf_apple_accounts:
+    for conf_apple_acct in Gb.conf_apple_accounts:
         aa_idx += 1
-        username = apple_account[CONF_USERNAME]
-        tracked_cnt, tracked_devices, untracked_cnt, untracked_devices = tracked_untracked_form_msg(username)
+        username = conf_apple_acct[CONF_USERNAME]
+        AppleAcct = Gb.AppleAcct_by_username.get(username)
+
         if aa_idx == 0 and username == '':
             break
-        elif username == '':
+        elif AppleAcct is None or username == '':
             continue
-        else:
-            valid_upw = Gb.valid_upw_by_username.get(username)
-            AppleAcct = Gb.AppleAcct_by_username.get(username)
 
-            if AppleAcct:
-                aa_text = ''
-                if AppleAcct.auth_2fa_code_needed:
-                    self.is_verification_code_needed = True
-                    aa_text += f"{RED_ALERT}AUTHENTICATION NEEDED, "
-                elif AppleAcct.terms_of_use_update_needed:
-                    aa_text += f"{RED_ALERT}ACCEPT `TERMS OF USE` NEEDED, "
-                elif AppleAcct.login_successful is False:
-                    aa_text = f"{RED_ALERT}{NOT_LOGGED_IN}, {AppleAcct.response_code_desc}, "
-
-                aa_text += (f"{tracked_cnt} of "
-                            f"{tracked_cnt+untracked_cnt} Devices Tracked "
-                            f"({tracked_devices})")
-
-            else:
-                aa_text = f"{RED_ALERT}{NOT_LOGGED_IN}, "
-                if valid_upw is False:
-                    aa_text += "Invalid Username/Password-401"
-                elif instr(Gb.conf_tracking[CONF_DATA_SOURCE], ICLOUD) is False:
-                    aa_text =  "Apple data source is disabled"
-                else:
-                    aa_text =  "Unknown error, Restart iCloud3"
-
-        # self.apple_acct_items_by_username[username] = f"{username_id(username)}{RARROW}{aa_text}"
+        aa_text = _build_aa_text_line(self, AppleAcct, username)
         self.apple_acct_items_by_username[username] = f"{username_base(username)}{RARROW}{aa_text}"
+
+#...............................................................................
+def _build_aa_text_line(self, AppleAcct, username):
+    '''
+    Build info line for apple acct selection list
+    '''
+
+    tracked_cnt, tracked_devices, untracked_cnt, untracked_devices = tracked_untracked_form_msg(username)
+    valid_upw = Gb.valid_upw_by_username.get(username)
+
+    aa_text = ''
+    if AppleAcct.is_auth_code_needed:
+        aa_text += f"{RED_ALERT}AUTH NEEDED, "
+
+    aa_text += (f"{tracked_cnt} of "
+                f"{tracked_cnt+untracked_cnt} Devices Tracked "
+                f"({tracked_devices})")
+    return aa_text
+
+#--------------------------------------------------------------------
+def build_apple_accounts_auth_list(self):
+    '''
+    Build a list of the Apple Accounts that is used in the data source,
+    username/password and reauthentication screens to s select the
+    Apple Account or add a new one.
+
+    Parameters:
+        include_icloud_dnames:
+            True - Add a list of the devices in the Apple Account and add a
+                    new account option
+
+
+    The list is built:
+        - At the start of the forms functions for the Data Sources, Update Apple Acct,
+            and Reauth screens
+        - When the Apple Acct config is updated
+        - When an Apple Acct is deleted
+    '''
+
+    auth_needed_items_by_username = {}
+    auth_not_needed_items_by_username = {}
+    self.apple_acct_auth_items_by_username = {}
+    self.is_auth_code_needed = False
+
+    aa_idx = -1
+    for conf_apple_acct in Gb.conf_apple_accounts:
+        aa_idx += 1
+        username = conf_apple_acct[CONF_USERNAME]
+        AppleAcct = Gb.AppleAcct_by_username.get(username)
+
+        if aa_idx == 0 and username == '':
+            break
+        elif AppleAcct is None or username == '':
+            continue
+
+        aa_text = _build_aa_auth_text_line(self, AppleAcct, conf_apple_acct)
+        if AppleAcct.is_auth_code_needed:
+            auth_needed_items_by_username[username] = \
+                f"{username_base(username)}{RARROW}{aa_text}"
+        else:
+            auth_not_needed_items_by_username[username] = \
+                f"{username_base(username)}{RARROW}{aa_text}"
+
+    self.apple_acct_auth_items_by_username = auth_needed_items_by_username
+    self.apple_acct_auth_items_by_username.update(auth_not_needed_items_by_username)
+
+#...............................................................................
+def _build_aa_auth_text_line(self, AppleAcct, conf_apple_acct):
+    build_aa_auth_methods_list(self, AppleAcct)
+
+    aa_text = ''
+    aa_text += f"{self.aa_auth_methods_by_auth_method[AppleAcct.auth_method]}"
+    if AppleAcct.is_auth_code_needed:
+        aa_text = aa_text.split('> ')[0]
+        aa_text += f"> {RED_ALERT}AUTH NEEDED"
+
+    return aa_text
+
+#...............................................................................
+def build_aa_auth_methods_list(self, AppleAcct):
+
+    self.aa_auth_methods_by_auth_method = {}
+    self.aa_auth_methods_by_auth_method['push'] =  ('Push Notification > '
+                                                    'From `Apple Account Sign-in Requested` popup window')
+    for auth_method, method_info in AppleAcct.conf_apple_acct[CONF_AUTH_METHODS].items():
+        if method_info == '':
+            continue
+        if auth_method.startswith(TEXT):
+            self.aa_auth_methods_by_auth_method[auth_method] = (
+                                        f"Text Msg to Device #{auth_method[-1:]} ({method_info}) > "
+                                        f"Send a Text Message to this Trusted Device")
+        elif auth_method.startswith(HWKEY):
+            self.aa_auth_methods_by_auth_method[auth_method] = (
+                                        f"Hardware Key #{auth_method[-1:]} ({method_info}) > "
+                                        f"Authenticate with this Hardware Key (YubiKey)")
+
+    return self.aa_auth_methods_by_auth_method
+
+
+
 
 #-------------------------------------------------------------------------------------------
 def tracked_untracked_form_msg(username):
@@ -173,10 +251,10 @@ def format_device_list_item(self, conf_device):
     device_text  = (f"{conf_device[CONF_FNAME]}"
                     f" ({conf_device[CONF_IC3_DEVICENAME]}){RARROW}")
 
-    if conf_device[CONF_TRACKING_MODE] == MONITOR_DEVICE:
-        device_text += " Ⓜ MONITOR, "
-    elif conf_device[CONF_TRACKING_MODE] == INACTIVE_DEVICE:
-        device_text += "✪ INACTIVE, "
+    if conf_device[CONF_TRACKING_MODE] == MONITOR:
+        device_text += F" {MONITOR_SYMB} MONITOR, "
+    elif conf_device[CONF_TRACKING_MODE] == INACTIVE:
+        device_text += f" {INACTIVE_SYMB} INACTIVE, "
 
     if conf_device[CONF_FAMSHR_DEVICENAME] != 'None':
         icloud_dname_apple_acct, status_msg = \
@@ -362,7 +440,8 @@ async def build_icloud_device_selection_list(self, selected_devicename=None):
                                         f"{final_line}"}
 
             if devices_available == {}:
-                devices_available ={f"{aa_idx_dots}nodev": "None, All Apple account devices are assigned"}
+                devices_available ={f"nodev": "All Apple account devices are assigned"}
+                # devices_available ={f"{aa_idx_dots}nodev": "All Apple account devices are assigned"}
 
             all_devices_available.update(username_hdr_available)
             all_devices_available.update(devices_available)
@@ -558,7 +637,7 @@ async def build_mobapp_entity_selection_list(self, selected_devicename=None):
         scan_for_mobapp_devices = {}
 
     if devices_available == {}:
-        devices_available = {f"nodev": "None, All MobApp devices are assigned"}
+        devices_available = {f"nodev": "All MobApp devices are assigned"}
     if (selected_devicename
             and is_empty(devices_this_device)
             and self.conf_device[CONF_MOBILE_APP_DEVICE] != 'None'
@@ -607,14 +686,10 @@ async def build_picture_filename_selection_list(self):
                                                 file_filter)
 
         await build_www_directory_filter_list(self)
-        # if is_empty(self.www_directory_list):
-        #     for image_filename in image_filenames:
-        #         dir = image_filename.rsplit('/', 1)[0]
-        #         list_add(self.www_directory_list, dir)
 
-        # Make sure all directories in the filter list still exist, 
+        # Make sure all directories in the filter list still exist,
         # delete it if it does not exist
-        www_gb_dirs_unknown = [dir  for dir in Gb.picture_www_dirs 
+        www_gb_dirs_unknown = [dir  for dir in Gb.picture_www_dirs
                                     if dir not in self.www_directory_list]
         if isnot_empty(www_gb_dirs_unknown):
             for www_gb_dir_unknown in www_gb_dirs_unknown:

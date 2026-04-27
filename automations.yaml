@@ -130,15 +130,15 @@
   - choose:
     - conditions:
       - condition: state
-        entity_id: light.smart_plug_hus_nr_20
+        entity_id: light.lidl_smart_plug_hus_nr_20
         state: 'off'
       sequence:
       - target:
-          entity_id: light.smart_plug_hus_nr_20
+          entity_id: light.lidl_smart_plug_hus_nr_20
         action: light.turn_on
       - delay: 00:02:00
       - target:
-          entity_id: light.smart_plug_hus_nr_20
+          entity_id: light.lidl_smart_plug_hus_nr_20
         action: light.turn_off
   mode: single
   max_exceeded: silent
@@ -202,21 +202,21 @@
 - id: '1708269464965'
   alias: Notification - Energy sensor svar ikke
   description: ''
-  trigger:
-  - platform: state
-    entity_id:
-    - sensor.energiforbrug_total
+  triggers:
+  - entity_id:
+    - sensor.frient_energiforbrug_total_power
     to: unavailable
     for:
       hours: 0
       minutes: 5
       seconds: 0
-  condition: []
-  action:
-  - service: notify.mobile_app_kims_iphone
-    metadata: {}
+    trigger: state
+  conditions: []
+  actions:
+  - metadata: {}
     data:
-      message: Energi sensor er nede
+      message: Freint energi sensor svare ikke
+    action: notify.mobile_app_kims_iphone
   mode: single
 - id: '1729323586250'
   alias: Notifikation - print error
@@ -1373,41 +1373,28 @@
       entity_id: light.ikea_inspelning_smart_plug_terrrasse_lyskaede
     action: light.turn_off
   mode: single
-- id: '1759945714262'
-  alias: Værksted - Tænd radiator ved lav temperatur (16)
-  description: ''
-  triggers:
-  - entity_id:
-    - sensor.weather_vaerksted_temperature
-    below: 16
-    trigger: numeric_state
-  actions:
-  - target:
-      device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
-    data: {}
-    enabled: true
-    action: climate.turn_on
 - id: '1760367613982'
   alias: Notigikation - Kim er hjemme notifikation til Gitte
   description: Notifikation på Gittes telefon om at Kim er hjemme
   triggers:
   - entity_id:
-    - device_tracker.kim_iphone_cloud3
-    to: home
+    - person.kim_vognsen
+    to:
+    - home
     for:
       hours: 0
       minutes: 0
       seconds: 30
     trigger: state
-    from: not_home
+    from:
+    - not_home
   conditions: []
   actions:
   - data:
       message: Kim er hjemme
     action: notify.mobile_app_gittes_iphone
-  - data:
-      message: Kim er hjemme
-    action: notify.mobile_app_kims_iphone
+  - action: notify.mobile_app_kims_iphone17
+    data: {}
   mode: single
 - id: '1760426419385'
   alias: Udendørs – sluk når party mode bliver OFF
@@ -1735,11 +1722,9 @@
       seconds: 30
     trigger: state
     from: not_home
-  conditions: []
   actions:
-  - data:
-      message: Gitte er hjemme  ❤️
-    action: notify.mobile_app_kims_iphone
+  - action: notify.mobile_app_kims_iphone17
+    data: {}
   mode: single
 - id: '1760539435834'
   alias: Hall – dæmp lys kl. 01:00 hvis party mode er OFF
@@ -1768,160 +1753,6 @@
   - data:
       message: ⚠️ Home Assistant RAM >90 %, check Recorder or integration load
     action: notify.mobile_app_kims_iphone
-- id: '1762870981459'
-  alias: Værksted- Tænd radiator ved lav temperatur (12)
-  description: ''
-  triggers:
-  - entity_id:
-    - sensor.weather_vaerksted_temperature
-    below: 12
-    trigger: numeric_state
-  conditions:
-  - condition: state
-    entity_id: climate.el_radiator_i_varksted
-    state: 'off'
-  actions:
-  - target:
-      device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
-    data: {}
-    enabled: true
-    action: climate.turn_on
-  - data:
-      message: Temperaturen er under 12 grader. Tændt for radiator værksted
-    action: notify.ios_kims_iphone
-  mode: single
-- id: '1762871213693'
-  alias: Værksted - Sæt normal temperatur for radiator kl. 20:10 hvis nødvendigt
-  description: Sætter el-radiatoren i værkstedet til normal temperatur kl. 20:10,
-    hvis temperaturen er under 17 grader.
-  triggers:
-  - at: '20:10:00'
-    trigger: time
-  conditions:
-  - condition: numeric_state
-    entity_id: sensor.weather_vaerksted_temperature
-    below: 17
-  actions:
-  - target:
-      device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
-    action: climate.turn_on
-    data: {}
-  mode: single
-- id: '1762871296966'
-  alias: Værksted - Sluk radiator ved høj temperatur i værksted (19)
-  description: ''
-  triggers:
-  - entity_id:
-    - sensor.weather_vaerksted_temperature
-    above: 19
-    trigger: numeric_state
-  conditions:
-  - condition: state
-    entity_id: climate.el_radiator_i_varksted
-    state: heat
-  actions:
-  - target:
-      device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
-    data: {}
-    enabled: true
-    action: climate.turn_off
-  mode: single
-- id: '1762871468597'
-  alias: Værksted - Sluk radiator ved høj temperatur (20)
-  description: ''
-  triggers:
-  - entity_id:
-    - sensor.weather_vaerksted_temperature
-    above: 20
-    trigger: numeric_state
-  conditions:
-  - condition: state
-    entity_id: climate.el_radiator_i_varksted
-    state: heat
-  actions:
-  - target:
-      device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
-    data: {}
-    enabled: true
-    action: climate.turn_off
-  - data:
-      message: Temperaturen er over 19 grader. Slukker radiator værksted
-    action: notify.ios_kims_iphone
-  mode: single
-- id: '1762871655826'
-  alias: Værksted - Sæt lav temperatur for radiator kl. 17
-  description: Sætter el-radiatoren i værkstedet til lav temperatur kl. 17:00.
-  triggers:
-  - at: '17:00:00'
-    trigger: time
-  conditions:
-  - condition: numeric_state
-    entity_id: sensor.weather_vaerksted_temperature
-    above: 17
-  actions:
-  - target:
-      device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
-    action: climate.turn_off
-  mode: single
-- id: '1763670897368'
-  alias: Værksted – Temperaturstyring radiator (AI) mellem 17-19 grader
-  description: ''
-  triggers:
-  - trigger: numeric_state
-    entity_id: sensor.weather_vaerksted_temperature
-    below: 17
-  - trigger: numeric_state
-    entity_id: sensor.weather_vaerksted_temperature
-    above: 19
-  conditions:
-  - condition: time
-    after: '20:00:00'
-    before: '17:00:00'
-  actions:
-  - choose:
-    - conditions:
-      - condition: numeric_state
-        entity_id: sensor.weather_vaerksted_temperature
-        below: 17
-      sequence:
-      - action: climate.turn_on
-        target:
-          device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
-    - conditions:
-      - condition: numeric_state
-        entity_id: sensor.weather_vaerksted_temperature
-        above: 19
-      sequence:
-      - action: climate.turn_off
-        target:
-          device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
-  mode: restart
-- id: '1763671657692'
-  alias: Værksted – Pris pause radiator 17–20 (AI)
-  description: ''
-  triggers:
-  - trigger: time
-    at: '17:00:00'
-  actions:
-  - action: climate.turn_off
-    target:
-      device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
-  mode: single
-- id: '1763671710261'
-  alias: Værksted – Genstart varme efter pris-pause (AI)
-  description: ''
-  triggers:
-  - trigger: time
-    at: '20:00:00'
-  conditions:
-  - condition: numeric_state
-    entity_id: sensor.weather_vaerksted_temperature
-    below: 17
-  actions:
-  - action: climate.turn_on
-    target:
-      device_id: 8d4dc88178dd4d6f98b2fee9d79c8568
-  mode: single
 - id: '1763971396570'
   alias: Stuen - Advarsel, luften er beskidt, åbne havedøren (VOC)
   description: ''
@@ -2127,6 +1958,13 @@
     subtype: 3
     id: btn3_down
     trigger: device
+  - device_id: 5d05bf23b98e15fdcc715ab88a969fd9
+    domain: hue
+    type: long_press
+    subtype: 4
+    unique_id: 9b12dd2c-4a52-4800-928b-cb72688180fe
+    trigger: device
+    id: btn5_down
   actions:
   - choose:
     - conditions:
@@ -2143,7 +1981,10 @@
         id: btn4_off
       sequence:
       - target:
-          entity_id: light.alt_lys_i_stuen
+          entity_id:
+          - light.hvid_lampe
+          - light.driver_montanareol
+          - light.kina_lampe
         data:
           transition: 0.3
         action: light.turn_off
@@ -2167,6 +2008,17 @@
           brightness_step_pct: -5
           transition: 0.1
         action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id:
+        - btn4_off
+        - btn5_down
+      sequence:
+      - target:
+          entity_id: light.alt_lys_i_stuen
+        data:
+          transition: 0.3
+        action: light.turn_off
   mode: single
 - id: '1766317925944'
   alias: Sonos Højtaler – IKEA dimmer i køkken (rigtig volume + power gate)
@@ -2706,4 +2558,337 @@
           brightness_step_pct: -5
           transition: 0.1
         action: light.turn_on
+  mode: single
+- id: '1767606421073'
+  alias: Zigbee – Alarm ved frosne klima sensorer
+  triggers:
+  - entity_id: sensor.frosne_klima_sensorer
+    trigger: state
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.to_state is not none and trigger.to_state.state !=
+      ''ingen'' }}'
+  actions:
+  - action: notify.mobile_app_kims_iphone
+    data:
+      message: Zigbee sensor alarm
+  - delay: 00:30:00
+  mode: single
+- id: '1767627490503'
+  alias: Værksted – Setpoint dag/nat
+  description: ''
+  triggers:
+  - at: '22:00:00'
+    id: nat
+    trigger: time
+  - at: 09:00:00
+    id: dag
+    trigger: time
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: nat
+      sequence:
+      - action: climate.set_temperature
+        target:
+          entity_id: climate.vaerksted_termostat
+        data:
+          temperature: '{{ states(''input_number.vaerksted_temp_nat'')|float(16.5)
+            }}'
+    - conditions:
+      - condition: trigger
+        id: dag
+      sequence:
+      - action: climate.set_temperature
+        target:
+          entity_id: climate.vaerksted_termostat
+        data:
+          temperature: '{{ states(''input_number.vaerksted_temp_normal'')|float(18.0)
+            }}'
+  mode: single
+- id: '1767627687795'
+  alias: Værksted – Pris-pause 17-20
+  description: ''
+  triggers:
+  - at: '17:00:00'
+    trigger: time
+  actions:
+  - action: climate.turn_off
+    target:
+      entity_id: climate.vaerksted_termostat
+  mode: single
+- id: '1767627715712'
+  alias: Værksted – Efter pris-pause (20:00) så temperatur til normal
+  description: ''
+  triggers:
+  - at: '20:00:00'
+    trigger: time
+  actions:
+  - action: climate.turn_on
+    target:
+      entity_id: climate.vaerksted_termostat
+  - action: climate.set_temperature
+    target:
+      entity_id: climate.vaerksted_termostat
+    data:
+      temperature: '{{ states(''input_number.vaerksted_temp_normal'')|float(18.0)
+        }}'
+  mode: single
+- id: '1767627758109'
+  alias: Værksted – Boost ON
+  description: ''
+  triggers:
+  - entity_id: input_boolean.vaerksted_boost
+    to: 'on'
+    trigger: state
+  actions:
+  - action: timer.start
+    target:
+      entity_id:
+      - timer.vaerksted_boost_timer
+    data: {}
+  - action: climate.turn_on
+    target:
+      entity_id: climate.vaerksted_termostat
+  - action: climate.set_temperature
+    target:
+      entity_id: climate.vaerksted_termostat
+    data:
+      temperature: '{{ states(''input_number.vaerksted_temp_boost'')|float(20.0) }}'
+  mode: restart
+- id: '1767627807235'
+  alias: Værksted – Boost OFF (timer slut)
+  description: ''
+  triggers:
+  - event_type: timer.finished
+    event_data:
+      entity_id: timer.vaerksted_boost
+    trigger: event
+  actions:
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.vaerksted_boost
+  - variables:
+      is_nat: '{{ now().hour >= 20 or now().hour < 9 }}'
+      temp_nat: '{{ states(''input_number.vaerksted_temp_nat'')|float(16.5) }}'
+      temp_dag: '{{ states(''input_number.vaerksted_temp_normal'')|float(18.0) }}'
+  - action: climate.set_temperature
+    target:
+      entity_id: climate.vaerksted_termostat
+    data:
+      temperature: '{{ temp_nat if is_nat else temp_dag }}'
+  mode: single
+- id: '1767627854033'
+  alias: Værksted – FAILSAFE frost (<= 12°C)
+  description: ''
+  triggers:
+  - entity_id: sensor.sonoff_snzb_02d_weather_sensor_vaerksted_temperature
+    below: 12
+    for:
+      minutes: 10
+    trigger: numeric_state
+  actions:
+  - action: climate.turn_on
+    target:
+      entity_id: climate.vaerksted_termostat
+  - action: climate.set_temperature
+    target:
+      entity_id: climate.vaerksted_termostat
+    data:
+      temperature: 16
+  - action: persistent_notification.create
+    data:
+      title: 'Værksted: Frost failsafe'
+      message: Temp <= 12°C i 10 min. Termostat tændt og sat til 16°C.
+  mode: single
+- id: '1767627894731'
+  alias: Værksted – FAILSAFE overtemp (>= 22°C)
+  description: ''
+  triggers:
+  - entity_id: sensor.sonoff_snzb_02d_weather_sensor_vaerksted_temperature
+    above: 22
+    for:
+      minutes: 5
+    trigger: numeric_state
+  conditions:
+  - condition: state
+    entity_id: climate.el_radiator_i_varksted
+    state:
+    - heat
+  actions:
+  - action: climate.turn_off
+    target:
+      entity_id: climate.vaerksted_termostat
+  - action: switch.turn_off
+    target:
+      entity_id: switch.vaerksted_radiator_heater
+  - action: persistent_notification.create
+    data:
+      title: 'Værksted: Overtemp failsafe'
+      message: Temp >= 22°C i 5 min. Varme er slukket.
+  mode: single
+- id: '1767627971244'
+  alias: Værksted – FAILSAFE watchdog (off + koldt)
+  description: ''
+  triggers:
+  - entity_id: climate.vaerksted_termostat
+    to: 'off'
+    for:
+      minutes: 30
+    trigger: state
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.sonoff_snzb_02d_weather_sensor_vaerksted_temperature
+    below: 15
+  actions:
+  - action: climate.turn_on
+    target:
+      entity_id: climate.vaerksted_termostat
+  - action: climate.set_temperature
+    target:
+      entity_id: climate.vaerksted_termostat
+    data:
+      temperature: '{{ states(''input_number.vaerksted_temp_nat'')|float(16.5) }}'
+  - action: persistent_notification.create
+    data:
+      title: 'Værksted: Watchdog (off+koldt)'
+      message: Termostat var OFF i 30 min mens temp < 15°C. Tændt igen.
+  mode: single
+- id: '1767628079112'
+  alias: Værksted – FAILSAFE sensor frosset
+  description: ''
+  triggers:
+  - entity_id: sensor.sonoff_snzb_02d_weather_sensor_vaerksted_temperature
+    for:
+      minutes: 90
+    trigger: state
+  actions:
+  - action: climate.turn_off
+    target:
+      entity_id: climate.vaerksted_termostat
+  - action: switch.turn_off
+    target:
+      entity_id: switch.vaerksted_radiator_heater
+  - action: persistent_notification.create
+    data:
+      title: 'Værksted: Temperatur sensor frosset'
+      message: 'Temperaturen har ikke ændret sig i 90 minutter. Varme er slukket som
+        sikkerhed. Tjek sensor/batteri/Zigbee.
+
+        '
+  mode: single
+- id: '1767628262477'
+  alias: Værksted – FAILSAFE varme uden temperaturstigning (valgfri)
+  description: ''
+  triggers:
+  - entity_id:
+    - sensor.shelly_plug_7_power
+    above: 1000
+    for:
+      hours: 1
+      minutes: 0
+      seconds: 0
+    trigger: numeric_state
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.sonoff_snzb_02d_weather_sensor_vaerksted_temperature
+    below: 18
+  actions:
+  - action: persistent_notification.create
+    data:
+      title: 'Værksted: Varme uden effekt?'
+      message: 'Radiatoren har brugt >1000W i 60 min mens temperaturen stadig er <18°C.
+        Tjek sensorplacering / varmetab / åbent vindue / defekt sensor.
+
+        '
+  mode: single
+- id: '1767814541816'
+  alias: Årsskifte - gem sidste års kWh (utility meters)
+  description: ''
+  triggers:
+  - at: 00:01:00
+    trigger: time
+  conditions:
+  - condition: template
+    value_template: '{{ now().month == 1 and now().day == 1 }}'
+  actions:
+  - target:
+      entity_id: input_number.jonatan_last_year_kwh
+    data:
+      value: '{{ state_attr(''sensor.jonatan_yearly_energy'', ''last_period'') | float(0)
+        }}'
+    action: input_number.set_value
+  - target:
+      entity_id: input_number.matias_last_year_kwh
+    data:
+      value: '{{ state_attr(''sensor.matias_yearly_energy'', ''last_period'') | float(0)
+        }}'
+    action: input_number.set_value
+  - target:
+      entity_id: input_number.vaerksted_radiator_last_year_kwh
+    data:
+      value: '{{ state_attr(''sensor.vaerksted_radiator_yearly_energy'', ''last_period'')
+        | float(0) }}'
+    action: input_number.set_value
+  - target:
+      entity_id: input_number.vaerksted_koleskab_last_year_kwh
+    data:
+      value: '{{ state_attr(''sensor.vaerksted_koleskab_yearly_energy'', ''last_period'')
+        | float(0) }}'
+    action: input_number.set_value
+  mode: single
+- id: '1768061923665'
+  alias: Værksted – Pris-pause 17-20 med input
+  description: ''
+  triggers:
+  - at: '17:00:00'
+    trigger: time
+  conditions:
+  - condition: state
+    entity_id: input_boolean.power_consumption_mode
+    state:
+    - 'on'
+  actions:
+  - action: climate.turn_off
+    target:
+      entity_id: climate.vaerksted_termostat
+  mode: single
+- id: '1773393459862'
+  alias: Carport lys – tænd hvis mørkt 06:30
+  description: ''
+  triggers:
+  - at: 06:30:00
+    trigger: time
+  conditions:
+  - condition: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    below: 0
+  actions:
+  - target:
+      entity_id: light.hue_smart_plug_lyskaede
+    action: light.turn_on
+  mode: single
+- id: '1773393532149'
+  alias: Carport lys – sluk ved solopgang
+  description: ''
+  triggers:
+  - event: sunrise
+    trigger: sun
+  actions:
+  - target:
+      entity_id: light.hue_smart_plug_lyskaede
+    action: light.turn_off
+  mode: single
+- id: '1773393625139'
+  alias: Carport lys – failsafe sluk
+  description: ''
+  triggers:
+  - trigger: time
+    at: 09:00:00
+  actions:
+  - action: light.turn_off
+    target:
+      entity_id: light.hue_smart_plug_lyskaede
   mode: single

@@ -66,6 +66,7 @@ from .const import (
     CONF_POWER_SENSOR_FRIENDLY_NAMING,
     CONF_POWER_SENSOR_NAMING,
     CONF_POWER_SENSOR_PRECISION,
+    CONF_POWER_UPDATE_INTERVAL,
     CONF_SENSOR_TYPE,
     CONF_SENSORS,
     CONF_UNAVAILABLE_POWER,
@@ -95,13 +96,12 @@ from .const import (
     UnitPrefix,
 )
 from .discovery import DiscoveryManager, DiscoveryStatus
-from .migrate import async_migrate_config_entry
+from .migrate import async_fix_legacy_profile_config_entry, async_migrate_config_entry
 from .power_profile.power_profile import DeviceType
 from .sensor import SENSOR_CONFIG
 from .sensors.group.config_entry_utils import (
     get_entries_excluding_global_config,
     get_entries_having_subgroup,
-    remove_group_from_power_sensor_entry,
     remove_power_sensor_from_associated_groups,
 )
 from .service.gui_configuration import SERVICE_SCHEMA, change_gui_configuration
@@ -136,6 +136,7 @@ CONFIG_SCHEMA = vol.Schema(
                     vol.Optional(CONF_GROUP_POWER_UPDATE_INTERVAL): cv.positive_int,
                     vol.Optional(CONF_GROUP_ENERGY_UPDATE_INTERVAL): cv.positive_int,
                     vol.Optional(CONF_ENERGY_UPDATE_INTERVAL): cv.positive_int,
+                    vol.Optional(CONF_POWER_UPDATE_INTERVAL): cv.positive_int,
                     vol.Optional(CONF_POWER_SENSOR_NAMING): validate_name_pattern,
                     vol.Optional(CONF_POWER_SENSOR_FRIENDLY_NAMING): validate_name_pattern,
                     vol.Optional(CONF_POWER_SENSOR_CATEGORY): vol.In(ENTITY_CATEGORIES),
@@ -214,7 +215,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     try:
         await repair_none_config_entries_issue(hass)
-    except Exception as e:  # noqa: BLE001  # pragma: no cover
+    except Exception as e:  # pragma: no cover
         _LOGGER.error("problem while cleaning up None entities", exc_info=e)  # pragma: no cover
 
     await init_analytics(hass)
@@ -232,7 +233,7 @@ async def init_analytics(hass: HomeAssistant) -> None:
         """Start the send schedule after the started event."""
         async_call_later(
             hass,
-            10,
+            600,
             HassJob(
                 analytics.send_analytics,
                 name="powercalc analytics startup",
@@ -439,6 +440,7 @@ async def setup_yaml_sensors(
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Powercalc integration from a config entry."""
 
+    await async_fix_legacy_profile_config_entry(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, [Platform.SENSOR, Platform.SELECT])
     # await hass.config_entries.async_forward_entry_setups(entry, [Platform.SENSOR])
 
@@ -519,8 +521,6 @@ async def async_remove_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
             hass,
             config_entry,
         )
-    if sensor_type == SensorType.GROUP:
-        updated_entries = await remove_group_from_power_sensor_entry(hass, config_entry)
 
     for entry in updated_entries:
         if entry.state == ConfigEntryState.LOADED:
@@ -547,7 +547,7 @@ async def repair_none_config_entries_issue(hass: HomeAssistant) -> None:
             object.__setattr__(entry, "unique_id", unique_id)
             hass.config_entries._entries._index_entry(entry)  # noqa
             await hass.config_entries.async_remove(entry.entry_id)
-        except Exception as e:  # noqa: BLE001  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             _LOGGER.error("problem while cleaning up None entities", exc_info=e)  # pragma: no cover
 
 

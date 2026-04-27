@@ -16,7 +16,7 @@
 
 - platform: integration
   source: sensor.el_omkostning_rate
-  name: energiforbrug_total_cost
+  name: energiforbrug_total_cost_old
   method: trapezoidal
   unit_time: h
   round: 4

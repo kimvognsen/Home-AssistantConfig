@@ -6,6 +6,7 @@ products:
     model_id: TH200DT
 entities:
   - entity: water_heater
+    translation_only_key: hot_water
     dps:
       - id: 1
         type: boolean
@@ -37,8 +38,7 @@ entities:
         name: mode
         hidden: true
   - entity: sensor
-    # 2025-11-05
-    deprecated: water_heater.current_temperature
+    deprecated: water_heater.current_temperature  # 2025-11-05
     class: temperature
     dps:
       - id: 3

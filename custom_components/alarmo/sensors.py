@@ -1,6 +1,7 @@
 """Sensor handling for Alarmo integration."""
 
 import logging
+import datetime
 from types import SimpleNamespace
 
 import homeassistant.util.dt as dt_util
@@ -48,6 +49,7 @@ ATTR_EVENT_COUNT = "event_count"
 ATTR_ENTITIES = "entities"
 ATTR_NEW_ENTITY_ID = "new_entity_id"
 ATTR_ENTRY_DELAY = "entry_delay"
+ATTR_DELAY_ON = "delay_on"
 
 SENSOR_STATES_OPEN = [STATE_ON, STATE_OPEN, LockState.UNLOCKED]
 SENSOR_STATES_CLOSED = [STATE_OFF, STATE_CLOSED, LockState.LOCKED]
@@ -133,6 +135,7 @@ class SensorHandler:
         self._state_listener = None
         self._subscriptions = []
         self._arm_timers = {}
+        self._delay_on_timers = {}
         self._groups = {}
         self._group_events = {}
         self._startup_complete = False
@@ -205,28 +208,36 @@ class SensorHandler:
         state: str | None = None,
     ):
         """Watch sensors based on the state of the alarm entities."""
-        sensors_list = []
+        watched_sensors_list = []
         for area in self.hass.data[const.DOMAIN]["areas"].keys():
-            sensors_list.extend(self.active_sensors_for_alarm_state(area))
+            watched_sensors_list.extend(
+                self.active_sensors_for_alarm_state(area, None, True)
+            )
 
         if self._state_listener:
             self._state_listener()
 
-        if sensors_list:
+        if watched_sensors_list:
             self._state_listener = async_track_state_change_event(
-                self.hass, sensors_list, self.async_sensor_state_changed
+                self.hass, watched_sensors_list, self.async_sensor_state_changed
             )
         else:
             self._state_listener = None
 
         # clear previous sensor group events that are not active for current alarm state
-        for group_id in self._group_events.keys():
-            self._group_events[group_id] = dict(
-                filter(
-                    lambda el: el[0] in sensors_list,
-                    self._group_events[group_id].items(),
+        if self._group_events:
+            active_sensors_list = []
+            for area in self.hass.data[const.DOMAIN]["areas"].keys():
+                active_sensors_list.extend(
+                    self.active_sensors_for_alarm_state(area, None, False)
                 )
-            )
+            for group_id in self._group_events.keys():
+                self._group_events[group_id] = dict(
+                    filter(
+                        lambda el: el[0] in active_sensors_list,
+                        self._group_events[group_id].items(),
+                    )
+                )
 
         # handle initial sensor states
         if area_id and old_state is None:
@@ -244,7 +255,12 @@ class SensorHandler:
         if area_id:
             self.update_ready_to_arm_status(area_id)
 
-    def active_sensors_for_alarm_state(self, area_id: str, to_state: str | None = None):
+    def active_sensors_for_alarm_state(
+        self,
+        area_id: str,
+        to_state: str | None = None,
+        watch_ready_to_arm: bool = False,
+    ):
         """Compose a list of sensors that are active for the state."""
         alarm_entity = self.hass.data[const.DOMAIN]["areas"][area_id]
 
@@ -266,7 +282,11 @@ class SensorHandler:
                 continue
             elif state in config[const.ATTR_MODES] or config[ATTR_ALWAYS_ON]:
                 entities.append(entity)
-            elif not to_state and config["type"] != SENSOR_TYPE_MOTION:
+            elif (
+                not to_state
+                and config["type"] != SENSOR_TYPE_MOTION
+                and watch_ready_to_arm
+            ):
                 # always watch all sensors other than motion sensors,
                 #   to indicate readiness for arming
                 entities.append(entity)
@@ -350,7 +370,7 @@ class SensorHandler:
         return None
 
     @callback
-    def async_sensor_state_changed(self, event):  # noqa: PLR0915, PLR0912
+    def async_sensor_state_changed(self, event):  # noqa: PLR0912
         """Callback fired when a sensor state has changed."""
         entity = event.data["entity_id"]
         old_state = parse_sensor_state(event.data["old_state"])
@@ -376,6 +396,10 @@ class SensorHandler:
             old_state,
             new_state,
         )
+
+        # Cancel any pending delay_on timer when sensor turns off
+        if new_state == STATE_CLOSED and entity in self._delay_on_timers:
+            self._stop_entity_timer(self._delay_on_timers, entity)
 
         if (
             new_state == STATE_UNAVAILABLE
@@ -421,21 +445,115 @@ class SensorHandler:
                 self.stop_arm_timer(entity)
 
         if res:
-            # sensor state is OK,
-            #   but we still need to clean up group events for closed sensors
-            # A sensor that has closed should not contribute to future group triggers
-            #   until it opens again
-            # Clear closed sensors from group events to
-            #   prevent stale events from triggering groups later
-            if new_state == STATE_CLOSED:
-                for group_id in list(self._group_events.keys()):
-                    if entity in self._group_events[group_id]:
-                        del self._group_events[group_id][entity]
-                        # Clean up empty group entries
-                        if not self._group_events[group_id]:
-                            del self._group_events[group_id]
+            # nothing to do here, sensor state is OK
             self.update_ready_to_arm_status(sensor_config["area"])
             return
+
+        # Check if delay_on is configured
+        delay_on = sensor_config.get(ATTR_DELAY_ON) or 0
+
+        if delay_on > 0:
+            # Start delay_on timer instead of immediate trigger
+            if self._start_delay_on_timer(entity, new_state):
+                self.update_ready_to_arm_status(sensor_config["area"])
+                return
+
+        # No trigger delay or timer failed to start - execute immediately
+        self._execute_sensor_trigger(entity, new_state)
+
+    def _start_entity_timer(
+        self,
+        timers: dict,
+        entity: str,
+        delay: datetime.timedelta,
+        timer_callback,
+    ) -> None:
+        """Start a timer for an entity, cancelling any existing timer first."""
+        self._stop_entity_timer(timers, entity)
+
+        @callback
+        def timer_finished(_now):
+            timers.pop(entity, None)
+            timer_callback()
+
+        timers[entity] = async_track_point_in_time(
+            self.hass, timer_finished, dt_util.utcnow() + delay
+        )
+
+    def _stop_entity_timer(self, timers: dict, entity: str | None = None) -> None:
+        """Cancel timer(s) for entities."""
+        if entity:
+            if cancel := timers.pop(entity, None):
+                cancel()
+        else:
+            for cancel in timers.values():
+                cancel()
+            timers.clear()
+
+    def start_arm_timer(self, entity):
+        """Start timer for automatical arming."""
+
+        def on_arm_timer_finished():
+            _LOGGER.debug("arm timer finished")
+            sensor_config = self._config[entity]
+            alarm_entity = self.hass.data[const.DOMAIN]["areas"][sensor_config["area"]]
+            if alarm_entity.state == AlarmControlPanelState.ARMING:
+                alarm_entity.async_arm(alarm_entity.arm_mode, skip_delay=True)
+
+        self._start_entity_timer(
+            self._arm_timers, entity, const.SENSOR_ARM_TIME, on_arm_timer_finished
+        )
+
+    def stop_arm_timer(self, entity=None):
+        """Cancel timer(s) for automatical arming."""
+        self._stop_entity_timer(self._arm_timers, entity)
+
+    def _start_delay_on_timer(self, entity: str, new_state: str):
+        """Start timer for delayed sensor trigger."""
+        sensor_config = self._config[entity]
+        delay = sensor_config.get(ATTR_DELAY_ON) or 0
+
+        if delay <= 0:
+            return False
+
+        def on_delay_on_finished():
+            """Handle delay_on timer expiration."""
+            # Re-check if sensor is still in violation state
+            current_state = self.hass.states.get(entity)
+            current_sensor_state = parse_sensor_state(current_state)
+            if current_sensor_state != STATE_OPEN and not (
+                current_sensor_state == STATE_UNAVAILABLE
+                and sensor_config[ATTR_TRIGGER_UNAVAILABLE]
+            ):
+                _LOGGER.debug(
+                    "delay_on finished for %s but sensor no longer in violation",
+                    entity,
+                )
+                return
+            _LOGGER.debug(
+                "delay_on finished for %s, proceeding with trigger",
+                entity,
+            )
+            self._execute_sensor_trigger(entity, new_state)
+
+        self._start_entity_timer(
+            self._delay_on_timers,
+            entity,
+            datetime.timedelta(seconds=delay),
+            on_delay_on_finished,
+        )
+        _LOGGER.debug(
+            "Started delay_on timer for %s (%s seconds)",
+            entity,
+            delay,
+        )
+        return True
+
+    def _execute_sensor_trigger(self, entity: str, new_state: str):
+        """Execute sensor trigger logic (called directly or after trigger delay)."""
+        sensor_config = self._config[entity]
+        alarm_entity = self.hass.data[const.DOMAIN]["areas"][sensor_config["area"]]
+        alarm_state = alarm_entity.state
 
         open_sensors = self.process_group_event(entity, new_state)
         if not open_sensors:
@@ -468,7 +586,8 @@ class SensorHandler:
             entry_delay = self.get_entry_delay_for_trigger(
                 open_sensors, sensor_config["area"], alarm_entity.arm_mode
             )
-
+            # remove group_id from open_sensors (only used for entry delay calculation)
+            open_sensors.pop(ATTR_GROUP_ID, None)
             if entry_delay == 0:
                 # immediate trigger (no entry delay)
                 alarm_entity.async_trigger(entry_delay=0, open_sensors=open_sensors)
@@ -488,6 +607,8 @@ class SensorHandler:
             entry_delay = self.get_entry_delay_for_trigger(
                 open_sensors, sensor_config["area"], alarm_entity.arm_mode
             )
+            # remove group_id from open_sensors (only used for entry delay calculation)
+            open_sensors.pop(ATTR_GROUP_ID, None)
 
             if entry_delay == 0:
                 # immediate trigger
@@ -499,34 +620,6 @@ class SensorHandler:
                 )
 
         self.update_ready_to_arm_status(sensor_config["area"])
-
-    def start_arm_timer(self, entity):
-        """Start timer for automatical arming."""
-
-        @callback
-        def timer_finished(now):
-            _LOGGER.debug("timer finished")
-            sensor_config = self._config[entity]
-            alarm_entity = self.hass.data[const.DOMAIN]["areas"][sensor_config["area"]]
-            if alarm_entity.state == AlarmControlPanelState.ARMING:
-                alarm_entity.async_arm(alarm_entity.arm_mode, skip_delay=True)
-
-        now = dt_util.utcnow()
-
-        if entity in self._arm_timers:
-            self.stop_arm_timer(entity)
-
-        self._arm_timers[entity] = async_track_point_in_time(
-            self.hass, timer_finished, now + const.SENSOR_ARM_TIME
-        )
-
-    def stop_arm_timer(self, entity=None):
-        """Cancel timer(s) for automatical arming."""
-        if entity and entity in self._arm_timers:
-            self._arm_timers[entity]()
-        elif not entity:
-            for key in self._arm_timers.keys():
-                self._arm_timers[key]()
 
     def process_group_event(self, entity: str, state: str) -> dict:
         """Check if sensor entity is member of a group to evaluate trigger."""
@@ -564,8 +657,9 @@ class SensorHandler:
             )
             return {}
         else:
-            for key in recent_events.keys():
-                open_sensors[key] = group_events[key][ATTR_STATE]
+            # add all (recently) triggered sensors to open_sensors
+            for entity_id in recent_events.keys():
+                open_sensors[entity_id] = group_events[entity_id][ATTR_STATE]
 
             # Add group info for override delay calculation
             open_sensors[ATTR_GROUP_ID] = group_id

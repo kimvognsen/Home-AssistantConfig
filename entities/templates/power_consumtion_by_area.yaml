@@ -209,23 +209,43 @@
         {% set all = ids | unique | list %}
         {{ all | map('states') | map('float', 0) | sum | round(0) }}
 
+#    - name: "Værksted – strømforbrug"
+#      unique_id: vaerksted_stromforbrug_w
+#      unit_of_measurement: "W"
+#      device_class: power
+#      state_class: measurement
+#      state: >
+#        {% set ents = expand(area_entities('værksted')) %}
+#        {% set ids =
+#          (ents
+#            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+#            | selectattr('attributes.unit_of_measurement', 'eq', 'W')
+#            | map(attribute='entity_id') | list)
+#          +
+#          (ents
+#            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+#            | selectattr('attributes.device_class', 'eq', 'power')
+#            | map(attribute='entity_id') | list)
+#        %}
+#        {% set all = ids | unique | list %}
+#        {{ all | map('states') | map('float', 0) | sum | round(0) }}
+
     - name: "Værksted – strømforbrug"
-      unique_id: vaerksted_stromforbrug_w
+      unique_id: vaerksted_stromforbrug
       unit_of_measurement: "W"
       device_class: power
       state_class: measurement
       state: >
+        {% set self_id = 'sensor.vaerksted_stromforbrug' %}
         {% set ents = expand(area_entities('værksted')) %}
         {% set ids =
-          (ents
-            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
-            | selectattr('attributes.unit_of_measurement', 'eq', 'W')
-            | map(attribute='entity_id') | list)
-          +
-          (ents
-            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+          (
+            ents
+            | rejectattr('entity_id', 'eq', self_id)
+            | rejectattr('state', 'in', ['unknown', 'unavailable', 'none', ''])
             | selectattr('attributes.device_class', 'eq', 'power')
-            | map(attribute='entity_id') | list)
+            | map(attribute='entity_id')
+            | list
+          )
         %}
-        {% set all = ids | unique | list %}
-        {{ all | map('states') | map('float', 0) | sum | round(0) }}
+        {{ ids | map('states') | map('float', 0) | sum | round(0) }}

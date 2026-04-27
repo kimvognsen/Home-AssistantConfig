@@ -14,6 +14,7 @@ from aiohttp import ClientConnectorError, ServerDisconnectedError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_EMAIL
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_call_later
@@ -26,6 +27,7 @@ from .const import (
     CONF_ENABLE_TARIFFS,
     CONF_TARIFF_CHARGE_OWNER,
 )
+from .exceptions import UnknownChargeOwnerError
 from .forecasts import Forecast
 from .tariffs import Tariff
 from .utils.regionhandler import RegionHandler
@@ -85,6 +87,10 @@ class APIConnector:
         self.connector_currency = "EUR"
         self.forecast_currency = "EUR"
         self.listeners = []
+        self.retry_unsubscribers = {}
+        self.co2_update_listener = None
+        self.carnot_update_listener = None
+        self.is_unloading = False
 
         # Retry handling
         self.retry_count = {}
@@ -139,7 +145,7 @@ class APIConnector:
                         self.retry_update(endpoint.module + "_co2", self.updateco2)
                         continue
                     else:
-                        self.retry_count.pop(endpoint.module + "_co2", None)
+                        self.clear_retry(endpoint.module + "_co2")
 
                     if api.co2data:
                         _LOGGER.debug(
@@ -190,7 +196,7 @@ class APIConnector:
                         self.retry_update(endpoint.module)
                         continue
                     else:
-                        self.retry_count.pop(endpoint.module, None)
+                        self.clear_retry(endpoint.module)
 
                     if len(api.result) == 0:
                         _LOGGER.debug("No data received from %s", endpoint.module)
@@ -337,14 +343,34 @@ class APIConnector:
 
             self.tariff_connector = tariff
 
-            self.tariff_data = await tariff.async_get_tariffs()
+            try:
+                self.tariff_data = await tariff.async_get_tariffs()
+                if self.tariff_data is None:
+                    self.tariff_data = {
+                        "additional_tariffs": {},
+                        "tariffs": {},
+                        "status": 503,
+                    }
 
-            if self.tariff_data["status"] != 200:
-                self.retry_update(
-                    tariff_endpoint[0].module + "_tariff", self.async_get_tariffs
-                )
-            else:
-                self.retry_count.pop(tariff_endpoint[0].module + "_tariff", None)
+                if self.tariff_data["status"] != 200:
+                    if self.tariff_data["status"] in [400, 403, 411]:
+                        _LOGGER.warning(
+                            "Tariff endpoint returned %s, skipping retry for now",
+                            self.tariff_data["status"],
+                        )
+                        self.clear_retry(tariff_endpoint[0].module + "_tariff")
+                    else:
+                        self.retry_update(
+                            tariff_endpoint[0].module + "_tariff",
+                            self.async_get_tariffs,
+                        )
+                else:
+                    self.clear_retry(tariff_endpoint[0].module + "_tariff")
+            except UnknownChargeOwnerError:
+                raise ConfigEntryNotReady(
+                    "Selected chargeowner, %s, is invalid - please reconfigure."
+                    % self._config.options.get(CONF_TARIFF_CHARGE_OWNER)
+                ) from None
 
     @property
     def tomorrow_valid(self) -> bool:
@@ -368,6 +394,12 @@ class APIConnector:
 
     def retry_update(self, module: str, update_function=None) -> None:
         """Retry update on error."""
+        if self.is_unloading:
+            return
+
+        if module in self.retry_unsubscribers:
+            self.retry_unsubscribers.pop(module)()
+
         retry_info = {
             module: {
                 "count": (
@@ -406,8 +438,21 @@ class APIConnector:
             f"{now.minute:02d}",
             f"{now.second:02d}",
         )
-        async_call_later(
+        self.retry_unsubscribers[module] = async_call_later(
             self.hass,
             datetime.timedelta(minutes=self.next_retry_delay),
             partial(update_function, request_module=module),
         )
+
+    def clear_retry(self, module: str) -> None:
+        """Clear retry state and cancel any pending retry callback for module."""
+        self.retry_count.pop(module, None)
+        if module in self.retry_unsubscribers:
+            self.retry_unsubscribers.pop(module)()
+
+    def cancel_retry_updates(self) -> None:
+        """Cancel all pending retry callbacks."""
+        for retry_unsub in self.retry_unsubscribers.values():
+            retry_unsub()
+        self.retry_unsubscribers.clear()
+        self.retry_count.clear()

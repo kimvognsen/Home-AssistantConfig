@@ -12,7 +12,7 @@
 
 # from homeassistant.const import (Platform)
 
-VERSION                         = '3.3.4.2'
+VERSION                         = '3.4.3.1'
 VERSION_BETA                    = ''
 #-----------------------------------------
 DOMAIN                          = 'icloud3'
@@ -23,7 +23,9 @@ PLATFORM_SENSOR                 = 'sensor'
 #-----------------------------------------
 
 ICLOUD3                         = 'iCloud3'
-ICLOUD3_VERSION_MSG             = f"{ICLOUD3} v{VERSION}{VERSION_BETA}"
+ICLOUD3LC                       = 'icloud3'
+ICLOUD3_VERSION_MSG             = f"v{VERSION}{VERSION_BETA}"
+ICLOUD3_ATTENTION_MSG           = F"^i^iCloud3 v{VERSION}{VERSION_BETA}"
 STORAGE_KEY                     = DOMAIN
 STORAGE_VERSION                 = 1
 MODE_PLATFORM                   = -1
@@ -58,7 +60,12 @@ DISTANCE_TO_DEVICES             = 'distance_to'
 DISTANCE_TO_OTHER_DEVICES       = 'distance_to_other_devices'
 DISTANCE_TO_OTHER_DEVICES_DATETIME = 'distance_to_other_devices_datetime'
 
+
 # General constants
+BASE                            = 'base'
+TRACKED                         = 'tracked'
+MONITORED                       = 'monitored'
+EXCLUDED                        = 'excluded'
 HOME                            = 'home'
 HOME_FNAME                      = 'Home'
 NOT_HOME                        = 'not_home'
@@ -199,6 +206,11 @@ APPLE_SERVER_ENDPOINT = {
         'auth':     'https://idmsa.apple.com/appleauth/auth',
         'auth_url': 'https://setup.icloud.com/setup/authenticate'
 }
+APPLE_SERVER_ENDPOINT_IPv4 = {
+        'idmsa':    'https://idmsa.apple.com',
+        'appleid':  'https://appleid.apple.com',
+        'auth':     'https://auth.apple.com'
+}
 
 INTERNET_STATUS_PING_IPS = {
         'Google/P': '8.8.8.8',
@@ -262,11 +274,12 @@ RANGE_UM = 3
 MOBAPP_DT_ENTITY = True
 ICLOUD_DT_ENTITY = False
 ICLOUD_LOCATION_DATA_ERROR   = False
+TRUST_TOKEN_EXPIRE_WARNING_DAYS = 20    #   Start warning user trust cookie will expire in x days
 CMD_RESET_PYICLOUD_SESSION   = 'reset_session'
 NEAR_DEVICE_DISTANCE         = 25       # Distance between nearby devices  (det_interval)
 PASS_THRU_ZONE_INTERVAL_SECS = 60       # Delay time before moving into a non-tracked zone to see if if just passing thru
-STATZONE_RADIUS_1M       = 1
-ICLOUD3_ERROR_MSG        = "ICLOUD3 ERROR-SEE EVENT LOG"
+STATZONE_RADIUS_1M           = 1
+ICLOUD3_ERROR_MSG            = "ICLOUD3 ERROR-SEE EVENT LOG"
 
 # Event Log variables
 EVENT_RECDS_MAX_CNT_BASE = 1500         # Used to calculate the max recds to store
@@ -344,13 +357,11 @@ EVLOG_UPDATE_HDR  = '^u^'       # update start-to-complete highlight and edge ba
 EVLOG_UPDATE_START= '^s^'       # update start-to-complete highlight and edge bar block
 EVLOG_UPDATE_END  = '^c^'       # update start-to-complete highlight and edge bar block
 EVLOG_ERROR       = '^e^'
-EVLOG_ALERT       = '^a^'
+EVLOG_ALERT       = '^a^'       # Red letters on yellow background
 EVLOG_WARNING     = '^w^'
-EVLOG_INIT_HDR    = '^i^'       # iC3 initialization start/complete event
-EVLOG_HIGHLIGHT   = '^h^'       # Display item in green highlight bar
-EVLOG_IC3_STARTING  = '^i^'
+EVLOG_ATTENTION   = '^i^'       # White Letters on orchid bar
+EVLOG_HIGHLIGHT   = '^h^'       # Green highlight bar
 EVLOG_IC3_STAGE_HDR = '^g^'
-EVLOG_BROWN_BAR     = '^i^'
 
 
 EVLOG_NOTICE      = '^6^'
@@ -373,11 +384,11 @@ CIRCLE_LETTERS_LITE =  {'a':'Ⓐ', 'b':'Ⓑ', 'c':'Ⓒ', 'd':'Ⓓ', 'e':'Ⓔ', '
 '''
 lite_circled_letters = "Ⓐ Ⓑ Ⓒ Ⓓ Ⓔ Ⓕ Ⓖ Ⓗ Ⓘ Ⓙ Ⓚ Ⓛ Ⓜ Ⓝ Ⓞ Ⓟ Ⓠ Ⓡ Ⓢ Ⓣ Ⓤ Ⓥ Ⓦ Ⓧ Ⓨ Ⓩ"
 dark_circled_letters = "🅐 🅑 🅒 🅓 🅔 🅕 🅖 🅗 🅘 🅙 🅚 🅛 🅜 🅝 🅞 🅟 🅠 🅡 🅢 🅣 🅤 🅥 🅦 🅧 🅨 🅩 ✪"
-Symbols = ±▪•●▬⮾ ⊗ ⊘✓×ø¦ ▶◀ ►◄▲▼ ∙▪ »« oPhone=►▶→⟾➤➟➜➔➤🡆🡪🡺⟹🡆➔ᐅ◈🝱☒☢⦻⛒⊘Ɵ⊗ⓧⓍ⛒z🜔
+Symbols = ±▪•●▬⮾ ⊗⊗ ⊘✓×ø¦ ▶◀ ►◄▲▼ ∙▪ »« oPhone=►▶→⟾➤➟➜➔➤🡆🡪🡺⟹🡆➔ᐅ◈🝱☒☢⦻⛒⊘Ɵ⊗ⓧⓍ⛒z🜔
 Important =✔️❗❌✨➰⚠️☢❓⚽⛔🛑⚡⭐◌\⭕🔶🔸ⓘ• ⍰ ‶″“”‘’‶″ 🕓 🔻🔺✔☁️🍎🔻⮽➕⚙️
 🔵🔴🟠🟡🟢🟣🟤🟦🟥🟧🟨🟩🟪🟫🔶🔷🔸🔹🔺🔻
-✅❎☑️🅰️🍏
-🔄🔁➡️🔃⬇️🔗▶️⏩⏪⏫⏬⏭⏮⏯⏰⏱⏸⏹⏺
+✅❎☑️🅰️🍏⛅☁🌤
+🔁🔄➡️🔃⬇️🔗▶️⏩⏪⏫⏬⏭⏮⏯⏰⏱⏸⏹⏺
 
 https://www.fileformat.info/info/unicode/block/braille_patterns/utf8test.htm
 https://www.htmlsymbols.xyz/unit-symbols
@@ -395,6 +406,8 @@ NL3               = '\n⠂ '
 NL4               = '\n⠂  '
 NL3U              = '\n⠂ 🔺 '
 NL3D              = '\n⠂ 🔻 '
+NL3UD             = '\n⠂ 🔶 '
+NL3_DATA          = '\n⠂  ❗ '
 NL3_DATA          = '\n⠂  ❗ '
 NL4_DATA          = '\n⠂   ❗ '
 BSP4              = '⠀⠀⠀⠀'  # Braille spaces
@@ -405,16 +418,19 @@ CLOCK_FACE        = '🕓'
 INFO              = '🛈'
 CHECK_MARK        = '✓ '
 RED_X             = '❌'
-YELLOW_ALERT      = '❎ '      #'⚠️'
+YELLOW_ALERT      = '❎ '
+YELLOW_WARNING    = '⚠️'
 RED_ALERT         = '⛔ '
 RED_STOP          = '🛑'
 RED_CIRCLE        = '⭕'
-SMALL_X           = '⊗ '
+SMALL_X           = 'ⓧ '
 CIRCLE_STAR       = '✪ '
 CIRCLE_STAR2      = '✪'
-CIRCLE_BIG_X      = '⊗'
+CIRCLE_BIG_X      = 'ⓧ'
 CIRCLE_SLASH      = '⊘'
-CIRCLE_X          = '⊗'
+CIRCLE_X          = 'ⓧ'
+MONITOR_SYMB      = 'Ⓜ'
+INACTIVE_SYMB     = 'ⓧ'
 DOT               = '• '
 PDOT              = '•'
 SQUARE_DOT        = '▪'
@@ -482,13 +498,13 @@ DATA_ENTRY_ALERT      = f"      {DATA_ENTRY_ALERT_CHAR} "
 OPT_NONE          = 0
 
 # Device tracking modes
-TRACK_DEVICE      = 'track'
-MONITOR_DEVICE    = 'monitor'
-INACTIVE_DEVICE   = 'inactive'
+TRACK               = 'track'
+MONITOR             = 'monitor'
+INACTIVE            = 'inactive'
 TRACKING_MODE_FNAME = {
-        TRACK_DEVICE: 'Tracked',
-        MONITOR_DEVICE: 'Monitored',
-        INACTIVE_DEVICE: 'INACTIVE',
+        TRACK: 'Tracked',
+        MONITOR: 'Monitored',
+        INACTIVE: 'INACTIVE',
 }
 
 # Zone field names
@@ -744,6 +760,34 @@ STORAGE_KEY = DOMAIN
 STORAGE_VERSION = 1
 
 # Platform
+
+
+DISTANCE           = 'distance'
+CONF_SENSORS_ZONE  = 'zone'
+ZONE_INFO          = 'zone_info'
+ZONE               = "zone"
+ZONE_DNAME         = "zone_dname"
+ZONE_FNAME         = "zone_fname"
+ZONE_NAME          = "zone_name"
+ZONE_DATETIME      = "zone_changed"
+LAST_ZONE          = "last_zone"
+LAST_ZONE_DNAME    = "last_zone_dname"
+LAST_ZONE_FNAME    = "last_zone_fname"
+LAST_ZONE_NAME     = "last_zone_name"
+LAST_ZONE_DATETIME = "last_zone_changed"
+
+CF_PROFILE         = 'profile'
+CF_DATA            = 'data'
+CF_TRACKING        = 'tracking'
+CF_DATA_DEVICES    = 'devices'
+CF_DATA_APPLE_ACCOUNTS = 'apple_accounts'
+CF_GENERAL         = 'general'
+CF_SENSORS         = 'sensors'
+CF_DEVICE_SENSORS  = 'device_sensors'
+
+#--------------------------------------------------------------------
+#       CONFIG_PROFILE
+#--------------------------------------------------------------------
 CONF_VERSION                    = 'version'
 CONF_IC3_VERSION                = 'ic3_version'
 CONF_VERSION_INSTALL_DATE       = 'version_install_date'
@@ -754,35 +798,168 @@ CONF_EVLOG_CARD_PROGRAM         = 'event_log_card_program'
 CONF_EVLOG_VERSION              = 'event_log_version'
 CONF_EVLOG_VERSION_RUNNING      = 'event_log_version_running'
 CONF_PICTURE_WWW_DIRS           = 'picture_www_dirs'
+CONF_SENSORS_HASH               = 'sensors_hash'
+
 CONF_EXTERNAL_IP_ADDRESS        = 'external_ip_address'
 
-# Account, Devices, Tracking Parameters
+DEFAULT_PROFILE_CONF = {
+        CONF_VERSION: 0,
+        CONF_IC3_VERSION: VERSION,
+        CONF_VERSION_INSTALL_DATE: DATETIME_ZERO,
+        CONF_UPDATE_DATE: DATETIME_ZERO,
+        CONF_EVLOG_VERSION: '',
+        CONF_EVLOG_VERSION_RUNNING: '',
+        CONF_EVLOG_CARD_DIRECTORY: EVLOG_CARD_WWW_DIRECTORY,
+        CONF_EVLOG_CARD_PROGRAM: EVLOG_CARD_WWW_JS_PROG,
+        CONF_EVLOG_BTNCONFIG_URL: '',
+        CONF_PICTURE_WWW_DIRS: [],
+        CONF_SENSORS_HASH: '',
+}
+
+#--------------------------------------------------------------------
+#       CONF_TRACKING
+#--------------------------------------------------------------------
 CONF_USERNAME                   = 'username'
 CONF_PASSWORD                   = 'password'
-CONF_TOTP_KEY                   = 'totp_key'
-CONF_LOCATE_ALL                 = 'locate_all'
+CONF_ENCODE_PASSWORD            = 'encode_password'
+
+CONF_SERVER_LOCATION_NEEDED     = 'apple_server_location_needed'
+CONF_PASSWORD_SRP_ENABLED       = 'password_srp_enabled'
+CONF_ICLOUD_SERVER_ENDPOINT_SUFFIX = 'icloud_server_endpoint_suffix'
+CONF_SETUP_ICLOUD_SESSION_EARLY = 'setup_icloud_session_early'
+CONF_DATA_SOURCE                = 'data_source'
 CONF_APPLE_ACCOUNTS             = 'apple_accounts'
 CONF_DEVICES                    = 'devices'
-CONF_DATA_SOURCE                = 'data_source'
-CONF_VERIFICATION_CODE          = 'verification_code'
-CONF_ICLOUD_SERVER_ENDPOINT_SUFFIX = 'icloud_server_endpoint_suffix'
-CONF_SERVER_LOCATION            = 'server_location'
-CONF_SERVER_LOCATION_NEEDED     = 'apple_server_location_needed'
-CONF_ENCODE_PASSWORD            = 'encode_password'
-CONF_SETUP_ICLOUD_SESSION_EARLY = 'setup_icloud_session_early'
+
 CONF_DEVICENAME                 = 'device_name'
 
-#devices_schema parameters used for v2->v3 migration
-# CONF_IOSAPP_SUFFIX              = 'iosapp_suffix'
-# CONF_IOSAPP_ENTITY              = 'iosapp_entity'
-# CONF_NOIOSAPP                   = 'noiosapp'
-# CONF_NO_IOSAPP                  = 'no_iosapp'
-# CONF_IOSAPP_INSTALLED           = 'iosapp_installed'
-# CONF_EMAIL                      = 'email'
-# CONF_CONFIG                     = 'config'
-# CONF_SOURCE                     = 'source'
+DEFAULT_TRACKING_CONF = {
+        CONF_USERNAME: '',
+        CONF_PASSWORD: '',
+        CONF_ENCODE_PASSWORD: True,
+        CONF_ICLOUD_SERVER_ENDPOINT_SUFFIX: '',
+        CONF_SERVER_LOCATION_NEEDED: False,
+        CONF_SETUP_ICLOUD_SESSION_EARLY: True,
+        CONF_PASSWORD_SRP_ENABLED: True,
+        CONF_DATA_SOURCE: f'{ICLOUD},{MOBAPP}',
+        CONF_APPLE_ACCOUNTS: [],
+        CONF_DEVICES: [],
+}
 
-# General Parameters
+#--------------------------------------------------------------------
+
+#-------------------------------------------------------------------
+# #     CONF_APPLE_ACCTS-
+#--------------------------------------------------------------------
+CONF_LOCATE_ALL                 = 'locate_all'
+CONF_AUTH_CODE                  = 'auth_code'
+CONF_SERVER_LOCATION            = 'server_location'
+
+CONF_AUTH_METHODS               = 'auth_methods'
+CONF_LAST_METHOD                = 'last_method'
+PUSH                       = 'push'
+TEXT                       = 'text'
+TEXT_1                     = 'text_1'
+TEXT_2                     = 'text_2'
+HWKEY                      = 'hwkey'
+HWKEY_1                    = 'hwkey_1'
+HWKEY_2                    = 'hwkey_2'
+
+DEFAULT_AUTH_METHODS = {
+        CONF_LAST_METHOD: PUSH,
+        TEXT_1: '',
+        TEXT_2: '',
+        HWKEY_1: '',
+        HWKEY_2: ''
+}
+
+DEFAULT_APPLE_ACCOUNT_CONF = {
+        CONF_USERNAME: '',
+        CONF_PASSWORD: '',
+        CONF_AUTH_METHODS: DEFAULT_AUTH_METHODS,
+        CONF_LOCATE_ALL: True,
+        CONF_SERVER_LOCATION: 'usa',
+}
+
+#--------------------------------------------------------------------
+#       CONF_DEVICES
+#--------------------------------------------------------------------
+# Devices Parameters
+CONF_IC3_DEVICENAME             = 'ic3_devicename'
+CONF_FNAME                      = 'fname'
+CONF_APPLE_ACCOUNT              = 'apple_account'
+CONF_APPLE_ACCT                 = 'apple_account'
+CONF_ICLOUD_DEVICENAME          = 'famshr_devicename'
+CONF_ICLOUD_DEVICE_ID           = 'famshr_device_id'
+CONF_FAMSHR_DEVICENAME          = 'famshr_devicename'
+CONF_FAMSHR_DEVICE_ID           = 'famshr_device_id'
+CONF_RAW_MODEL                  = 'raw_model'
+CONF_MODEL                      = 'model'
+CONF_MODEL_DISPLAY_NAME         = 'model_display_name'
+CONF_FMF_EMAIL                  = 'fmf_email'
+CONF_FMF_DEVICE_ID              = 'fmf_device_id'
+CONF_IOSAPP_DEVICE              = 'iosapp_device'
+CONF_MOBILE_APP_DEVICE          = 'mobile_app_device'
+CONF_PICTURE                    = 'picture'
+CONF_ICON                       = 'icon'
+CONF_TRACKING_MODE              = 'tracking_mode'
+CONF_TRACK_FROM_BASE_ZONE       = 'track_from_base_zone'        # Primary Zone a device is tracking from, normally Home
+CONF_TRACK_FROM_ZONES           = 'track_from_zones'            # All zones the device is tracking from
+CONF_LOG_ZONES                  = 'log_zones'                   # Log zone activity to 'icloud3-zone-log_[year]_[device]_[zone].csv' file
+CONF_DEVICE_TYPE                = 'device_type'
+CONF_INZONE_INTERVAL            = 'inzone_interval'
+CONF_FIXED_INTERVAL             = 'fixed_interval'
+CONF_UNIQUE_ID                  = 'unique_id'
+CONF_EVLOG_DISPLAY_ORDER        = 'evlog_display_order'
+# CONF_STAT_ZONE_FNAME            = 'stat_zone_fname'
+
+CONF_ZONE                       = 'zone'
+CONF_COMMAND                    = 'command'
+CONF_NAME                       = 'name'
+CONF_MOBAPP_REQUEST_LOC_MAX_CNT = 'mobapp_request_loc_max_cnt'
+CONF_INTERVAL                   = 'interval'
+
+
+DEFAULT_DEVICE_CONF = {
+        CONF_IC3_DEVICENAME: ' ',
+        CONF_FNAME: '',
+        CONF_PICTURE: 'None',
+        CONF_ICON: 'mdi:account',
+        CONF_DEVICE_TYPE: 'iPhone',
+        CONF_INZONE_INTERVAL: 120,
+        CONF_FIXED_INTERVAL: 0,
+        CONF_TRACKING_MODE: TRACK,
+        CONF_APPLE_ACCOUNT: '',
+        CONF_FAMSHR_DEVICENAME: 'None',
+        CONF_FAMSHR_DEVICE_ID: '',
+        CONF_RAW_MODEL : '',
+        CONF_MODEL: '',
+        CONF_MODEL_DISPLAY_NAME: '',
+        CONF_MOBILE_APP_DEVICE: 'None',
+        CONF_TRACK_FROM_BASE_ZONE: HOME,
+        CONF_TRACK_FROM_ZONES: [HOME],
+        CONF_LOG_ZONES: ['none'],
+}
+# Used in conf_flow to reinialize the Configuration Devices
+DEFAULT_DEVICE_APPLE_ACCT_DATA_SOURCE = {
+        CONF_APPLE_ACCOUNT: '',
+        CONF_FAMSHR_DEVICENAME: 'None',
+        CONF_FAMSHR_DEVICE_ID: '',
+        CONF_RAW_MODEL : '',
+        CONF_MODEL: '',
+        CONF_MODEL_DISPLAY_NAME: '',
+}
+DEFAULT_DEVICE_MOBAPP_DATA_SOURCE = {
+        CONF_MOBILE_APP_DEVICE: 'None',
+}
+RANGE_DEVICE_CONF = {
+        CONF_INZONE_INTERVAL: [5, 480],
+        CONF_FIXED_INTERVAL: [0, 480],
+}
+
+#--------------------------------------------------------------------
+#       CONFIG_GENERAL
+#--------------------------------------------------------------------
 CONF_UNIT_OF_MEASUREMENT        = 'unit_of_measurement'
 CONF_TIME_FORMAT                = 'time_format'
 CONF_MAX_INTERVAL               = 'max_interval'
@@ -799,7 +976,6 @@ CONF_PASSTHRU_ZONE_TIME         = 'passthru_zone_time'
 CONF_LOG_LEVEL                  = 'log_level'
 CONF_LOG_LEVEL_DEVICES          = 'log_level_devices'
 CONF_DISPLAY_GPS_LAT_LONG       = 'display_gps_lat_long'
-CONF_PASSWORD_SRP_ENABLED       = 'password_srp_enabled'
 
 # Zone Parameters
 CONF_DEVICE_TRACKER_STATE_SOURCE= 'device_tracker_state_source'
@@ -828,45 +1004,8 @@ CONF_STAT_ZONE_INZONE_INTERVAL  = 'stat_zone_inzone_interval'
 CONF_STAT_ZONE_BASE_LATITUDE    = 'stat_zone_base_latitude'
 CONF_STAT_ZONE_BASE_LONGITUDE   = 'stat_zone_base_longitude'
 
-# Display Text As Parameter
-CONF_DISPLAY_TEXT_AS            = 'display_text_as'
-
-# Devices Parameters
-CONF_IC3_DEVICENAME             = 'ic3_devicename'
-CONF_FNAME                      = 'fname'
-CONF_APPLE_ACCOUNT              = 'apple_account'
-CONF_APPLE_ACCT                 = 'apple_account'
-CONF_ICLOUD_DEVICENAME          = 'famshr_devicename'
-CONF_ICLOUD_DEVICE_ID           = 'famshr_device_id'
-CONF_FAMSHR_DEVICENAME          = 'famshr_devicename'
-CONF_FAMSHR_DEVICE_ID           = 'famshr_device_id'
-CONF_RAW_MODEL                  = 'raw_model'
-CONF_MODEL                      = 'model'
-CONF_MODEL_DISPLAY_NAME         = 'model_display_name'
-CONF_FMF_EMAIL                  = 'fmf_email'
-CONF_FMF_DEVICE_ID              = 'fmf_device_id'
-CONF_IOSAPP_DEVICE              = 'iosapp_device'
-CONF_MOBILE_APP_DEVICE          = 'mobile_app_device'
-CONF_PICTURE                    = 'picture'
-CONF_ICON                       = 'icon'
-CONF_TRACKING_MODE              = 'tracking_mode'
 CONF_TRACK_FROM_BASE_ZONE_USED  = 'track_from_base_zone_used'   # Primary Zone a device is tracking from, normally Home
-CONF_TRACK_FROM_BASE_ZONE       = 'track_from_base_zone'        # Primary Zone a device is tracking from, normally Home
 CONF_TRACK_FROM_HOME_ZONE       = 'track_from_home_zone'
-CONF_TRACK_FROM_ZONES           = 'track_from_zones'            # All zones the device is tracking from
-CONF_LOG_ZONES                  = 'log_zones'                   # Log zone activity to 'icloud3-zone-log_[year]_[device]_[zone].csv' file
-CONF_DEVICE_TYPE                = 'device_type'
-CONF_INZONE_INTERVAL            = 'inzone_interval'
-CONF_FIXED_INTERVAL             = 'fixed_interval'
-CONF_UNIQUE_ID                  = 'unique_id'
-CONF_EVLOG_DISPLAY_ORDER        = 'evlog_display_order'
-CONF_STAT_ZONE_FNAME            = 'stat_zone_fname'
-
-CONF_ZONE                       = 'zone'
-CONF_COMMAND                    = 'command'
-CONF_NAME                       = 'name'
-CONF_MOBAPP_REQUEST_LOC_MAX_CNT = 'mobapp_request_loc_max_cnt'
-CONF_INTERVAL                   = 'interval'
 
 # Local Time Zone
 CONF_AWAY_TIME_ZONE_1_OFFSET    = 'away_time_zone_1_offset'
@@ -874,163 +1013,10 @@ CONF_AWAY_TIME_ZONE_1_DEVICES   = 'away_time_zone_1_devices'
 CONF_AWAY_TIME_ZONE_2_OFFSET    = 'away_time_zone_2_offset'
 CONF_AWAY_TIME_ZONE_2_DEVICES   = 'away_time_zone_2_devices'
 
-CONF_SENSORS_MONITORED_DEVICES = 'monitored_devices'
-
-CONF_SENSORS = SENSORS         = 'sensors'
-CONF_SENSORS_DEVICE            = 'device'
-NAME                           = "name"
-BADGE                          = "badge"
-BATTERY                        = "battery"
-BATTERY_STATUS                 = "battery_status"
-INFO                           = "info"
-
-CONF_SENSORS_TRACKING_UPDATE   = 'tracking_update'
-INTERVAL                       = "interval"
-LOCATED                        = "located"
-LAST_LOCATED                   = "last_located"
-LAST_UPDATE                    = "last_update"
-NEXT_UPDATE                    = "next_update"
-
-CONF_SENSORS_TRACKING_TIME     = 'tracking_time'
-TRAVEL_TIME                    = "travel_time"
-TRAVEL_TIME_MIN                = "travel_time_min"
-TRAVEL_TIME_HHMM               = "travel_time_hhmm"
-ARRIVAL_TIME                   = "arrival_time"
 
 
-CONF_SENSORS_TRACKING_DISTANCE = 'tracking_distance'
-ZONE_DISTANCE_M                = 'distance (meters)'
-ZONE_DISTANCE_M_EDGE           = 'distance_to_zone_edge (meters)'
-ZONE_DISTANCE                  = "zone_distance"
-HOME_DISTANCE                  = "home_distance"
-DISTANCE_HOME                  = "distance_home"
-DIR_OF_TRAVEL                  = "dir_of_travel"
-MOVED_DISTANCE                 = "moved_distance"
-MOVED_TIME_FROM                = 'moved_from'
-MOVED_TIME_TO                  = 'moved_to'
-
-# TfZ Sensors are not configured via config_flow but built in
-# config_flow from the distance, time & zone sensors
-CONF_SENSORS_TRACK_FROM_ZONES = 'track_from_zones'
-TFZ_ZONE_INFO                 = 'tfz_zone_info'
-TFZ_DISTANCE                  = 'tfz_distance'
-TFZ_ZONE_DISTANCE             = 'tfz_zone_distance'
-TFZ_TRAVEL_TIME               = 'tfz_travel_time'
-TFZ_TRAVEL_TIME_MIN           = 'tfz_travel_time_min'
-TFZ_TRAVEL_TIME_HHMM          = "tfz_travel_time_hhmm"
-TFZ_ARRIVAL_TIME              = "tfz_arrival_time"
-TFZ_DIR_OF_TRAVEL             = 'tfz_dir_of_travel'
-
-CONF_SENSORS_TRACKING_OTHER   = 'tracking_other'
-TRIGGER                       = "trigger"
-WAZE_DISTANCE_ATTR            = "waze_route_distance"
-CALC_DISTANCE_ATTR            = "calculated_distance"
-WAZE_DISTANCE                 = "waze_distance"
-CALC_DISTANCE                 = "calc_distance"
-
-CONF_SENSORS_OTHER            = 'other'
-GPS_ACCURACY                  = "gps_accuracy"
-ALTITUDE                      = "altitude"
-VERTICAL_ACCURACY             = "vertical_accuracy"
-
-CONF_EXCLUDED_SENSORS         = "excluded_sensors"
-
-
-DISTANCE           = 'distance'
-CONF_SENSORS_ZONE  = 'zone'
-ZONE_INFO          = 'zone_info'
-ZONE               = "zone"
-ZONE_DNAME         = "zone_dname"
-ZONE_FNAME         = "zone_fname"
-ZONE_NAME          = "zone_name"
-ZONE_DATETIME      = "zone_changed"
-LAST_ZONE          = "last_zone"
-LAST_ZONE_DNAME    = "last_zone_dname"
-LAST_ZONE_FNAME    = "last_zone_fname"
-LAST_ZONE_NAME     = "last_zone_name"
-LAST_ZONE_DATETIME = "last_zone_changed"
-
-CF_PROFILE         = 'profile'
-CF_DATA            = 'data'
-CF_TRACKING        = 'tracking'
-CF_DATA_DEVICES    = 'devices'
-CF_DATA_APPLE_ACCOUNTS = 'apple_accounts'
-CF_GENERAL         = 'general'
-CF_SENSORS         = 'sensors'
-CF_DEVICE_SENSORS  = 'device_sensors'
-
-#--------------------------------------------------------
-DEFAULT_PROFILE_CONF = {
-        CONF_VERSION: 0,
-        CONF_IC3_VERSION: VERSION,
-        CONF_VERSION_INSTALL_DATE: DATETIME_ZERO,
-        CONF_UPDATE_DATE: DATETIME_ZERO,
-        CONF_EVLOG_VERSION: '',
-        CONF_EVLOG_VERSION_RUNNING: '',
-        CONF_EVLOG_CARD_DIRECTORY: EVLOG_CARD_WWW_DIRECTORY,
-        CONF_EVLOG_CARD_PROGRAM: EVLOG_CARD_WWW_JS_PROG,
-        CONF_EVLOG_BTNCONFIG_URL: '',
-        CONF_PICTURE_WWW_DIRS: []
-}
-
-DEFAULT_TRACKING_CONF = {
-        CONF_USERNAME: '',
-        CONF_PASSWORD: '',
-        CONF_ENCODE_PASSWORD: True,
-        CONF_ICLOUD_SERVER_ENDPOINT_SUFFIX: '',
-        CONF_SERVER_LOCATION_NEEDED: False,
-        CONF_SETUP_ICLOUD_SESSION_EARLY: True,
-        CONF_PASSWORD_SRP_ENABLED: True,
-        CONF_DATA_SOURCE: f'{ICLOUD},{MOBAPP}',
-        CONF_APPLE_ACCOUNTS: [],
-        CONF_DEVICES: [],
-}
-
-DEFAULT_APPLE_ACCOUNT_CONF = {
-        CONF_USERNAME: '',
-        CONF_PASSWORD: '',
-        CONF_TOTP_KEY: '',
-        CONF_LOCATE_ALL: True,
-        CONF_SERVER_LOCATION: 'usa',
-}
-
-DEFAULT_DEVICE_CONF = {
-        CONF_IC3_DEVICENAME: ' ',
-        CONF_FNAME: '',
-        CONF_PICTURE: 'None',
-        CONF_ICON: 'mdi:account',
-        CONF_UNIQUE_ID: '',
-        CONF_DEVICE_TYPE: 'iPhone',
-        CONF_INZONE_INTERVAL: 120,
-        CONF_FIXED_INTERVAL: 0,
-        CONF_TRACKING_MODE: TRACK_DEVICE,
-        CONF_APPLE_ACCOUNT: '',
-        CONF_FAMSHR_DEVICENAME: 'None',
-        CONF_FAMSHR_DEVICE_ID: '',
-        CONF_RAW_MODEL : '',
-        CONF_MODEL: '',
-        CONF_MODEL_DISPLAY_NAME: '',
-        CONF_MOBILE_APP_DEVICE: 'None',
-        CONF_TRACK_FROM_BASE_ZONE: HOME,
-        CONF_TRACK_FROM_ZONES: [HOME],
-        CONF_LOG_ZONES: ['none'],
-}
-# Used in conf_flow to reinialize the Configuration Devices
-DEFAULT_DEVICE_APPLE_ACCT_DATA_SOURCE = {
-        CONF_APPLE_ACCOUNT: '',
-        CONF_FAMSHR_DEVICENAME: 'None',
-        CONF_FAMSHR_DEVICE_ID: '',
-        CONF_RAW_MODEL : '',
-        CONF_MODEL: '',
-        CONF_MODEL_DISPLAY_NAME: '',
-}
-DEFAULT_DEVICE_MOBAPP_DATA_SOURCE = {
-        CONF_MOBILE_APP_DEVICE: 'None',
-}
-RANGE_DEVICE_CONF = {
-        CONF_INZONE_INTERVAL: [5, 480],
-        CONF_FIXED_INTERVAL: [0, 480],
-}
+# Display Text As Parameter
+CONF_DISPLAY_TEXT_AS            = 'display_text_as'
 
 DEFAULT_GENERAL_CONF = {
         CONF_LOG_LEVEL: 'debug-auto-reset',
@@ -1112,6 +1098,70 @@ RANGE_GENERAL_CONF = {
         CONF_STAT_ZONE_BASE_LONGITUDE: [-180, 180, 1, ''],
 }
 
+#--------------------------------------------------------------------
+#       CONF_SENSORS
+#--------------------------------------------------------------------
+CONF_SENSORS_MONITORED_DEVICES = 'monitored_devices'
+
+CONF_SENSORS = SENSORS         = 'sensors'
+CONF_SENSORS_DEVICE            = 'device'
+NAME                           = "name"
+BADGE                          = "badge"
+BATTERY                        = "battery"
+BATTERY_STATUS                 = "battery_status"
+INFO                           = "info"
+
+CONF_SENSORS_TRACKING_UPDATE   = 'tracking_update'
+INTERVAL                       = "interval"
+LOCATED                        = "located"
+LAST_LOCATED                   = "last_located"
+LAST_UPDATE                    = "last_update"
+NEXT_UPDATE                    = "next_update"
+
+CONF_SENSORS_TRACKING_TIME     = 'tracking_time'
+TRAVEL_TIME                    = "travel_time"
+TRAVEL_TIME_MIN                = "travel_time_min"
+TRAVEL_TIME_HHMM               = "travel_time_hhmm"
+ARRIVAL_TIME                   = "arrival_time"
+
+
+CONF_SENSORS_TRACKING_DISTANCE = 'tracking_distance'
+ZONE_DISTANCE_M                = 'distance (meters)'
+ZONE_DISTANCE_M_EDGE           = 'distance_to_zone_edge (meters)'
+ZONE_DISTANCE                  = "zone_distance"
+HOME_DISTANCE                  = "home_distance"
+DISTANCE_HOME                  = "distance_home"
+DIR_OF_TRAVEL                  = "dir_of_travel"
+MOVED_DISTANCE                 = "moved_distance"
+MOVED_TIME_FROM                = 'moved_from'
+MOVED_TIME_TO                  = 'moved_to'
+
+# TfZ Sensors are not configured via config_flow but built in
+# config_flow from the distance, time & zone sensors
+CONF_SENSORS_TRACK_FROM_ZONES = 'track_from_zones'
+TFZ_ZONE_INFO                 = 'tfz_zone_info'
+TFZ_DISTANCE                  = 'tfz_distance'
+TFZ_ZONE_DISTANCE             = 'tfz_zone_distance'
+TFZ_TRAVEL_TIME               = 'tfz_travel_time'
+TFZ_TRAVEL_TIME_MIN           = 'tfz_travel_time_min'
+TFZ_TRAVEL_TIME_HHMM          = "tfz_travel_time_hhmm"
+TFZ_ARRIVAL_TIME              = "tfz_arrival_time"
+TFZ_DIR_OF_TRAVEL             = 'tfz_dir_of_travel'
+
+CONF_SENSORS_TRACKING_OTHER   = 'tracking_other'
+TRIGGER                       = "trigger"
+WAZE_DISTANCE_ATTR            = "waze_route_distance"
+CALC_DISTANCE_ATTR            = "calculated_distance"
+WAZE_DISTANCE                 = "waze_distance"
+CALC_DISTANCE                 = "calc_distance"
+
+CONF_SENSORS_OTHER            = 'other'
+GPS_ACCURACY                  = "gps_accuracy"
+ALTITUDE                      = "altitude"
+VERTICAL_ACCURACY             = "vertical_accuracy"
+
+CONF_EXCLUDED_SENSORS         = "excluded_sensors"
+
 # Default Create Sensor Field Parameter
 DEFAULT_SENSORS_CONF = {
         CONF_SENSORS_MONITORED_DEVICES: [
@@ -1150,12 +1200,11 @@ DEFAULT_SENSORS_CONF = {
         CONF_EXCLUDED_SENSORS: [
                 NONE_FNAME],
 }
-
-DEFAULT_DATA_CONF =  {
-        CF_TRACKING: DEFAULT_TRACKING_CONF,
-        CF_GENERAL: DEFAULT_GENERAL_CONF,
-        CF_SENSORS: DEFAULT_SENSORS_CONF,
-        CF_DEVICE_SENSORS: [],
+DEFAULT_DEVICE_SENSORS_CONF = {
+        TRACK: [],
+        MONITOR: [],
+        CONF_TRACK_FROM_ZONES: [],
+        CONF_EXCLUDED_SENSORS: []
 }
 
 CF_DEFAULT_IC3_CONF_FILE = {
@@ -1164,10 +1213,11 @@ CF_DEFAULT_IC3_CONF_FILE = {
                 CF_TRACKING: DEFAULT_TRACKING_CONF,
                 CF_GENERAL: DEFAULT_GENERAL_CONF,
                 CF_SENSORS: DEFAULT_SENSORS_CONF,
-                CF_DEVICE_SENSORS: [],
+                CF_DEVICE_SENSORS: DEFAULT_DEVICE_SENSORS_CONF,
         }
 }
 
+#--------------------------------------------------------------------
 CONF_PARAMETER_TIME_STR = [
         CONF_INZONE_INTERVAL,
         CONF_FIXED_INTERVAL,

@@ -22,7 +22,7 @@ entities:
         name: button
         optional: true
   - entity: text
-    name: Meal plan
+    translation_key: meal_plan
     category: config
     hidden: true
     dps:
@@ -164,7 +164,7 @@ entities:
         # Present at all times on Catit 43752 but unsure about other products
         optional: true
   - entity: switch
-    name: Sound enabled
+    translation_key: sound
     category: config
     dps:
       - id: 103

@@ -1,0 +1,19 @@
+{
+    "domain": "dk_fuelprices",
+    "name": "Fuelprices.dk",
+    "after_dependencies": [
+        "http"
+    ],
+    "codeowners": [
+        "@MTrab"
+    ],
+    "config_flow": true,
+    "documentation": "https://github.com/MTrab/dk_fuelprices/blob/master/README.md",
+    "iot_class": "cloud_polling",
+    "issue_tracker": "https://github.com/MTrab/dk_fuelprices/issues",
+    "requirements": [
+        "pybraendstofpriser==2.2.0"
+    ],
+    "single_config_entry": true,
+    "version": "1.0.0"
+}

@@ -1,0 +1,203 @@
+"""Initialize the dk_fuelprices component."""
+
+from __future__ import annotations
+
+import logging
+
+from types import MappingProxyType
+
+from homeassistant.config_entries import ConfigEntry, ConfigEntryState, ConfigSubentry
+from homeassistant.const import CONF_API_KEY
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
+from homeassistant.loader import async_get_integration
+
+from .api import APIClient, BraendstofpriserConfigEntry
+from .const import (
+    ATTR_COORDINATOR,
+    CONF_COMPANY,
+    CONF_PRODUCTS,
+    CONF_STATION,
+    DOMAIN,
+    STARTUP,
+)
+
+_LOGGER = logging.getLogger(__name__)
+
+PLATFORMS = ["sensor"]
+
+
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Set up dk_fuelprices from a config entry."""
+    config_entry.async_on_unload(config_entry.add_update_listener(_update_listener))
+    result = await _setup(hass, config_entry)
+
+    await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
+
+    return result
+
+
+async def _update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Handle options or subentry updates by reloading the entry."""
+    hass.config_entries.async_schedule_reload(entry.entry_id)
+
+
+async def _setup(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Setup the integration."""
+    integration = await async_get_integration(hass, DOMAIN)
+    _LOGGER.info(STARTUP, integration.version)
+
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN][config_entry.entry_id] = {"subentries": {}}
+
+    config_entry = await _ensure_initial_subentry(hass, config_entry)
+    api_key = config_entry.data.get(CONF_API_KEY)
+    if not api_key:
+        _LOGGER.error("Missing API key in config entry %s", config_entry.entry_id)
+        return False
+    for subentry_id, subentry in config_entry.subentries.items():
+        coordinator = APIClient(
+            hass,
+            api_key,
+            subentry.data.get(CONF_COMPANY),
+            subentry.data.get(CONF_STATION),
+            subentry.data.get(CONF_PRODUCTS, {}),
+            subentry_id,
+        )
+        hass.data[DOMAIN][config_entry.entry_id]["subentries"][subentry_id] = {
+            ATTR_COORDINATOR: coordinator
+        }
+
+        if config_entry.state == ConfigEntryState.SETUP_IN_PROGRESS:
+            await coordinator.async_config_entry_first_refresh()
+
+    return True
+
+
+async def _ensure_initial_subentry(
+    hass: HomeAssistant, config_entry: ConfigEntry
+) -> ConfigEntry:
+    """Create the first subentry from initial config flow data if missing."""
+    if config_entry.subentries:
+        return config_entry
+
+    company = config_entry.data.get(CONF_COMPANY)
+    station = config_entry.data.get(CONF_STATION)
+    products = config_entry.data.get(CONF_PRODUCTS)
+    if not (company and station and products):
+        return config_entry
+
+    subentry_data = {
+        CONF_COMPANY: company,
+        CONF_STATION: station,
+        CONF_PRODUCTS: products,
+    }
+    subentry_title = f"{company} - {station['name']}" if station else f"{company}"
+    unique_id = f"{company}_{station['id']}" if station else None
+
+    subentry = ConfigSubentry(
+        data=MappingProxyType(subentry_data),
+        subentry_type="station",
+        title=subentry_title,
+        unique_id=unique_id,
+    )
+
+    # Update entry data to keep only the API key, then add the subentry.
+    hass.config_entries.async_update_entry(
+        config_entry,
+        data={CONF_API_KEY: config_entry.data.get(CONF_API_KEY)},
+    )
+    hass.config_entries.async_add_subentry(config_entry, subentry)
+
+    return hass.config_entries.async_get_entry(config_entry.entry_id) or config_entry
+
+
+async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    unload_ok = await hass.config_entries.async_unload_platforms(
+        config_entry, PLATFORMS
+    )
+    if unload_ok:
+        hass.data[DOMAIN].pop(config_entry.entry_id)
+    return unload_ok
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Migrate old config entries to the new subentry structure."""
+    if entry.version >= 2:
+        return True
+
+    _LOGGER.info("Migrating config entry %s from version %s", entry.entry_id, entry.version)
+
+    company = entry.data.get(CONF_COMPANY)
+    station = entry.data.get(CONF_STATION)
+    products = entry.options.get(CONF_PRODUCTS, {})
+    api_key = entry.options.get(CONF_API_KEY)
+
+    subentry_data = {
+        CONF_COMPANY: company,
+        CONF_STATION: station,
+        CONF_PRODUCTS: products,
+    }
+    subentry_title = f"{company} - {station['name']}" if station else f"{company}"
+    unique_id = f"{company}_{station['id']}" if station else None
+
+    subentry = ConfigSubentry(
+        data=MappingProxyType(subentry_data),
+        subentry_type="station",
+        title=subentry_title,
+        unique_id=unique_id,
+    )
+
+    hass.config_entries.async_update_entry(
+        entry,
+        data={CONF_API_KEY: api_key},
+        options={},
+        version=2,
+    )
+    hass.config_entries.async_add_subentry(entry, subentry)
+
+    _LOGGER.info("Migration to version 2 successful")
+    return True
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, config_entry: BraendstofpriserConfigEntry, device_entry
+) -> bool:
+    """Remove a config entry from a device."""
+
+    return not any(
+        identifier
+        for identifier in device_entry.identifiers
+        if identifier[0] == DOMAIN and identifier[1] in config_entry.subentries
+    )
+
+
+def remove_stale_devices(
+    hass: HomeAssistant,
+    config_entry: BraendstofpriserConfigEntry,
+    devices,
+) -> None:
+    """Remove stale devices from device registry."""
+    device_registry = dr.async_get(hass)
+    device_entries = dr.async_entries_for_config_entry(
+        device_registry, config_entry.entry_id
+    )
+    all_device_ids = {device.deviceid for device in devices.values()}
+
+    for device_entry in device_entries:
+        device_id: str | None = None
+
+        for identifier in device_entry.identifiers:
+            if identifier[0] == DOMAIN:
+                device_id = identifier[1]
+                break
+
+        if device_id is None or device_id not in all_device_ids:
+            # If device_id is None an invalid device entry was found for this config entry.
+            # If the device_id is not in existing device ids it's a stale device entry.
+            # Remove config entry from this device entry in either case.
+            device_registry.async_update_device(
+                device_entry.id, remove_config_entry_id=config_entry.entry_id
+            )

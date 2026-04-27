@@ -1,0 +1,48 @@
+- trigger:
+    - platform: time_pattern
+      minutes: "/5"
+  sensor:
+    - name: "Frosne klima sensorer"
+      unique_id: frozen_climate_sensors
+      icon: mdi:snowflake-alert
+      state: >
+        {% set sensors = [
+          'sensor.weather_stuen_temperature',
+          'sensor.weather_sovevaerelse_temperature',
+          'sensor.weather_matias_vaerelse_temperature',
+          'sensor.sonoff_weather_vaerksted_temperature',
+          'sensor.weather_entre_temperature',
+          'sensor.temperatur_hall_temperature',
+          'sensor.weather_badevaerelse_temperature',
+          'sensor.weather_jonatans_vaerelse_temperature',
+          'sensor.weather_kontor_temperature',
+          'sensor.weather_hoveddor_temperature',
+          'sensor.weather_carport_temperature',
+          'sensor.weather_loft_temperature',
+
+          'sensor.weather_stuen_humidity',
+          'sensor.weather_sovevaerelse_humidity',
+          'sensor.weather_matias_vaerelse_humidity',
+          'sensor.weather_vaerksted_humidity',
+          'sensor.weather_entre_humidity',
+          'sensor.weather_badevaerelse_humidity',
+          'sensor.weather_jonatans_vaerelse_humidity',
+          'sensor.weather_kontor_humidity'
+        ] %}
+        {% set max_age = 2 * 60 * 60 %}  {# 2 timer #}
+        {% set frozen = namespace(list=[]) %}
+
+        {% for e in sensors %}
+          {% set st = states[e] %}
+          {% if st is not none and states(e) not in ['unknown','unavailable'] %}
+            {% set age_s = (now() - st.last_updated).total_seconds() %}
+            {% if age_s > max_age %}
+              {% set mins = (age_s / 60) | round(0) | int %}
+              {% set name = state_attr(e, 'friendly_name') or e %}
+              {% set kind = 'temp' if e.endswith('_temperature') else 'fugt' %}
+              {% set frozen.list = frozen.list + [ name ~ ' (' ~ kind ~ ', ' ~ mins ~ ' min)' ] %}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+
+        {{ frozen.list | join(', ') if frozen.list | length > 0 else 'ingen' }}

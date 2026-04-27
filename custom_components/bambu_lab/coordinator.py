@@ -39,6 +39,9 @@ from .const import (
 
 from .pybambu import BambuClient
 from .pybambu.const import (
+    AMS_MODELS,
+    AMS_DRYING_MODELS,
+    AMS_MODELS_AND_EXTERNAL_SPOOL,
     Features,
     Printers
 )
@@ -54,6 +57,8 @@ from .pybambu.commands import (
     AMS_READ_RFID_TEMPLATE,
     AMS_READ_RFID_GCODE,
     AMS_FILAMENT_DRYING_TEMPLATE,
+    RETRY_LOAD_FILAMENT_TEMPLATE,
+    DONE_LOAD_FILAMENT_TEMPLATE
 )
 
 class BambuDataUpdateCoordinator(DataUpdateCoordinator):
@@ -118,9 +123,6 @@ class BambuDataUpdateCoordinator(DataUpdateCoordinator):
         
         elif event == "event_printer_mqtt_encryption_enabled":
             self._report_encryption_enabled_issue()
-
-        elif event == "event_printer_info_update":
-            self._update_external_spool_info()
 
         elif event == "event_printer_ready":
             self._printer_ready()
@@ -256,11 +258,6 @@ class BambuDataUpdateCoordinator(DataUpdateCoordinator):
                 self._report_encryption_enabled_issue(True)
                 return False
 
-            if self.get_model().info.is_hybrid_mode_blocking:
-                LOGGER.error("Printer is in hybrid connection mode. All control actions sent to local mqtt are blocked.")
-                self._report_hybrid_mode_blocking_issue(True)
-                return False
-
         future = self._hass.data[DOMAIN]['service_call_future']
         if future is None:
             LOGGER.error("Future is None")
@@ -277,6 +274,10 @@ class BambuDataUpdateCoordinator(DataUpdateCoordinator):
                 result = self._service_call_extrude_retract(data)
             case "load_filament":
                 result = self._service_call_load_filament(data)
+            case "retry_load_filament":
+                result = self._service_call_retry_load_filament(data)
+            case "done_load_filament":
+                result = self._service_call_done_load_filament(data)
             case "unload_filament":
                 result = self._service_call_unload_filament(data)
             case "set_filament":
@@ -405,7 +406,22 @@ class BambuDataUpdateCoordinator(DataUpdateCoordinator):
         LOGGER.debug(f"FINAL TRAY VALUE: {full_tray + 1}/16 = Tray {tray + 1}/4 on AMS {ams_index}")
 
         return ams_index, tray
-    
+
+    def _get_ams_device_id(self, data: dict):
+        device_id = data.get('device_id')
+        if device_id is None:
+            LOGGER.error(f"Invalid data payload, missing device_id: {data}")
+            return None
+
+        dev_reg = device_registry.async_get(self._hass)
+        ams_device = dev_reg.async_get(device_id)
+        model = ams_device.model
+        if model not in AMS_MODELS_AND_EXTERNAL_SPOOL:
+            LOGGER.error("Passed device is not an AMS or external spool.")
+            return None
+        
+        return device_id
+
     def _get_ams_device_and_tray(self, data: dict):
         entity_id = data.get('entity_id')
         if entity_id is None:
@@ -434,12 +450,12 @@ class BambuDataUpdateCoordinator(DataUpdateCoordinator):
         device_id = data["device_id"]
         if device_id is None:
             LOGGER.error(f"Invalid data payload, missing device_id: {data}")
-            return None
+            return False
 
         dev_reg = device_registry.async_get(self._hass)
         ams_device = dev_reg.async_get(device_id)
         model = ams_device.model
-        if (model != 'AMS 2 Pro') and (model != 'AMS HT'):
+        if model not in AMS_DRYING_MODELS:
             LOGGER.error("Passed device is not an AMS 2 or AMS HT.")
             return False
         
@@ -515,7 +531,7 @@ class BambuDataUpdateCoordinator(DataUpdateCoordinator):
 
         if entity_unique_id.endswith('_external_spool'):
             ams_index = 255
-            tray_index = 254
+            tray_index = 0
         elif not self.get_model().supports_feature(Features.AMS):
             LOGGER.error(f"AMS not available")
             return False
@@ -564,7 +580,15 @@ class BambuDataUpdateCoordinator(DataUpdateCoordinator):
         
         return combined_data
 
-    def _service_call_load_unload_filament(self, load: bool, data: dict):
+    def _service_call_retry_load_filament(self, data: dict):
+        command = RETRY_LOAD_FILAMENT_TEMPLATE
+        self.client.publish(command)
+    
+    def _service_call_done_load_filament(self, data: dict):
+        command = DONE_LOAD_FILAMENT_TEMPLATE
+        self.client.publish(command)
+
+    def _service_call_load_filament(self, data: dict):
         ams_device, entity_id = self._get_ams_device_and_tray(data)
         if entity_id is None:
             return False
@@ -583,15 +607,21 @@ class BambuDataUpdateCoordinator(DataUpdateCoordinator):
         #   X1C_<PRINTERSERIAL>_AMS_<AMSSERIAL>_tray_1
         # or
         #   X1C_<PRINTERSERIAL>_ExternalSpool_external_spool
+        #   H2C_<PRINTERSERIAL>_ExternalSpool_external_spool  # Left
+        #   H2C_<PRINTERSERIAL>_ExternalSpool2_external_spool # Right
 
         temperature = int(data.get('temperature', 0))
 
         if entity_unique_id.endswith('_external_spool'):
-            ams_index, tray = 255, 0
+            ams_index = 255
+            tray = 0
             target = 254
             # search selected external spool by identifier
+            suffices = ['']
+            if len(self.get_model().external_spool) == 2:
+                suffices = ['2', '']
             for i, ext_spool in enumerate(self.get_model().external_spool):
-                vtray = self.get_virtual_tray_device(i)
+                vtray = self.get_virtual_tray_device(suffices[i])
                 if vtray['identifiers'] == ams_device.identifiers:
                     ams_index = 255 - i
                     # Unless a target temperature override is set, try and find the
@@ -625,20 +655,34 @@ class BambuDataUpdateCoordinator(DataUpdateCoordinator):
 
         command = SWITCH_AMS_TEMPLATE
         command['print']['ams_id'] = ams_index
-        if load:
-            command['print']['slot_id'] = tray
-            command['print']['target'] = target
-            command['print']['tar_temp'] = temperature
-        else:
-            command['print']['slot_id'] = 255
-            command['print']['target'] = 255
+        command['print']['slot_id'] = tray
+        command['print']['target'] = target
+        command['print']['tar_temp'] = temperature
         self.client.publish(command)
 
-    def _service_call_load_filament(self, data: dict):
-        return self._service_call_load_unload_filament(True, data)
-
     def _service_call_unload_filament(self, data: dict):
-        return self._service_call_load_unload_filament(False, data)
+        device_id = self._get_ams_device_id(data)
+        if device_id is None:
+            return False
+
+        dev_reg = device_registry.async_get(self._hass)
+        ams_device = dev_reg.async_get(device_id)
+        ams_index = self._get_ams_index_from_device(ams_device)
+        if ams_index is None:
+            # External Spool
+            ams_index = 255
+
+        # Printers with older firmware require a different method to change
+        # filament. For now, only support newer firmware.
+        if not self.get_model().supports_feature(Features.AMS_SWITCH_COMMAND):
+            LOGGER.error(f"Loading filament is not available for this printer's firmware version, please update it")
+            return False
+
+        command = SWITCH_AMS_TEMPLATE
+        command['print']['ams_id'] = ams_index
+        command['print']['slot_id'] = 255
+        command['print']['target'] = 255
+        self.client.publish(command)
 
     def _service_call_print_project_file(self, data: dict):
         command = PRINT_PROJECT_FILE_TEMPLATE
@@ -811,21 +855,16 @@ class BambuDataUpdateCoordinator(DataUpdateCoordinator):
             LOGGER.debug("Removing stale AMS.")
             dev_reg.async_remove_device(device)
 
+        # Clean up orphaned Hotend Rack device if printer no longer has one.
+        if not self.get_model().supports_feature(Features.HOTEND_RACK):
+            for device in dev_reg.devices.values():
+                if config_entry_id in device.config_entries:
+                    if device.model == 'Hotend Rack':
+                        LOGGER.debug("Removing stale Hotend Rack device.")
+                        dev_reg.async_remove_device(device.id)
+
         # And now we can reinitialize the sensors, which will trigger device creation as necessary.
         self.hass.async_create_task(self._reinitialize_sensors())
-
-    def _update_external_spool_info(self):
-        dev_reg = device_registry.async_get(self._hass)
-        hadevice = dev_reg.async_get_or_create(config_entry_id=self.config_entry.entry_id,
-                                               identifiers={(DOMAIN, f"{self.get_model().info.serial}_ExternalSpool")})
-        serial = self.config_entry.data["serial"]
-        device_type = self.config_entry.data["device_type"]
-        dev_reg.async_update_device(hadevice.id,
-                                    name=f"{device_type}_{serial}_ExternalSpool",
-                                    model="External Spool",
-                                    manufacturer=BRAND,
-                                    sw_version="",
-                                    hw_version="")
 
     def PublishDeviceTriggerEvent(self, event: str):
         dev_reg = device_registry.async_get(self._hass)
@@ -876,16 +915,31 @@ class BambuDataUpdateCoordinator(DataUpdateCoordinator):
             sw_version=self.get_model().ams.data[index].sw_version
         )
 
-    def get_virtual_tray_device(self, index: int):
+    def get_virtual_tray_device(self, suffix: str):
         printer_serial = self.config_entry.data["serial"]
         device_type = self.config_entry.data["device_type"]
-        device_name=f"{device_type}_{printer_serial}_ExternalSpool{'2' if index==1 else ''}"
+        device_name=f"{device_type}_{printer_serial}_ExternalSpool{suffix}"
 
         return DeviceInfo(
-            identifiers={(DOMAIN, f"{printer_serial}_ExternalSpool{'2' if index==1 else ''}")},
+            identifiers={(DOMAIN, f"{printer_serial}_ExternalSpool{suffix}")},
             via_device=(DOMAIN, printer_serial),
             name=device_name,
             model="External Spool",
+            manufacturer=BRAND,
+            hw_version="",
+            sw_version=""
+        )
+
+    def get_hotend_rack_device(self):
+        printer_serial = self.config_entry.data["serial"]
+        device_type = self.config_entry.data["device_type"]
+        device_name = f"{device_type}_{printer_serial}_HotendRack"
+
+        return DeviceInfo(
+            identifiers={(DOMAIN, f"{printer_serial}_HotendRack")},
+            via_device=(DOMAIN, printer_serial),
+            name=device_name,
+            model="Hotend Rack",
             manufacturer=BRAND,
             hw_version="",
             sw_version=""
@@ -960,7 +1014,7 @@ class BambuDataUpdateCoordinator(DataUpdateCoordinator):
         if force:
             # Delete issue so we can re-create it but only ever have one in the list.
             if existing_issue is not None:
-                registry.async_delete_issue(domain=DOMAIN, issue_id=issue_id)
+                issue_registry.async_delete_issue(hass=self._hass, domain=DOMAIN, issue_id=issue_id)
         else:
             if existing_issue is not None:
                 # Issue already exists, no need to create it again

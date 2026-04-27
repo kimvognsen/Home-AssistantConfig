@@ -45,8 +45,7 @@ entities:
         type: string
         name: storage
   - entity: select
-    name: Motion sensitivity
-    icon: "mdi:motion-sensor"
+    translation_key: motion_sensitivity
     category: config
     dps:
       - id: 106
@@ -318,8 +317,7 @@ entities:
         optional: true
         name: value
   - entity: event
-    name: Alarm
-    icon: "mdi:alarm-bell"
+    translation_key: alarm
     dps:
       - id: 185
         type: base64

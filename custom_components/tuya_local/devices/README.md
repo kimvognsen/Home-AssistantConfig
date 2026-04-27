@@ -280,8 +280,7 @@ equivalents, other units are currently ASCII so can be easily entered directly).
 
 *Optional.*
 
-For sensors, this sets the state class of the sensor (measurement, total
-or total_increasing)
+For sensors, this sets the state class of the sensor (`measurement`, `measurement_angle`, `total` or `total_increasing`)
 
 
 ### `format`
@@ -303,6 +302,12 @@ For base64 and hex types, this specifies how to extract a single numeric value f
 *Optional, default="big"*
 
 For base64 and hex types, this specifies the endianess of the data and mask. Could be "big" or "little".
+
+### `mask_signed`
+
+*Optional, default=false*
+
+For base64 and hex types, set this to true if you need to extract a signed integer from the masked field.
 
 ## Mapping Rules
 
@@ -649,6 +654,16 @@ Either **position**, **action** or **open** should be specified otherwise the co
 - **open** (optional, boolean): a dp that reports if the cover is open. Only used if **position** is not available.
 - **tilt_position** (optional, number): a dp to control the tilt opening of the cover (an example is venetian blinds that tilt as well as go up and down). The range will be auto-converted to the 0-100 expected by HA.
 
+### `datetime`
+*At least one of the following dps is required**
+
+- **year** (optional, integer in range 1970-) - the year component
+- **month** (optional, integer in range 1-12) - the month component
+- **day** (optional, integer in range 1-31) - the day component
+- **hour** (optional, integer in range 0-24 or more if this is the only dp) - the hour component
+- **minute** (optional, integer in range 0-60 or more if the only dp) - the minute component
+- **second** (optional, integer in range 0-60 or more if the only dp) - the second component. If this is the only component, this is equivalent to `unixtime`.
+
 ### `fan`
 - **switch** (optional, boolean): a dp to control the power state of the fan
 - **preset_mode** (optional, mapping of strings): a dp to control different modes of the fan.
@@ -669,6 +684,11 @@ Humidifer can also cover dehumidifiers (use class to specify which).
 - **current_humidity** (optional, number): a dp to report the current humidity measured by the device
 - **action** (optional, string): a dp to report the current action the device is performing. Valid actions are `humidifying`, `drying`, `idle` and `off`
 
+### `infrared`
+- **send** (required, accepts a string): a dp to send remote codes.
+- **control** (optional, accepts strings `"send_ir"`): a dp to send commands seperately from ir codes. If not supplied, commands will be JSON formatted and sent through the **send** dp.
+- **code_type** (optional, accepts integers): a dp to set the type of code being sent. The current implementation only supports type `0`. This is only used when a separate **control** dp is also supplied, otherwise the parameter is included in the JSON sent to the **send** dp.
+
 ### `lawn_mower`
 - **activity** (required, string): a dp to report the current activity of the mower. Valid activities are `mowing`, `paused`, `docked`, `error`, `returning` (from LawnMowerActivities in https://github.com/home-assistant/core/blob/dev/homeassistant/components/lawn_mower/const.py). Any additional activities should be mapped to one of those, and exposed through an extra attribute or sensor entity that shows all the statuses that the mower is reporting.
 
@@ -686,7 +706,7 @@ Humidifer can also cover dehumidifiers (use class to specify which).
     If no `color_mode` dp is available, a single supported color mode will be
     calculated based on which of the above dps are available.
 - **effect** (optional, mapping of strings): a dp to control effects / presets supported by the light.
-   Note: If the light mixes in color modes in the same dp, `color_mode` should be used instead. If the light contains both a separate dp for effects/scenes/presets and a mix of color_modes and effects (commonly scene and music) in the `color_mode` dp, then a separate select entity should be used for the dedicated dp to ensure the effects from `color_mode` are selectable.
+   Note: If the light mixes in color modes in the same dp, `color_mode` should be used instead. If the light contains both a separate dp for effects/scenes/presets and a mix of color_modes and effects (commonly scene and music) in the `color_mode` dp, then a separate select entity should be used for the dedicated dp to ensure the effects from `color_mode` are selectable. If there is no (or read-only) switch and no brightness dp, then the "off" effect will be used to turn off the light, and a default option should be marked for turning on the light with no parameters.
 
 ### `lock`
 
@@ -728,9 +748,10 @@ no information will be available about which specific credential was used to unl
 ### `remote`
 - **send** (required, accepts a string): a dp to send remote codes.
 - **receive** (optional, returns strings): a dp to receive learned commands on. If not supplied, the `remote.learn_command` service call will not be available. 
-- **control** (optional, accepts strings `"send_ir"`, `"study"`, `"study_exit"`): a dp to send commands seperately from ir codes. If not supplied, commands will be JSON formatted and sent through the **send** dp.
+- **control** (optional, accepts strings `"send_ir"`, `"study"`, `"study_exit"`, `rfstudy_send`, `rf_study`, `rfstudy_exit`): a dp to send commands seperately from ir codes. If not supplied, commands will be JSON formatted and sent through the **send** dp.
 - **delay** (optional, accepts numbers): a dp to set the delay in ms between buttons when there are multiple in the send string. This is only used when a separate **control** dp is also supplied, otherwise the parameter is included in the JSON sent to the **send** dp.
 - **code_type** (optional, accepts integers): a dp to set the type of code being sent. The current implementation only supports type `0`. This is only used when a separate **control** dp is also supplied, otherwise the parameter is included in the JSON sent to the **send** dp.
+
 ### `select`
 - **option** (required, mapping of strings): a dp to control the option that is selected.
 
@@ -783,6 +804,7 @@ to use it for other length timers.
 
 ### `valve`
 - **valve** (required, boolean or integer): a dp that reports the current state of the valve, and if not readonly, can also be used to set the state.  If a number, it should be a percentage between 0 and 100 indicating how far open the valve is.  If a boolean, it should indicate open (true) or closed (false).
+- **switch** (optional, boolean): if the valve dp is an integer, the valve may also have a boolean switch dp for closing and opening the valve without affecting the open valve position.
 
 ### `water_heater`
 - **current_temperature** (optional, number): a dp that reports the current water temperature.

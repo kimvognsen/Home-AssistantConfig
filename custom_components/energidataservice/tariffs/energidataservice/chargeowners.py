@@ -16,7 +16,7 @@ CHARGEOWNERS = {
     "Konstant": {
         "gln": "5790000704842",
         "company": "Konstant Net A/S - 151",
-        "type": ["151-NT01T", "151-NRA04T"],
+        "type": ["C_FBTNTR_B", "C_FBTNTR_R"],
         "chargetype": ["D03"],
     },
     "Cerius": {
@@ -64,7 +64,7 @@ CHARGEOWNERS = {
     "Hurup Elværk Net": {
         "gln": "5790000610839",
         "company": "Hurup Elværk Net A/S",
-        "type": ["HEV-NT-01"],
+        "type": ["HEV-NT-01T"],
         "chargetype": ["D03"],
     },
     "Veksel": {
@@ -118,7 +118,7 @@ CHARGEOWNERS = {
     "Hammel Elforsyning Net": {
         "gln": "5790001090166",
         "company": "Hammel Elforsyning Net A/S",
-        "type": ["50001"],
+        "type": ["C-Tarif"],
         "chargetype": ["D03"],
     },
     "El-net Kongerslev": {
@@ -136,19 +136,13 @@ CHARGEOWNERS = {
     "Tarm Elværk Net": {
         "gln": "5790000706419",
         "company": "Tarm Elværk Net A/S",
-        "type": ["TEV-NT-01", "TEV-NT-01R"],
+        "type": ["TEV-NT-01T", "TEV-NT-01R"],
         "chargetype": ["D03"],
     },
     "Zeanet": {
         "gln": "5790001089375",
         "company": "Zeanet A/S",
         "type": ["43110"],
-        "chargetype": ["D03"],
-    },
-    "NKE-Elnet": {
-        "gln": "5790001088231",
-        "company": "NKE-Elnet A/S",
-        "type": ["94TR_C_ET"],
         "chargetype": ["D03"],
     },
     "L-Net": {

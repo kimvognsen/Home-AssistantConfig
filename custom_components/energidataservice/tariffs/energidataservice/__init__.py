@@ -9,6 +9,7 @@ from aiohttp import ClientSession
 from async_retrying_ng import RetryError, retry
 from homeassistant.util import slugify as util_slugify
 
+from ...exceptions import UnknownChargeOwnerError
 from .chargeowners import CHARGEOWNERS
 from .regions import REGIONS
 
@@ -82,7 +83,7 @@ class Connector:
                 _LOGGER.warning(
                     "Could not fetch tariff data from Energi Data Service DataHub!"
                 )
-                return
+                return self.tariffs
             else:
                 # We got data from the DataHub - update the dataset
 
@@ -113,13 +114,15 @@ class Connector:
 
             return self.tariffs
         except KeyError:
-            _LOGGER.error(
-                "Error finding '%s' in the list of charge owners - "
-                "please reconfigure your integration.",
-                self._chargeowner,
-            )
+            # _LOGGER.error(
+            #     "Error finding '%s' in the list of charge owners - "
+            #     "please reconfigure your integration.",
+            #     self._chargeowner,
+            # )
+            raise UnknownChargeOwnerError(self._chargeowner) from None
         except RetryError:
             _LOGGER.error("Retry attempts exceeded for tariffs request.")
+            return self.tariffs
 
     def get_dated_tariff(self, date: datetime) -> dict:
         """Get tariff for this specific date."""
@@ -174,7 +177,7 @@ class Connector:
                 _LOGGER.warning(
                     "Could not fetch tariff data from Energi Data Service DataHub!"
                 )
-                return
+                return {}
             else:
                 self._all_additional_tariffs = dataset
 
@@ -198,24 +201,21 @@ class Connector:
             headers = self._header(self._version)
             resp = await self.client.get(f"{BASE_URL}?{query}", headers=headers)
             self.status = resp.status
-            resp.raise_for_status()
-
-            if resp.status == 400:
-                _LOGGER.error("API returned error 400, Bad Request!")
-                return {}
-            elif resp.status == 403:
-                self._result = {}
-            elif resp.status == 411:
-                _LOGGER.error("API returned error 411, Invalid Request!")
-                self._result = {}
-            elif resp.status == 429:
-                self._result = {}
-            elif resp.status == 200:
+            if resp.status == 200:
                 res = await resp.json()
                 return res["records"]
-            else:
-                _LOGGER.error("API returned error %s", str(resp.status))
+
+            if resp.status in (400, 403, 411, 429):
+                _LOGGER.warning(
+                    "Tariff API request returned status %s for query '%s'",
+                    resp.status,
+                    query,
+                )
                 return {}
+
+            resp.raise_for_status()
+            _LOGGER.error("API returned error %s", str(resp.status))
+            return {}
         except Exception as exc:
             _LOGGER.error("Error during API request: %s", exc)
             raise

@@ -95,7 +95,6 @@ entities:
   - entity: sensor
     category: diagnostic
     name: Power level
-    class: power_factor
     dps:
       - id: 109
         type: integer
@@ -152,8 +151,7 @@ entities:
           - dps_val: c
             value: C
   - entity: sensor
-    category: diagnostic
-    name: Ambient temperature
+    translation_key: ambient_temperature
     class: temperature
     dps:
       - id: 115

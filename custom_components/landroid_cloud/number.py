@@ -1,111 +1,239 @@
-"""Input numbers for landroid_cloud."""
+"""Number platform for Landroid Cloud."""
 
 from __future__ import annotations
 
-import json
+from dataclasses import dataclass
 
-from homeassistant.components.number import NumberDeviceClass, NumberMode
+from homeassistant.components.number import (
+    NumberEntity,
+    NumberEntityDescription,
+    NumberMode,
+)
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EntityCategory
+from homeassistant.const import EntityCategory, UnitOfArea, UnitOfLength
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from pyworxcloud import DeviceCapability
+from pyworxcloud.exceptions import NoCuttingHeightError
 
-from .api import LandroidAPI
-from .const import ATTR_DEVICES, DOMAIN
-from .device_base import LandroidNumber, LandroidNumberEntityDescription
+from .commands import async_run_cloud_command
+from .entity import LandroidBaseEntity
 
-INPUT_NUMBERS = [
-    LandroidNumberEntityDescription(
-        key="timeextension",
-        name="Time extension",
+
+@dataclass(frozen=True, kw_only=True)
+class LandroidNumberDescription(NumberEntityDescription):
+    """Description for Landroid numbers."""
+
+    capability: DeviceCapability | None = None
+
+
+def _rain_delay_value(device) -> int | None:
+    """Return rain delay as an integer when available."""
+    value = getattr(device, "rainsensor", {}).get("delay")
+    return None if value is None else int(value)
+
+
+def _time_extension_value(device) -> int | None:
+    """Return schedule time extension percentage when available."""
+    value = getattr(device, "schedules", {}).get("time_extension")
+    return None if value is None else int(value)
+
+
+def _torque_value(device) -> int | None:
+    """Return torque as an integer percentage when available."""
+    value = getattr(device, "torque", None)
+    return None if value is None else int(value)
+
+
+def _lawn_value(device, key: str) -> int | None:
+    """Return one lawn parameter as an integer when available."""
+    value = getattr(device, "lawn", {}).get(key)
+    return None if value is None else int(value)
+
+
+NUMBERS: tuple[LandroidNumberDescription, ...] = (
+    LandroidNumberDescription(
+        key="rain_delay",
+        translation_key="rain_delay",
         entity_category=EntityCategory.CONFIG,
-        device_class=None,
-        entity_registry_enabled_default=True,
-        native_unit_of_measurement="%",
+        entity_registry_enabled_default=False,
+        native_min_value=0,
+        native_max_value=1440,
+        native_step=1,
+        native_unit_of_measurement="min",
+        mode=NumberMode.BOX,
+        icon="mdi:weather-rainy",
+    ),
+    LandroidNumberDescription(
+        key="cutting_height",
+        translation_key="cutting_height",
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
+        native_min_value=20,
+        native_max_value=70,
+        native_step=5,
+        native_unit_of_measurement="mm",
+        mode=NumberMode.SLIDER,
+        capability=DeviceCapability.CUTTING_HEIGHT,
+    ),
+    LandroidNumberDescription(
+        key="time_extension",
+        translation_key="time_extension",
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
         native_min_value=-100,
         native_max_value=100,
         native_step=10,
-        mode=NumberMode.SLIDER,
-        value_fn=lambda api: api.cloud.devices[api.device_name].schedules[
-            "time_extension"
-        ],
-        command_fn=lambda api, value: api.cloud.send(
-            api.device.serial_number, json.dumps({"sc": {"p": value}})
-        ),
-        required_protocol=0,
+        native_unit_of_measurement="%",
+        mode=NumberMode.BOX,
+        icon="mdi:timer-edit-outline",
     ),
-    LandroidNumberEntityDescription(
+    LandroidNumberDescription(
         key="torque",
-        name="Torque",
+        translation_key="torque",
         entity_category=EntityCategory.CONFIG,
-        device_class=NumberDeviceClass.POWER_FACTOR,
-        entity_registry_enabled_default=True,
-        native_unit_of_measurement=None,
+        entity_registry_enabled_default=False,
         native_min_value=-50,
         native_max_value=50,
         native_step=1,
+        native_unit_of_measurement="%",
         mode=NumberMode.SLIDER,
-        value_fn=lambda api: api.cloud.devices[api.device_name].torque,
-        command_fn=lambda api, value: api.cloud.send(
-            api.device.serial_number, json.dumps({"tq": value})
-        ),
-        required_capability=DeviceCapability.TORQUE,
+        icon="mdi:gauge",
+        capability=DeviceCapability.TORQUE,
     ),
-    LandroidNumberEntityDescription(
-        key="raindelay",
-        name="Raindelay",
+    LandroidNumberDescription(
+        key="lawn_size",
+        translation_key="lawn_size",
         entity_category=EntityCategory.CONFIG,
-        device_class=None,
-        entity_registry_enabled_default=True,
-        native_unit_of_measurement="minutes",
+        entity_registry_enabled_default=False,
         native_min_value=0,
-        native_max_value=300,
+        native_max_value=100000,
         native_step=1,
+        native_unit_of_measurement=UnitOfArea.SQUARE_METERS,
         mode=NumberMode.BOX,
-        value_fn=lambda api: api.device.rainsensor["delay"],
-        command_fn=lambda api, value: api.cloud.raindelay(
-            api.device.serial_number, value
-        ),
-        icon="mdi:weather-rainy",
+        icon="mdi:texture-box",
     ),
-    LandroidNumberEntityDescription(
-        key="cutting_height",
-        name="Cutting height",
+    LandroidNumberDescription(
+        key="lawn_perimeter",
+        translation_key="lawn_perimeter",
         entity_category=EntityCategory.CONFIG,
-        device_class=NumberDeviceClass.DISTANCE,
-        entity_registry_enabled_default=True,
-        native_unit_of_measurement="mm",
-        native_min_value=30,
-        native_max_value=60,
-        native_step=5,
-        mode=NumberMode.SLIDER,
-        value_fn=lambda api: api.cloud.get_cutting_height(api.device.serial_number),
-        command_fn=lambda api, value: api.cloud.set_cutting_height(
-            api.device.serial_number, value
-        ),
-        required_capability=DeviceCapability.CUTTING_HEIGHT,
+        entity_registry_enabled_default=False,
+        native_min_value=0,
+        native_max_value=100000,
+        native_step=1,
+        native_unit_of_measurement=UnitOfLength.METERS,
+        mode=NumberMode.BOX,
+        icon="mdi:ruler-square",
     ),
-]
+)
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigEntry,
-    async_add_devices,
+    entry: ConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Set up the switch platform."""
-    entities = []
-    for _, info in hass.data[DOMAIN][config.entry_id][ATTR_DEVICES].items():
-        api: LandroidAPI = info["api"]
-        for number in INPUT_NUMBERS:
-            if (
-                isinstance(number.required_protocol, type(None))
-                or number.required_protocol == api.device.protocol
-            ) and (
-                isinstance(number.required_capability, type(None))
-                or api.device.capabilities.check(number.required_capability)
-            ):
-                entity = LandroidNumber(hass, number, api, config)
-                entities.append(entity)
+    """Set up Landroid Cloud number entities."""
+    coordinator = entry.runtime_data.coordinator
+    entities: list[LandroidNumber] = []
 
-    async_add_devices(entities)
+    for serial_number, device in coordinator.data.items():
+        for description in NUMBERS:
+            if description.capability and not device.capabilities.check(
+                description.capability
+            ):
+                continue
+
+            entities.append(
+                LandroidNumber(
+                    coordinator=coordinator,
+                    config_entry=entry,
+                    serial_number=serial_number,
+                    description=description,
+                )
+            )
+
+    async_add_entities(entities)
+
+
+class LandroidNumber(LandroidBaseEntity, NumberEntity):
+    """Representation of a Landroid cloud number entity."""
+
+    entity_description: LandroidNumberDescription
+    _attr_requires_online = True
+
+    def __init__(
+        self,
+        coordinator,
+        config_entry,
+        serial_number: str,
+        description: LandroidNumberDescription,
+    ) -> None:
+        """Initialize number entity."""
+        self.entity_description = description
+        super().__init__(
+            coordinator, config_entry, serial_number, self.entity_description.key
+        )
+
+    @property
+    def native_value(self) -> float | None:
+        """Return number value."""
+        serial_number = str(self.device.serial_number)
+
+        if self.entity_description.key == "rain_delay":
+            return _rain_delay_value(self.device)
+
+        if self.entity_description.key == "cutting_height":
+            try:
+                return float(self.coordinator.cloud.get_cutting_height(serial_number))
+            except NoCuttingHeightError:
+                return None
+
+        if self.entity_description.key == "time_extension":
+            return _time_extension_value(self.device)
+
+        if self.entity_description.key == "torque":
+            return _torque_value(self.device)
+
+        if self.entity_description.key == "lawn_size":
+            return _lawn_value(self.device, "size")
+
+        if self.entity_description.key == "lawn_perimeter":
+            return _lawn_value(self.device, "perimeter")
+
+        return None
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Set new number value."""
+        serial_number = str(self.device.serial_number)
+
+        if self.entity_description.key == "rain_delay":
+            await async_run_cloud_command(
+                lambda: self.coordinator.cloud.raindelay(serial_number, str(int(value)))
+            )
+        elif self.entity_description.key == "cutting_height":
+            await async_run_cloud_command(
+                lambda: self.coordinator.cloud.set_cutting_height(
+                    serial_number, int(value)
+                )
+            )
+        elif self.entity_description.key == "time_extension":
+            await async_run_cloud_command(
+                lambda: self.coordinator.cloud.set_time_extension(
+                    serial_number, int(value)
+                )
+            )
+        elif self.entity_description.key == "torque":
+            await async_run_cloud_command(
+                lambda: self.coordinator.cloud.set_torque(serial_number, int(value))
+            )
+        elif self.entity_description.key == "lawn_size":
+            await async_run_cloud_command(
+                lambda: self.coordinator.cloud.set_lawn_size(serial_number, int(value))
+            )
+        elif self.entity_description.key == "lawn_perimeter":
+            await async_run_cloud_command(
+                lambda: self.coordinator.cloud.set_lawn_perimeter(
+                    serial_number, int(value)
+                )
+            )

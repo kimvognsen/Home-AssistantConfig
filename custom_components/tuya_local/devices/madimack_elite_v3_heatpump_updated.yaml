@@ -69,7 +69,6 @@ entities:
   - entity: sensor
     category: diagnostic
     name: Power level
-    class: power_factor
     dps:
       - id: 109
         type: integer
@@ -124,8 +123,7 @@ entities:
           - dps_val: c
             value: C
   - entity: sensor
-    category: diagnostic
-    name: Ambient temperature
+    translation_key: ambient_temperature
     class: temperature
     dps:
       - id: 115
@@ -210,15 +208,6 @@ entities:
       - id: 107
         type: bitfield
         name: fault_code
-  - entity: sensor
-    # 2025-07-22
-    deprecated: binary_sensor.problem
-    category: diagnostic
-    name: Fault code
-    dps:
-      - id: 107
-        name: sensor
-        type: bitfield
   - entity: sensor
     class: power
     category: diagnostic

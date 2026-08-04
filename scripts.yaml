@@ -116,3 +116,26 @@ stuen_led_bloklys_dim_plus:
   mode: restart
   alias: Stuen LED Bloklys lysstyrke op
   icon: mdi:candle
+send_billede_til_mobil_nar_det_ringer_pa_doren:
+  alias: Send billede til mobil når det ringer på døren
+  sequence:
+  - action: camera.snapshot
+    target:
+      entity_id: camera.reolink_rlc_1224a
+    data:
+      filename: /config/www/snapshot/snapshot_thecloud_ip_kamera_indkorsels.jpg
+  - delay:
+      seconds: 2
+  - action: notify.mobile_app_kims_iphone17
+    data:
+      title: Ringklokke
+      message: Det ringer på døren
+      data:
+        image: /local/snapshot/snapshot_thecloud_ip_kamera_indkorsels.jpg
+  - action: notify.mobile_app_gittes_iphone_2
+    data:
+      title: Ringklokke
+      message: Det ringer på døren
+      data:
+        image: /local/snapshot/snapshot_thecloud_ip_kamera_indkorsels.jpg
+  mode: restart

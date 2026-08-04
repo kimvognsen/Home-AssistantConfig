@@ -1,7 +1,6 @@
-from __future__ import annotations
-
 from collections import defaultdict
 from collections.abc import Mapping
+from copy import deepcopy
 from dataclasses import dataclass
 from enum import StrEnum
 import logging
@@ -27,9 +26,13 @@ from homeassistant.helpers.typing import ConfigType
 
 from custom_components.powercalc.const import (
     BUILT_IN_LIBRARY_DIR,
+    CONF_ENERGY_SENSOR_NAMING,
     CONF_MAX_POWER,
     CONF_MIN_POWER,
     CONF_POWER,
+    CONF_POWER_SENSOR_NAMING,
+    DEFAULT_SELF_USAGE_ENERGY_NAME_PATTERN,
+    DEFAULT_SELF_USAGE_POWER_NAME_PATTERN,
     DOMAIN,
     CalculationStrategy,
     PowerProfileSource,
@@ -63,6 +66,7 @@ class DeviceType(StrEnum):
 
 
 class DiscoveryBy(StrEnum):
+    CONFIG_ENTRY = "config_entry"
     DEVICE = "device"
     ENTITY = "entity"
 
@@ -95,7 +99,9 @@ DEVICE_TYPE_DOMAIN: dict[DeviceType, str | set[str]] = {
     DeviceType.UPS: SENSOR_DOMAIN,
 }
 
-SUPPORTED_DOMAINS: set[str] = {domain for domains in DEVICE_TYPE_DOMAIN.values() for domain in (domains if isinstance(domains, set) else {domains})}
+SUPPORTED_DOMAINS: set[str] = {
+    domain for domains in DEVICE_TYPE_DOMAIN.values() for domain in (domains if isinstance(domains, set) else {domains})
+}
 
 
 def _build_domain_device_type_mapping() -> Mapping[str, set[DeviceType]]:
@@ -119,13 +125,14 @@ class PowerProfile:
         model: str,
         directory: str,
         json_data: ConfigType,
-        sub_profiles: list[tuple[str, dict]] | None = None,
+        sub_profiles: list[tuple[str, dict[str, Any]]] | None = None,
     ) -> None:
         self._manufacturer = manufacturer
         self._model = model.replace("#slash#", "/")
         self._hass = hass
         self._directory = directory
-        self._json_data = json_data
+        self._base_json_data = deepcopy(json_data)
+        self._json_data = deepcopy(json_data)
         self.sub_profile: str | None = None
         self._sub_profile_dir: str | None = None
         self._sub_profiles = sub_profiles or []
@@ -222,9 +229,9 @@ class PowerProfile:
         return config
 
     @property
-    def composite_config(self) -> list | None:
+    def composite_config(self) -> list[ConfigType] | None:
         """Get configuration to set up composite strategy."""
-        return cast(list, self._json_data.get("composite_config"))
+        return cast(list[ConfigType], self._json_data.get("composite_config"))
 
     @property
     def playbook_config(self) -> ConfigType | None:
@@ -242,7 +249,12 @@ class PowerProfile:
     @property
     def sensor_config(self) -> ConfigType:
         """Additional sensor configuration."""
-        return self._json_data.get("sensor_config") or {}
+        sensor_config = dict(self._json_data.get("sensor_config") or {})
+        if self.only_self_usage and CONF_POWER_SENSOR_NAMING not in sensor_config:
+            sensor_config[CONF_POWER_SENSOR_NAMING] = DEFAULT_SELF_USAGE_POWER_NAME_PATTERN
+        if self.only_self_usage and CONF_ENERGY_SENSOR_NAMING not in sensor_config:
+            sensor_config[CONF_ENERGY_SENSOR_NAMING] = DEFAULT_SELF_USAGE_ENERGY_NAME_PATTERN
+        return sensor_config
 
     def is_strategy_supported(self, mode: CalculationStrategy) -> bool:
         """Whether a certain calculation strategy is supported by this profile."""
@@ -343,7 +355,7 @@ class PowerProfile:
             return "remarks_smart_dimmer"
         return None
 
-    async def get_sub_profiles(self) -> list[tuple[str, dict]]:
+    async def get_sub_profiles(self) -> list[tuple[str, dict[str, Any]]]:
         """Get listing of possible sub profiles and their corresponding JSON data."""
         return self._sub_profiles
 
@@ -393,13 +405,15 @@ class PowerProfile:
 
         if found_profile is None:
             raise ModelNotSupportedError(
-                f"Sub profile not found (manufacturer: {self._manufacturer}, model: {self._model}, sub_profile: {sub_profile})",
+                f"Sub profile not found (manufacturer: {self._manufacturer}, "
+                f"model: {self._model}, sub_profile: {sub_profile})",
             )
 
         self._sub_profile_dir = os.path.join(self._directory, sub_profile)
         _LOGGER.debug("Loading sub profile: %s", sub_profile)
 
-        self._json_data.update(found_profile)
+        self._json_data = deepcopy(self._base_json_data)
+        self._json_data.update(deepcopy(found_profile))
 
         self.sub_profile = sub_profile
 

@@ -49,9 +49,19 @@
       "init": {
         "title": "Opțiuni Landroid Cloud",
         "data": {
-          "command_timeout": "Timp limită comandă (secunde)"
+          "email": "E-mail",
+          "password": "Parolă"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "A eșuat conectarea",
+      "invalid_auth": "Eroare la autentificare",
+      "too_many_requests": "Prea multe solicitări",
+      "api_error": "API-ul cloud a respins cererea",
+      "timeout": "Timpul de conectare a expirat",
+      "unknown": "Eroare neașteptată",
+      "already_exists": "Acest cont a fost deja configurat"
     }
   },
   "entity": {
@@ -166,6 +176,9 @@
       }
     },
     "binary_sensor": {
+      "mqtt_connected": {
+        "name": "MQTT"
+      },
       "rain_sensor": {
         "name": "Senzor de ploaie"
       },
@@ -322,6 +335,20 @@
     }
   },
   "services": {
+    "ots": {
+      "name": "Pornește programarea unică",
+      "description": "Pornește o tundere unică dacă mașina de tuns o acceptă.",
+      "fields": {
+        "boundary": {
+          "name": "Margine",
+          "description": "Dacă să fie inclusă tunderea marginii."
+        },
+        "runtime": {
+          "name": "Durată",
+          "description": "Durata în minute."
+        }
+      }
+    },
     "set_nutrition": {
       "name": "Set nutrition",
       "description": "Set auto-schedule nutrition values.",

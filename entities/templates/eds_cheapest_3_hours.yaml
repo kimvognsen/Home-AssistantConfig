@@ -1,0 +1,73 @@
+- sensor:
+    - name: "Strøm billigste i 3 timer"
+      unique_id: billigste_3_timer
+      icon: mdi:clock-outline
+
+      state: >
+        {% set today = state_attr('sensor.energi_data_service', 'raw_today') | default([], true) %}
+        {% set tomorrow = state_attr('sensor.energi_data_service', 'raw_tomorrow') | default([], true) %}
+        {% set prices = today + tomorrow %}
+
+        {% set ns = namespace(
+          best_price = 999999,
+          best_start = none,
+          best_end = none
+        ) %}
+
+        {% for i in range(0, [prices | count - 2, 0] | max) %}
+          {% set p1 = prices[i] %}
+          {% set p2 = prices[i + 1] %}
+          {% set p3 = prices[i + 2] %}
+
+          {% set start = as_datetime(p1.hour) %}
+          {% set end = as_datetime(p3.hour) + timedelta(hours=1) %}
+
+          {% if start >= now().replace(minute=0, second=0, microsecond=0) %}
+            {% set average =
+              (p1.price | float(999999) +
+               p2.price | float(999999) +
+               p3.price | float(999999)) / 3 %}
+
+            {% if average < ns.best_price %}
+              {% set ns.best_price = average %}
+              {% set ns.best_start = start %}
+              {% set ns.best_end = end %}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+
+        {% if ns.best_start %}
+          {% if ns.best_start.date() == now().date() %}
+            I dag {{ ns.best_start.strftime('%H:%M') }}–{{ ns.best_end.strftime('%H:%M') }}
+          {% elif ns.best_start.date() == (now() + timedelta(days=1)).date() %}
+            I morgen {{ ns.best_start.strftime('%H:%M') }}–{{ ns.best_end.strftime('%H:%M') }}
+          {% else %}
+            {{ ns.best_start.strftime('%d-%m %H:%M') }}–{{ ns.best_end.strftime('%H:%M') }}
+          {% endif %}
+        {% else %}
+          Ingen prisdata
+        {% endif %}
+
+      attributes:
+        gennemsnitspris: >
+          {% set today = state_attr('sensor.energi_data_service', 'raw_today') | default([], true) %}
+          {% set tomorrow = state_attr('sensor.energi_data_service', 'raw_tomorrow') | default([], true) %}
+          {% set prices = today + tomorrow %}
+          {% set ns = namespace(best=999999) %}
+
+          {% for i in range(0, [prices | count - 2, 0] | max) %}
+            {% set start = as_datetime(prices[i].hour) %}
+
+            {% if start >= now().replace(minute=0, second=0, microsecond=0) %}
+              {% set avg =
+                (prices[i].price | float(999999) +
+                 prices[i + 1].price | float(999999) +
+                 prices[i + 2].price | float(999999)) / 3 %}
+
+              {% if avg < ns.best %}
+                {% set ns.best = avg %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+
+          {{ ns.best | round(3) if ns.best < 999999 else none }}

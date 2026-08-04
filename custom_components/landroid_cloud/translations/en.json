@@ -55,9 +55,19 @@
       "init": {
         "title": "Landroid Cloud options",
         "data": {
-          "command_timeout": "Command timeout (seconds)"
+          "email": "Email",
+          "password": "Password"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to cloud service",
+      "invalid_auth": "Invalid credentials",
+      "too_many_requests": "Too many requests",
+      "api_error": "Cloud API rejected the request",
+      "timeout": "Connection timed out",
+      "unknown": "Unexpected error",
+      "already_exists": "This account is already configured"
     }
   },
   "services": {
@@ -72,6 +82,20 @@
         "runtime": {
           "name": "Run time",
           "description": "Run time in minutes."
+        }
+      }
+    },
+    "set_border_cut_settings": {
+      "name": "Set border-cut settings",
+      "description": "Set Vision border-cut behavior without starting a mowing task.",
+      "fields": {
+        "cut_over_border": {
+          "name": "Cut over border",
+          "description": "Whether border cutting may cross the lawn border."
+        },
+        "border_distance_cm": {
+          "name": "Border distance",
+          "description": "Border distance in centimeters."
         }
       }
     },
@@ -396,6 +420,9 @@
       }
     },
     "binary_sensor": {
+      "mqtt_connected": {
+        "name": "MQTT"
+      },
       "rain_sensor": {
         "name": "Rain sensor"
       },

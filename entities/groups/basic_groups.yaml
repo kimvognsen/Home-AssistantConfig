@@ -5,10 +5,10 @@ all_door_sensors:
   all: true
   entities:
     # - binary_sensor.contact_sensor_950f_door_open
-    - binary_sensor.dorsensor_stuen
+    - binary_sensor.dor_sensor_stuen_contact
     - binary_sensor.dor_sensor_entre_contact
     - binary_sensor.dor_sensor_vaerksted_contact
-    - binary_sensor.dor_sensor_bryggers_contact
+    - binary_sensor.sonoff_dor_sensor_bryggers_contact
 
 # Gruppe 2: alle vindue-sensorer
 all_windows_sensors:
@@ -17,8 +17,8 @@ all_windows_sensors:
   all: true
   entities:
     - binary_sensor.vindue_sensor_badevaerelse_contact
-    - binary_sensor.vinduesensor_sovevaerelse_contact
-    - binary_sensor.vinduesensor_matias_vaerelse_contact
+    - binary_sensor.vindue_sensor_sovevaerelse_contact
+    - binary_sensor.vindue_sensor_matias_vaerelse_contact
     - binary_sensor.vindue_sensor_jonatans_vaerelse_contact
 
 # Gruppe 3: family

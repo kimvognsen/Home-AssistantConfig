@@ -49,9 +49,19 @@
       "init": {
         "title": "Параметры Landroid Cloud",
         "data": {
-          "command_timeout": "Таймаут команды (секунды)"
+          "email": "Email",
+          "password": "Пароль"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "Не удалось подключиться",
+      "invalid_auth": "Ошибка аутентификации",
+      "too_many_requests": "Слишком много запросов",
+      "api_error": "Облачный API отклонил запрос",
+      "timeout": "Истекло время ожидания подключения",
+      "unknown": "Неожиданная ошибка",
+      "already_exists": "Эта учетная запись пользователя уже настроена"
     }
   },
   "entity": {
@@ -166,6 +176,9 @@
       }
     },
     "binary_sensor": {
+      "mqtt_connected": {
+        "name": "MQTT"
+      },
       "rain_sensor": {
         "name": "Датчик дождя"
       },
@@ -322,6 +335,20 @@
     }
   },
   "services": {
+    "ots": {
+      "name": "Запустить одноразовое расписание",
+      "description": "Запускает одноразовое кошение, если газонокосилка это поддерживает.",
+      "fields": {
+        "boundary": {
+          "name": "Край",
+          "description": "Нужно ли включать проход по краю."
+        },
+        "runtime": {
+          "name": "Время работы",
+          "description": "Время работы в минутах."
+        }
+      }
+    },
     "set_nutrition": {
       "name": "Set nutrition",
       "description": "Set auto-schedule nutrition values.",

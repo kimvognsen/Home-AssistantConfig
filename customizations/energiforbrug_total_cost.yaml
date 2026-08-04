@@ -4,10 +4,10 @@ sensor.energiforbrug_total_cost:
   state_class: total
 # old  state_class: total_increasing
 
-sensor.aktuel_el_forbrug_i_dag:
-  unit_of_measurement: "DKK"
-  device_class: monetary
-  state_class: total
+#sensor.aktuel_el_forbrug_i_dag:
+#  unit_of_measurement: "DKK"
+#  device_class: monetary
+#  state_class: total
 
 sensor.el_omkostning_rate:
   unit_of_measurement: "DKK/h"

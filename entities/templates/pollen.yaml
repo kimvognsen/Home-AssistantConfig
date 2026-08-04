@@ -1,160 +1,92 @@
+---
+# Pollen niveauer
+# Klassifikation efter tærskler brugt i pollen_dk:
+# Alternaria: 20 / 100 / 500
+# Birk: 30 / 100 / 550
+# Bynke: 10 / 50 / 60
+# Cladosporium: 2000 / 6000 / 7000
+# El: 10 / 50 / 200
+# Elm: 10 / 50 / 80
+# Græs: 10 / 50 / 150
+# Hassel: 5 / 15 / 40
+
 - sensor:
-    - name: "Birke pollen niveau"
-      unique_id: birke_pollen_niveau
+    - name: "Alternaria pollen niveau"
+      unique_id: alternaria_pollen_niveau_v5
       state: >-
-        {% set level = states('sensor.birke_pollen_seneste') | int(-1) %}
-        {% if level == -1 %}
-          Uden for sæson
-        {% elif level <= 10 %}
-          Lav
-        {% elif level <= 50 %}
-          Middel
-        {% else %}
-          Høj
+        {% set v = states('sensor.alternaria_pollen_seneste') | int(-1) %}
+        {% if v < 0 %}Ukendt
+        {% elif v < 20 %}Lav
+        {% elif v < 100 %}Moderat
+        {% else %}Høj
+        {% endif %}
+
+    - name: "Birk pollen niveau"
+      unique_id: birk_pollen_niveau_v5
+      state: >-
+        {% set v = states('sensor.birk_pollen_seneste') | int(-1) %}
+        {% if v < 0 %}Ukendt
+        {% elif v < 30 %}Lav
+        {% elif v < 100 %}Moderat
+        {% else %}Høj
         {% endif %}
 
     - name: "Bynke pollen niveau"
-      unique_id: bynke_pollen_niveau
+      unique_id: bynke_pollen_niveau_v5
       state: >-
-        {% set level = states('sensor.bynke_pollen_seneste') | int(-1) %}
-        {% if level == -1 %}
-          Uden for sæson
-        {% elif level <= 10 %}
-          Lav
-        {% elif level <= 50 %}
-          Middel
-        {% else %}
-          Høj
-        {% endif %}
-
-    - name: "El pollen niveau"
-      unique_id: el_pollen_niveau
-      state: >-
-        {% set level = states('sensor.el_pollen_seneste') | int(-1) %}
-        {% if level == -1 %}
-          Uden for sæson
-        {% elif level <= 10 %}
-          Lav
-        {% elif level <= 50 %}
-          Middel
-        {% else %}
-          Høj
-        {% endif %}
-
-    - name: "Elm pollen niveau"
-      unique_id: elm_pollen_niveau
-      state: >-
-        {% set level = states('sensor.elm_pollen_seneste') | int(-1) %}
-        {% if level == -1 %}
-          Uden for sæson
-        {% elif level <= 10 %}
-          Lav
-        {% elif level <= 50 %}
-          Middel
-        {% else %}
-          Høj
-        {% endif %}
-
-    - name: "Alternaria pollen niveau"
-      unique_id: alternaria_pollen_niveau
-      state: >-
-        {% set level = states('sensor.alternaria_seneste') | int(-1) %}
-        {% if level == -1 %}
-          Uden for sæson
-        {% elif level <= 10 %}
-          Lav
-        {% elif level <= 50 %}
-          Middel
-        {% else %}
-          Høj
+        {% set v = states('sensor.bynke_pollen_seneste') | int(-1) %}
+        {% if v < 0 %}Ukendt
+        {% elif v < 10 %}Lav
+        {% elif v < 50 %}Moderat
+        {% else %}Høj
         {% endif %}
 
     - name: "Cladosporium pollen niveau"
-      unique_id: cladosporium_pollen_niveau
+      unique_id: cladosporium_pollen_niveau_v5
       state: >-
-        {% set level = states('sensor.cladosporium_seneste') | int(-1) %}
-        {% if level == -1 %}
-          Uden for sæson
-        {% elif level <= 10 %}
-          Lav
-        {% elif level <= 50 %}
-          Middel
-        {% else %}
-          Høj
+        {% set v = states('sensor.cladosporium_pollen_seneste') | int(-1) %}
+        {% if v < 0 %}Ukendt
+        {% elif v < 2000 %}Lav
+        {% elif v < 6000 %}Moderat
+        {% else %}Høj
+        {% endif %}
+
+    - name: "El pollen niveau"
+      unique_id: el_pollen_niveau_v5
+      state: >-
+        {% set v = states('sensor.el_pollen_seneste') | int(-1) %}
+        {% if v < 0 %}Ukendt
+        {% elif v < 10 %}Lav
+        {% elif v < 50 %}Moderat
+        {% else %}Høj
+        {% endif %}
+
+    - name: "Elm pollen niveau"
+      unique_id: elm_pollen_niveau_v5
+      state: >-
+        {% set v = states('sensor.elm_pollen_seneste') | int(-1) %}
+        {% if v < 0 %}Ukendt
+        {% elif v < 10 %}Lav
+        {% elif v < 50 %}Moderat
+        {% else %}Høj
         {% endif %}
 
     - name: "Græs pollen niveau"
-      unique_id: graes_pollen_niveau
+      unique_id: graes_pollen_niveau_v5
       state: >-
-        {% set level = states('sensor.graes_pollen_seneste') | int(-1) %}
-        {% if level == -1 %}
-          Uden for sæson
-        {% elif level <= 10 %}
-          Lav
-        {% elif level <= 50 %}
-          Middel
-        {% else %}
-          Høj
+        {% set v = states('sensor.graes_pollen_seneste') | int(-1) %}
+        {% if v < 0 %}Ukendt
+        {% elif v < 10 %}Lav
+        {% elif v < 50 %}Moderat
+        {% else %}Høj
         {% endif %}
 
     - name: "Hassel pollen niveau"
-      unique_id: hassel_pollen_niveau
+      unique_id: hassel_pollen_niveau_v5
       state: >-
-        {% set level = states('sensor.hassel_pollen_seneste') | int(-1) %}
-        {% if level == -1 %}
-          Uden for sæson
-        {% elif level <= 10 %}
-          Lav
-        {% elif level <= 50 %}
-          Middel
-        {% else %}
-          Høj
+        {% set v = states('sensor.hassel_pollen_seneste') | int(-1) %}
+        {% if v < 0 %}Ukendt
+        {% elif v < 5 %}Lav
+        {% elif v < 15 %}Moderat
+        {% else %}Høj
         {% endif %}
-
-    - name: "Vis Birk Chip"
-      unique_id: vis_birke_pollen_chip
-      state: >-
-        {% set s = states('sensor.birke_pollen_niveau') %}
-        {{ s in ['Lav', 'Middel', 'Høj'] }}
-
-    - name: "Vis Bynke Chip"
-      unique_id: vis_bynke_pollen_chip
-      state: >-
-        {% set s = states('sensor.bynke_pollen_niveau') %}
-        {{ s in ['Lav', 'Middel', 'Høj'] }}
-
-    - name: "Vis El Chip"
-      unique_id: vis_el_pollen_chip
-      state: >-
-        {% set s = states('sensor.el_pollen_niveau') %}
-        {{ s in ['Lav', 'Middel', 'Høj'] }}
-
-    - name: "Vis Elm Chip"
-      unique_id: vis_elm_pollen_chip
-      state: >-
-        {% set s = states('sensor.elm_pollen_niveau') %}
-        {{ s in ['Lav', 'Middel', 'Høj'] }}
-
-    - name: "Vis Alternaria Chip"
-      unique_id: vis_alternaria_pollen_chip
-      state: >-
-        {% set s = states('sensor.alternaria_pollen_niveau') %}
-        {{ s in ['Lav', 'Middel', 'Høj'] }}
-
-    - name: "Vis Cladosporium Chip"
-      unique_id: vis_cladosporium_pollen_chip
-      state: >-
-        {% set s = states('sensor.cladosporium_pollen_niveau') %}
-        {{ s in ['Lav', 'Middel', 'Høj'] }}
-
-    - name: "Vis Græs Chip"
-      unique_id: vis_graes_pollen_chip
-      state: >-
-        {% set s = states('sensor.graes_pollen_niveau') %}
-        {{ s in ['Lav', 'Middel', 'Høj'] }}
-
-    - name: "Vis Hassel Chip"
-      unique_id: vis_hassel_pollen_chip
-      state: >-
-        {% set s = states('sensor.hassel_pollen_niveau') %}
-        {{ s in ['Lav', 'Middel', 'Høj'] }}

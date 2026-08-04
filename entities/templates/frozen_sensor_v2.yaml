@@ -1,29 +1,28 @@
 - trigger:
     - platform: time_pattern
-      minutes: "/5"
+      minutes: 0
   sensor:
     - name: "Frosne klima sensorer"
       unique_id: frozen_climate_sensors
       icon: mdi:snowflake-alert
       state: >
         {% set sensors = [
-          'sensor.weather_stuen_temperature',
+          'sensor.sonoff_snzb_02d_weather_sensor_stuen_temperature',
           'sensor.weather_sovevaerelse_temperature',
           'sensor.weather_matias_vaerelse_temperature',
-          'sensor.sonoff_weather_vaerksted_temperature',
+          'sensor.sonoff_snzb_02d_weather_sensor_vaerksted_temperature',
           'sensor.weather_entre_temperature',
-          'sensor.temperatur_hall_temperature',
+          'sensor.weather_hall_temperature',
           'sensor.weather_badevaerelse_temperature',
           'sensor.weather_jonatans_vaerelse_temperature',
           'sensor.weather_kontor_temperature',
-          'sensor.weather_hoveddor_temperature',
+          'sensor.sonoff_weather_hoveddor_humidity',
           'sensor.weather_carport_temperature',
           'sensor.weather_loft_temperature',
-
-          'sensor.weather_stuen_humidity',
+          'sensor.sonoff_snzb_02d_weather_sensor_stuen_humidity',
           'sensor.weather_sovevaerelse_humidity',
           'sensor.weather_matias_vaerelse_humidity',
-          'sensor.weather_vaerksted_humidity',
+          'sensor.sonoff_snzb_02d_weather_sensor_vaerksted_humidity',
           'sensor.weather_entre_humidity',
           'sensor.weather_badevaerelse_humidity',
           'sensor.weather_jonatans_vaerelse_humidity',

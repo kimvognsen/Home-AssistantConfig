@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from decimal import Decimal
 import logging
 
@@ -25,12 +23,13 @@ from custom_components.powercalc.const import (
     SIGNAL_POWER_SENSOR_STATE_CHANGE,
 )
 from custom_components.powercalc.sensors.energy import create_energy_sensor
+from custom_components.powercalc.sensors.energy_related import create_energy_related_sensors
 from custom_components.powercalc.sensors.power import PowerSensor
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def create_general_standby_sensors(
+def create_general_standby_sensors(
     hass: HomeAssistant,
     config: ConfigType,
 ) -> list[Entity]:
@@ -44,18 +43,19 @@ async def create_general_standby_sensors(
         power_sensor.entity_id = "sensor.all_standby_power"
         sensor_config = config.copy()
         sensor_config[CONF_NAME] = "All standby"
-        source_entity = await create_source_entity(DUMMY_ENTITY_ID, hass)
-        energy_sensor = await create_energy_sensor(
+        source_entity = create_source_entity(DUMMY_ENTITY_ID, hass)
+        energy_sensor = create_energy_sensor(
             hass,
             sensor_config,
             power_sensor,
             source_entity,
         )
         sensors.append(energy_sensor)
+        sensors.extend(create_energy_related_sensors(hass, sensor_config, energy_sensor, source_entity))
     return sensors
 
 
-class StandbyPowerSensor(SensorEntity, PowerSensor):
+class StandbyPowerSensor(PowerSensor, SensorEntity):
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = UnitOfPower.WATT
@@ -70,18 +70,20 @@ class StandbyPowerSensor(SensorEntity, PowerSensor):
     async def async_added_to_hass(self) -> None:
         """Register state listeners."""
         await super().async_added_to_hass()
-        async_dispatcher_connect(
-            self.hass,
-            SIGNAL_POWER_SENSOR_STATE_CHANGE,
-            self._recalculate,
+        self.async_on_remove(
+            async_dispatcher_connect(
+                self.hass,
+                SIGNAL_POWER_SENSOR_STATE_CHANGE,
+                self._recalculate,
+            ),
         )
 
     async def _recalculate(self) -> None:
         """Calculate sum of all power sensors in standby, and update the state of the sensor."""
         if self.standby_sensors:
             self._attr_native_value = Decimal(
-                round(  # type: ignore
-                    sum(self.standby_sensors.values()),
+                round(
+                    sum(self.standby_sensors.values(), Decimal(0)),
                     self._rounding_digits,
                 ),
             )

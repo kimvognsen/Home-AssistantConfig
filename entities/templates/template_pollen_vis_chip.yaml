@@ -1,0 +1,42 @@
+---
+
+- sensor:
+    - name: "Vis Alternaria Chip"
+      unique_id: vis_alternaria_chip_v5
+      state: >-
+        {{ states('sensor.alternaria_pollen_niveau') in ['Moderat', 'Høj'] }}
+
+    - name: "Vis Birk Chip"
+      unique_id: vis_birk_chip_v5
+      state: >-
+        {{ states('sensor.birk_pollen_niveau') in ['Moderat', 'Høj'] }}
+
+    - name: "Vis Bynke Chip"
+      unique_id: vis_bynke_chip_v5
+      state: >-
+        {{ states('sensor.bynke_pollen_niveau') in ['Moderat', 'Høj'] }}
+
+    - name: "Vis Cladosporium Chip"
+      unique_id: vis_cladosporium_chip_v5
+      state: >-
+        {{ states('sensor.cladosporium_pollen_niveau') in ['Moderat', 'Høj'] }}
+
+    - name: "Vis El Chip"
+      unique_id: vis_el_chip_v5
+      state: >-
+        {{ states('sensor.el_pollen_niveau') in ['Moderat', 'Høj'] }}
+
+    - name: "Vis Elm Chip"
+      unique_id: vis_elm_chip_v5
+      state: >-
+        {{ states('sensor.elm_pollen_niveau') in ['Moderat', 'Høj'] }}
+
+    - name: "Vis Græs Chip"
+      unique_id: vis_graes_chip_v5
+      state: >-
+        {{ states('sensor.graes_pollen_niveau') in ['Moderat', 'Høj'] }}
+
+    - name: "Vis Hassel Chip"
+      unique_id: vis_hassel_chip_v5
+      state: >-
+        {{ states('sensor.hassel_pollen_niveau') in ['Moderat', 'Høj'] }}

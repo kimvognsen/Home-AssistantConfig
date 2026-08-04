@@ -3,21 +3,26 @@
       unique_id: billigste_benzin_95_tekst
       state: >
         {% set sensors = {
-          'Ingo': (states('sensor.fuel_ingo_95') | float(0)) or 999,
-          'F24': (states('sensor.fuel_f24_95') | float(0)) or 999,
-          'Circle K': (states('sensor.fuel_circlek_95') | float(0)) or 999,
-          'Uno-X': (states('sensor.fuel_unox_95') | float(0)) or 999,
-          'Q8': (states('sensor.fuel_q8_95') | float(0)) or 999,
-          'OK': (states('sensor.fuel_ok_95') | float(0)) or 999,
-          'Shell': (states('sensor.fuel_shell_95') | float(0)) or 999
+          'Ingo': (states('sensor.ingo_albertslund_holsbjergvej_benzin_95') | float(0)) or 999,
+          'Shell Express': (states('sensor.shell_express_albertslund_shell_fuelsave_95_oktan') | float(0)) or 999,
+          'Circle K': (states('sensor.circle_k_albertslund_miles_95') | float(0)) or 999,
+          'Uno-X': (states('sensor.albertslund_blyfri_95_e10') | float(0)) or 999
         } %}
         {% set min_p = sensors.values() | min %}
         {% if min_p == 999 %}
           Ingen priser tilgængelige
         {% else %}
+          {% set ns = namespace(chains=[]) %}
           {% for chain, price in sensors.items() %}
             {% if price == min_p %}
-              {{ "%.2f"|format(price) }} kr/l hos {{ chain }}
+              {% set ns.chains = ns.chains + [chain] %}
             {% endif %}
           {% endfor %}
+          {% if ns.chains | length == 1 %}
+            {{ "%.2f"|format(min_p) }} kr/l hos {{ ns.chains[0] }}
+          {% elif ns.chains | length == 2 %}
+            {{ "%.2f"|format(min_p) }} kr/l hos {{ ns.chains[0] }} og {{ ns.chains[1] }}
+          {% else %}
+            {{ "%.2f"|format(min_p) }} kr/l hos {{ ns.chains[:-1] | join(', ') }} og {{ ns.chains[-1] }}
+          {% endif %}
         {% endif %}

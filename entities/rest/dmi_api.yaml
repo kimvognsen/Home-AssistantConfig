@@ -1,5 +1,5 @@
 - resource: https://www.dmi.dk/dmidk_byvejrWS/rest/json/nuv_clear_cloud
-  scan_interval: 900
+  scan_interval: 3600
   timeout: 15
 
   sensor:

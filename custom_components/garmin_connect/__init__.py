@@ -6,11 +6,12 @@ import asyncio
 import logging
 
 from ha_garmin import GarminAuth, GarminClient
+from homeassistant.config_entries import ConfigEntryNotReady
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
-from .const import CONF_CLIENT_ID, CONF_REFRESH_TOKEN, CONF_TOKEN, DOMAIN
+from .const import CONF_CLIENT_ID, CONF_IS_CN, CONF_REFRESH_TOKEN, CONF_TOKEN, DOMAIN
 from .coordinator import (
     ActivityCoordinator,
     BloodPressureCoordinator,
@@ -21,6 +22,7 @@ from .coordinator import (
     GearCoordinator,
     GoalsCoordinator,
     MenstrualCoordinator,
+    NutritionCoordinator,
     TrainingCoordinator,
 )
 from .services import async_setup_services, async_unload_services
@@ -154,7 +156,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: GarminConnectConfigEntry
         _LOGGER.debug("Skipping setup for %s — reauth pending", entry.title)
         return False
 
-    is_cn = hass.config.country == "CN"
+    is_cn = entry.options.get(CONF_IS_CN, False)
     auth = GarminAuth(is_cn=is_cn)
     auth.di_token = entry.data[CONF_TOKEN]
     auth.di_refresh_token = entry.data[CONF_REFRESH_TOKEN]
@@ -171,17 +173,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: GarminConnectConfigEntry
         gear=GearCoordinator(hass, entry, client, auth),
         blood_pressure=BloodPressureCoordinator(hass, entry, client, auth),
         menstrual=MenstrualCoordinator(hass, entry, client, auth),
+        nutrition=NutritionCoordinator(hass, entry, client, auth),
     )
 
+    try:
+        await coordinators.core.async_config_entry_first_refresh()
+    except asyncio.CancelledError as err:
+        raise ConfigEntryNotReady("Garmin API timed out during setup; will retry") from err
+
     await asyncio.gather(
-        coordinators.core.async_config_entry_first_refresh(),
-        coordinators.activity.async_config_entry_first_refresh(),
-        coordinators.training.async_config_entry_first_refresh(),
-        coordinators.body.async_config_entry_first_refresh(),
-        coordinators.goals.async_config_entry_first_refresh(),
-        coordinators.gear.async_config_entry_first_refresh(),
-        coordinators.blood_pressure.async_config_entry_first_refresh(),
-        coordinators.menstrual.async_config_entry_first_refresh(),
+        coordinators.activity.async_refresh(),
+        coordinators.training.async_refresh(),
+        coordinators.body.async_refresh(),
+        coordinators.goals.async_refresh(),
+        coordinators.gear.async_refresh(),
+        coordinators.blood_pressure.async_refresh(),
+        coordinators.menstrual.async_refresh(),
+        coordinators.nutrition.async_refresh(),
+        return_exceptions=True,
     )
 
     entry.runtime_data = coordinators

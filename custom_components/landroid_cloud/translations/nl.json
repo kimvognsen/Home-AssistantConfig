@@ -49,9 +49,19 @@
       "init": {
         "title": "Landroid Cloud-opties",
         "data": {
-          "command_timeout": "Time-out voor opdracht (seconden)"
+          "email": "E-mail",
+          "password": "Wachtwoord"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "Kan geen verbinding maken",
+      "invalid_auth": "Fout in authenticatie",
+      "too_many_requests": "Te veel verzoeken aan de API - Probeer het opnieuw binnen 24 uur",
+      "api_error": "De cloud-API heeft de aanvraag afgewezen",
+      "timeout": "Verbindingstime-out",
+      "unknown": "Onverwachtse fout",
+      "already_exists": "Deze gebruiker is al geconfigureerd"
     }
   },
   "entity": {
@@ -166,6 +176,9 @@
       }
     },
     "binary_sensor": {
+      "mqtt_connected": {
+        "name": "MQTT"
+      },
       "rain_sensor": {
         "name": "Regensensor"
       },
@@ -322,6 +335,20 @@
     }
   },
   "services": {
+    "ots": {
+      "name": "Eenmalig schema starten",
+      "description": "Start een eenmalige maaibeurt als de maaier dit ondersteunt.",
+      "fields": {
+        "boundary": {
+          "name": "Rand",
+          "description": "Of er een randmaaibeurt moet worden meegenomen."
+        },
+        "runtime": {
+          "name": "Looptijd",
+          "description": "Looptijd in minuten."
+        }
+      }
+    },
     "set_nutrition": {
       "name": "Set nutrition",
       "description": "Set auto-schedule nutrition values.",

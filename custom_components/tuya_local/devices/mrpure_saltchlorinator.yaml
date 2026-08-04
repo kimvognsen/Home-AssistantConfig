@@ -6,6 +6,9 @@ products:
   - id: 5ls2jw49hpczwqng
     manufacturer: Fairland
     model: Mr.Pure
+  - id: 5x5lnhkwee1l1fuu
+    manufacturer: Aquark
+    model: InverClear
 entities:
   - entity: sensor
     name: Salinity
@@ -244,8 +247,7 @@ entities:
           min: 0
           max: 100
   - entity: switch
-    name: Timer
-    icon: "mdi:timer"
+    translation_key: timer
     category: config
     dps:
       - id: 121
@@ -491,3 +493,12 @@ entities:
       - id: 121
         type: boolean
         name: available
+  - entity: sensor
+    name: Chip lifespan
+    class: duration
+    dps:
+      - id: 145
+        type: integer
+        optional: true
+        name: sensor
+        unit: h

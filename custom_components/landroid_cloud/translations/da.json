@@ -49,9 +49,19 @@
       "init": {
         "title": "Landroid Cloud-indstillinger",
         "data": {
-          "command_timeout": "Kommandotimeout (sekunder)"
+          "email": "E-mail",
+          "password": "Kodeord"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "Kunne ikke forbinde",
+      "invalid_auth": "Fejl i brugernavn og/eller password",
+      "too_many_requests": "For mange forespørgsler mod API - Prøv igen om 24 timer",
+      "api_error": "Cloud-API afviste forespørgslen",
+      "timeout": "Forbindelsen fik timeout",
+      "unknown": "Ukendt fejl",
+      "already_exists": "Denne konto er allerede konfigureret"
     }
   },
   "services": {
@@ -66,6 +76,20 @@
         "runtime": {
           "name": "Køretid",
           "description": "Køretid i minutter."
+        }
+      }
+    },
+    "set_border_cut_settings": {
+      "name": "Indstil kantklip",
+      "description": "Indstil Vision-kantklip uden at starte en klipning.",
+      "fields": {
+        "cut_over_border": {
+          "name": "Kør over kant",
+          "description": "Om kantklip må krydse plænens kant."
+        },
+        "border_distance_cm": {
+          "name": "Kantafstand",
+          "description": "Kantafstand i centimeter."
         }
       }
     },
@@ -390,6 +414,9 @@
       }
     },
     "binary_sensor": {
+      "mqtt_connected": {
+        "name": "MQTT"
+      },
       "rain_sensor": {
         "name": "Regnsensor"
       },

@@ -12,7 +12,7 @@ from datetime import timedelta
 from typing import Any
 
 from ha_garmin import GarminAuth, GarminClient
-from ha_garmin.exceptions import GarminAPIError, GarminAuthError
+from ha_garmin.exceptions import GarminAuthError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
@@ -42,6 +42,7 @@ class GarminConnectCoordinators:
     gear: GearCoordinator
     blood_pressure: BloodPressureCoordinator
     menstrual: MenstrualCoordinator
+    nutrition: NutritionCoordinator
 
 
 class BaseGarminCoordinator(DataUpdateCoordinator[dict[str, Any]]):
@@ -136,7 +137,7 @@ class ActivityCoordinator(BaseGarminCoordinator):
             await self._update_tokens_if_changed()
         except GarminAuthError as err:
             raise ConfigEntryAuthFailed("Authentication failed") from err
-        except GarminAPIError as err:
+        except Exception as err:
             raise UpdateFailed(f"Error fetching activity data: {err}") from err
         return data
 
@@ -162,7 +163,7 @@ class TrainingCoordinator(BaseGarminCoordinator):
             await self._update_tokens_if_changed()
         except GarminAuthError as err:
             raise ConfigEntryAuthFailed("Authentication failed") from err
-        except GarminAPIError as err:
+        except Exception as err:
             raise UpdateFailed(f"Error fetching training data: {err}") from err
         return data
 
@@ -188,7 +189,7 @@ class BodyCoordinator(BaseGarminCoordinator):
             await self._update_tokens_if_changed()
         except GarminAuthError as err:
             raise ConfigEntryAuthFailed("Authentication failed") from err
-        except GarminAPIError as err:
+        except Exception as err:
             raise UpdateFailed(f"Error fetching body data: {err}") from err
         return data
 
@@ -214,7 +215,7 @@ class GoalsCoordinator(BaseGarminCoordinator):
             await self._update_tokens_if_changed()
         except GarminAuthError as err:
             raise ConfigEntryAuthFailed("Authentication failed") from err
-        except GarminAPIError as err:
+        except Exception as err:
             raise UpdateFailed(f"Error fetching goals data: {err}") from err
         return data
 
@@ -240,7 +241,7 @@ class GearCoordinator(BaseGarminCoordinator):
             await self._update_tokens_if_changed()
         except GarminAuthError as err:
             raise ConfigEntryAuthFailed("Authentication failed") from err
-        except GarminAPIError as err:
+        except Exception as err:
             raise UpdateFailed(f"Error fetching gear data: {err}") from err
         return data
 
@@ -273,7 +274,7 @@ class BloodPressureCoordinator(BaseGarminCoordinator):
             await self._update_tokens_if_changed()
         except GarminAuthError as err:
             raise ConfigEntryAuthFailed("Authentication failed") from err
-        except GarminAPIError as err:
+        except Exception as err:
             raise UpdateFailed(f"Error fetching blood pressure data: {err}") from err
         return data
 
@@ -299,8 +300,34 @@ class MenstrualCoordinator(BaseGarminCoordinator):
             await self._update_tokens_if_changed()
         except GarminAuthError as err:
             raise ConfigEntryAuthFailed("Authentication failed") from err
-        except GarminAPIError as err:
+        except Exception as err:
             raise UpdateFailed(f"Error fetching menstrual data: {err}") from err
+        return data
+
+
+class NutritionCoordinator(BaseGarminCoordinator):
+    """Coordinator for nutrition log data (~11 sensors, disabled by default, Connect+)."""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        client: GarminClient,
+        auth: GarminAuth,
+    ) -> None:
+        """Initialize."""
+        scan_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+        super().__init__(hass, entry, client, auth, "nutrition", timedelta(seconds=scan_interval))
+
+    async def _async_update_data(self) -> dict[str, Any]:
+        """Fetch nutrition data from Garmin Connect."""
+        try:
+            data = await self.client.fetch_nutrition_data()
+            await self._update_tokens_if_changed()
+        except GarminAuthError as err:
+            raise ConfigEntryAuthFailed("Authentication failed") from err
+        except Exception as err:
+            raise UpdateFailed(f"Error fetching nutrition data: {err}") from err
         return data
 
 

@@ -49,9 +49,19 @@
       "init": {
         "title": "Landroid Cloud-alternativ",
         "data": {
-          "command_timeout": "Timeout för kommando (sekunder)"
+          "email": "E-post",
+          "password": "Lösenord"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "Misslyckades med att ansluta",
+      "invalid_auth": "Fel vid autentisering",
+      "too_many_requests": "För många API-förfrågningar. Försök igen om 24 timmar",
+      "api_error": "Moln-API:t avvisade begäran",
+      "timeout": "Tidsgräns för anslutning överskreds",
+      "unknown": "Oväntat fel",
+      "already_exists": "Det här användarkontot har redan konfigurerats"
     }
   },
   "entity": {
@@ -166,6 +176,9 @@
       }
     },
     "binary_sensor": {
+      "mqtt_connected": {
+        "name": "MQTT"
+      },
       "rain_sensor": {
         "name": "Regnsensor"
       },
@@ -322,6 +335,20 @@
     }
   },
   "services": {
+    "ots": {
+      "name": "Starta engångsschema",
+      "description": "Startar en engångsklippning om klipparen stöder det.",
+      "fields": {
+        "boundary": {
+          "name": "Kant",
+          "description": "Om kantklippning ska inkluderas."
+        },
+        "runtime": {
+          "name": "Körtid",
+          "description": "Körtid i minuter."
+        }
+      }
+    },
     "set_nutrition": {
       "name": "Set nutrition",
       "description": "Set auto-schedule nutrition values.",

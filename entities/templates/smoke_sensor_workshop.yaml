@@ -5,7 +5,7 @@
 - binary_sensor:
     - name: Røgalarm Værksted
       unique_id: smoke_sensor_workshop
-      state: "{{ states('binary_sensor.lumi_lumi_sensor_smoke_acn03') }}"
+      state: "{{ states('binary_sensor.smoke_detector_vaerksted_smoke') }}"
       device_class: smoke
       attributes:
         entity_picture: /local/images/lovelace/smoke_alarm_fibaro.png

@@ -95,21 +95,6 @@
     action: switch.turn_off
     data: {}
   mode: single
-- id: '1662547055870'
-  alias: Low battery level detection & notification for all battery sensors
-  description: ''
-  use_blueprint:
-    path: sbyx/low-battery-level-detection-notification-for-all-battery-sensors.yaml
-    input:
-      threshold: 10
-      exclude:
-        entity_id:
-        - sensor.gittes_iphone_battery_level
-        - sensor.kims_iphone_battery_level
-      actions:
-      - data:
-          message: The battery of the sensor(s) {{sensors}} is low.
-        action: notify.ios_kims_iphone
 - id: '1665324363600'
   alias: Lav en Watchman rapport
   description: ''
@@ -125,23 +110,30 @@
   - trigger: state
     entity_id: binary_sensor.hue_outdoor_sensor_indkoersel_bevaegelse
     to: 'on'
-  conditions: []
+  conditions:
+  - condition: or
+    conditions:
+    - condition: sun
+      after: sunset
+      after_offset: -00:30:00
+    - condition: sun
+      before: sunrise
+      before_offset: 00:30:00
   actions:
-  - choose:
-    - conditions:
-      - condition: state
-        entity_id: light.lidl_smart_plug_hus_nr_20
-        state: 'off'
-      sequence:
-      - target:
-          entity_id: light.lidl_smart_plug_hus_nr_20
-        action: light.turn_on
-      - delay: 00:02:00
-      - target:
-          entity_id: light.lidl_smart_plug_hus_nr_20
-        action: light.turn_off
-  mode: single
-  max_exceeded: silent
+  - action: light.turn_on
+    target:
+      entity_id: light.carport_lidl_smart_plug_hus_nr_20
+    data: {}
+  - wait_for_trigger:
+    - trigger: state
+      entity_id: binary_sensor.hue_outdoor_sensor_indkoersel_bevaegelse
+      to: 'off'
+      for:
+        minutes: 2
+  - action: light.turn_off
+    target:
+      entity_id: light.carport_lidl_smart_plug_hus_nr_20
+  mode: restart
 - id: '1693767642039'
   alias: Light Sluk LED strip i brygger
   description: ''
@@ -197,7 +189,7 @@
   actions:
   - data:
       message: Badeværelse vindue åben!
-    action: notify.ios_kims_iphone
+    action: notify.kims_mobiltelefon
   mode: single
 - id: '1708269464965'
   alias: Notification - Energy sensor svar ikke
@@ -216,21 +208,7 @@
   - metadata: {}
     data:
       message: Freint energi sensor svare ikke
-    action: notify.mobile_app_kims_iphone
-  mode: single
-- id: '1729323586250'
-  alias: Notifikation - print error
-  description: ''
-  triggers:
-  - device_id: 292e934d775b86be8ccbd940953d4b0c
-    domain: bambu_lab
-    type: event_printer_error
-    trigger: device
-  conditions: []
-  actions:
-  - action: notify.ios_kims_iphone
-    data:
-      message: Print error P1S
+    action: notify.kims_mobiltelefon
   mode: single
 - id: '1731934062538'
   alias: 'Termostat kontor: Skru ned ved høj temperatur'
@@ -287,7 +265,7 @@
     state: 'off'
   actions:
   - target:
-      entity_id: light.ikea_inspelning_smart_plug_terrrasse_lyskaede
+      entity_id: light.terrasse_ikea_inspelning_smart_plug_terrrasse_lyskaede
     action: light.turn_on
     data: {}
   - wait_for_trigger:
@@ -296,7 +274,7 @@
       for: 00:05:00
       trigger: state
   - target:
-      entity_id: light.ikea_inspelning_smart_plug_terrrasse_lyskaede
+      entity_id: light.terrasse_ikea_inspelning_smart_plug_terrrasse_lyskaede
     action: light.turn_off
   mode: restart
 - id: '1733677471139'
@@ -381,7 +359,7 @@
   triggers:
   - entity_id:
     - sensor.weather_kontor_temperature
-    below: 20.5
+    below: 20
     trigger: numeric_state
   conditions: []
   actions:
@@ -398,7 +376,7 @@
   description: ''
   triggers:
   - entity_id:
-    - binary_sensor.vinduesensor_sovevaerelse_contact
+    - binary_sensor.vindue_sensor_sovevaerelse_contact
     to: 'on'
     for:
       hours: 0
@@ -412,7 +390,7 @@
   actions:
   - data:
       message: soveværelse vindue åben!
-    action: notify.ios_kims_iphone
+    action: notify.kims_mobiltelefon
   mode: single
 - id: '1735130963725'
   alias: Notifikatione nogen i Hall
@@ -433,14 +411,14 @@
   actions:
   - data:
       message: Nogen i Hall!
-    action: notify.ios_kims_iphone
+    action: notify.kims_mobiltelefon
   mode: single
 - id: '1735131092178'
   alias: Notifikation Motion i Stuen
   description: ''
   triggers:
   - entity_id:
-    - binary_sensor.dorsensor_stuen
+    - binary_sensor.dor_sensor_stuen_contact
     to: 'on'
     for:
       hours: 0
@@ -454,44 +432,12 @@
   actions:
   - data:
       message: Nogen i Stuen!
-    action: notify.ios_kims_iphone
-  mode: single
-- id: '1735481014976'
-  alias: Notifikation - Rotter på loftet NØ
-  description: ''
-  triggers:
-  - type: occupied
-    device_id: 21c0cd4917ae42c2516451db0d9c5fa4
-    entity_id: bd9b720dedca6bb88453eb8a892c5a38
-    domain: binary_sensor
-    trigger: device
-  conditions: []
-  actions:
-  - action: notify.ios_kims_iphone
-    metadata: {}
-    data:
-      message: Rotte på loftet
-  mode: single
-- id: '1735481499498'
-  alias: Rotte Increment Motion Counter NV
-  description: Increments the motion counter each time motion is detected
-  triggers:
-  - type: occupied
-    device_id: 9ed4c0570dcc0eef4211190b37d8323e
-    entity_id: 2f9c9553717c40b59e51e8a461a236ec
-    domain: binary_sensor
-    trigger: device
-  actions:
-  - action: counter.increment
-    metadata: {}
-    data: {}
-    target:
-      entity_id: counter.rotter_pa_loftet_taeller
+    action: notify.kims_mobiltelefon
   mode: single
 - id: '1736094486977'
   alias: Dørklokke
-  description: Ringer på dør og den spille på google nimi nest højtaleren og sender
-    et billede
+  description: Ringer på døren, spiller lyd på Google Nest Mini i bryggers og sender
+    billede til mobiltelefonerne.
   triggers:
   - domain: mqtt
     device_id: 1a40b65ef078881ec684c1a8eeb938e2
@@ -500,120 +446,16 @@
     trigger: device
   conditions: []
   actions:
-  - data:
+  - action: media_player.play_media
+    target:
+      entity_id: media_player.nest_mini_bryggers
+    data:
       media:
         media_content_id: http://10.0.10.61:8123/local/media/doorbell-1.mp3
         media_content_type: audio/mp3
         metadata: {}
-    target:
-      entity_id: media_player.nest_mini_bryggers
-    action: media_player.play_media
-  - data: {}
-    action: script.sendt_picture
-  - data:
-      message: Det ringer på døren
-      title: Ringklokke
-    action: notify.ios_parents
-  mode: single
-- id: '1736174880498'
-  alias: Notifikation - Rotter på loftet SØ
-  description: ''
-  triggers:
-  - type: occupied
-    device_id: 7f4dac74d228d4193fda70d4c7e89f72
-    entity_id: 30640ea2e15a5be304851e0ff6fbb78a
-    domain: binary_sensor
-    trigger: device
-  conditions: []
-  actions:
-  - action: notify.ios_kims_iphone
-    metadata: {}
-    data:
-      message: Rotte på loftet SØ
-  mode: single
-- id: '1736174952584'
-  alias: Notifikation  - Rotter på loftet SV
-  description: ''
-  triggers:
-  - type: occupied
-    device_id: ca95c909928bead832b89a09537d0687
-    entity_id: 3d959aeb709dcc923d09c4d9b33cde93
-    domain: binary_sensor
-    trigger: device
-  conditions: []
-  actions:
-  - action: notify.ios_kims_iphone
-    metadata: {}
-    data:
-      message: Rotte på loftet SV
-  mode: single
-- id: '1736177157893'
-  alias: Rotte Increment Motion Counter NØ
-  description: Increments the motion counter each time motion is detected
-  triggers:
-  - type: occupied
-    device_id: 21c0cd4917ae42c2516451db0d9c5fa4
-    entity_id: bd9b720dedca6bb88453eb8a892c5a38
-    domain: binary_sensor
-    trigger: device
-  conditions: []
-  actions:
-  - action: counter.increment
-    metadata: {}
-    data: {}
-    target:
-      entity_id: counter.rotter_pa_loftet_taeller
-  mode: single
-- id: '1736616222747'
-  alias: Rotte Increment Motion Counter SV
-  description: Increments the motion counter each time motion is detected
-  triggers:
-  - type: occupied
-    device_id: ca95c909928bead832b89a09537d0687
-    entity_id: 3d959aeb709dcc923d09c4d9b33cde93
-    domain: binary_sensor
-    trigger: device
-  conditions: []
-  actions:
-  - action: counter.increment
-    metadata: {}
-    data: {}
-    target:
-      entity_id: counter.rotter_pa_loftet_taeller
-  mode: single
-- id: '1736616257247'
-  alias: Rotte Increment Motion Counter SØ
-  description: Increments the motion counter each time motion is detected
-  triggers:
-  - type: occupied
-    device_id: 7f4dac74d228d4193fda70d4c7e89f72
-    entity_id: 30640ea2e15a5be304851e0ff6fbb78a
-    domain: binary_sensor
-    trigger: device
-  conditions: []
-  actions:
-  - action: counter.increment
-    metadata: {}
-    data: {}
-    target:
-      entity_id: counter.rotter_pa_loftet_taeller
-  mode: single
-- id: '1736616322273'
-  alias: Notifikation - Rotter på loftet NV
-  description: ''
-  triggers:
-  - type: occupied
-    device_id: 9ed4c0570dcc0eef4211190b37d8323e
-    entity_id: 2f9c9553717c40b59e51e8a461a236ec
-    domain: binary_sensor
-    trigger: device
-  conditions: []
-  actions:
-  - action: notify.ios_kims_iphone
-    metadata: {}
-    data:
-      message: Rotte på loftet NV
-  mode: single
+  - action: script.send_billede_til_mobil_nar_det_ringer_pa_doren
+  mode: restart
 - id: '1738836937234'
   alias: 'Termostat soveværelse: Skru ned ved høj temperatur'
   description: Skruer ned for termostaten, når temperaturen bliver over 22 grader
@@ -640,7 +482,7 @@
   triggers:
   - entity_id:
     - sensor.weather_sovevaerelse_temperature
-    below: 20.8
+    below: 21
     trigger: numeric_state
   conditions: []
   actions:
@@ -772,18 +614,19 @@
     trigger: device
   conditions: []
   actions:
-  - action: notify.mobile_app_kims_iphone
+  - action: notify.send_message
     metadata: {}
+    target:
+      entity_id: notify.kims_mobiltelefon
     data:
-      message: Der er vand ved vaskemaskinen, ring til Svend
-      title: Der er vand ved vaskemaskinen
+      message: Vand i Bryggers, ring til Svend
   mode: single
 - id: '1748094150587'
   alias: Notifikatione nogen i Bryggers
   description: ''
   triggers:
   - entity_id:
-    - binary_sensor.dor_sensor_bryggers_contact
+    - binary_sensor.sonoff_dor_sensor_bryggers_contact
     to: 'on'
     for:
       hours: 0
@@ -797,7 +640,7 @@
   actions:
   - data:
       message: Nogen i bryggers!
-    action: notify.ios_kims_iphone
+    action: notify.kims_mobiltelefon
   mode: single
 - id: '1751112500748'
   alias: Opdater pollen “tidligere” værdier
@@ -807,8 +650,8 @@
     trigger: time
   actions:
   - data:
-      entity_id: input_number.birke_pollen_tidligere
-      value: '{{ states(''sensor.birke_pollen_seneste'') | float(0) }}'
+      entity_id: input_number.birk_pollen_tidligere
+      value: '{{ states(''sensor.birk_pollen_seneste'') | float(0) }}'
     action: input_number.set_value
   - data:
       entity_id: input_number.bynke_pollen_tidligere
@@ -824,11 +667,11 @@
     action: input_number.set_value
   - data:
       entity_id: input_number.alternaria_pollen_tidligere
-      value: '{{ states(''sensor.alternaria_seneste'') | float(0) }}'
+      value: '{{ states(''sensor.alternaria_pollen_seneste'') | float(0) }}'
     action: input_number.set_value
   - data:
       entity_id: input_number.cladosporium_pollen_tidligere
-      value: '{{ states(''sensor.cladosporium_seneste'') | float(0) }}'
+      value: '{{ states(''sensor.cladosporium_pollen_seneste'') | float(0) }}'
     action: input_number.set_value
   - data:
       entity_id: input_number.graes_pollen_tidligere
@@ -839,24 +682,12 @@
       value: '{{ states(''sensor.hassel_pollen_seneste'') | float(0) }}'
     action: input_number.set_value
   mode: single
-- id: '1751114820174'
-  alias: Opdater tidligere UV-indeks
-  description: Gem trigger.from_state så man kan sammenligne
-  triggers:
-  - entity_id: sensor.openuv_current_uv_index
-    trigger: state
-  actions:
-  - data:
-      entity_id: input_number.uv_index_tidligere
-      value: '{{ trigger.from_state.state | float(0) }}'
-    action: input_number.set_value
-  mode: single
 - id: '1751886897930'
   alias: Notifikation – valgte rum
   description: Sender notifikation når en valgt sensor trigges og home_alone = on
   triggers:
   - entity_id:
-    - binary_sensor.dorsensor_stuen
+    - binary_sensor.dor_sensor_stuen_contact
     - binary_sensor.ikea_vallhorn_hall_occupancy
     - binary_sensor.hue_outdoor_motion_sensor_hovedindgang_bevaegelse
     - binary_sensor.aqara_p1_motion_sensor_bryggers_occupancy
@@ -865,11 +696,11 @@
     - binary_sensor.motion_sensor_entre_occupancy
     - binary_sensor.dor_sensor_vaerksted_contact
     - binary_sensor.dor_sensor_entre_contact
-    - binary_sensor.dor_sensor_bryggers_contact
+    - binary_sensor.sonoff_dor_sensor_bryggers_contact
     - binary_sensor.vindue_sensor_badevaerelse_contact
-    - binary_sensor.vinduesensor_sovevaerelse_contact
+    - binary_sensor.vindue_sensor_sovevaerelse_contact
     - binary_sensor.vindue_sensor_jonatans_vaerelse_contact
-    - binary_sensor.vinduesensor_matias_vaerelse_contact
+    - binary_sensor.vindue_sensor_matias_vaerelse_contact
     to: 'on'
     trigger: state
   conditions:
@@ -877,7 +708,7 @@
     entity_id: input_boolean.home_alone
     state: 'on'
   - condition: template
-    value_template: "{% set map = {\n  'binary_sensor.dorsensor_stuen':        'input_boolean.stuen_motion',\n
+    value_template: "{% set map = {\n  'binary_sensor.dor_sensor_stuen_contact':        'input_boolean.stuen_motion',\n
       \ 'binary_sensor.ikea_vallhorn_hall_occupancy':         'input_boolean.hall_motion',\n
       \ 'binary_sensor.hue_outdoor_motion_sensor_hovedindgang_bevaegelse': 'input_boolean.hovedindgang_motion',\n
       \ 'binary_sensor.aqara_p1_motion_sensor_bryggers_occupancy':            'input_boolean.bryggers_motion',\n
@@ -886,18 +717,18 @@
       \ 'binary_sensor.motion_sensor_entre_occupancy':         'input_boolean.entre_motion',\n
       \ 'binary_sensor.motion_sensor_vaerksted_occupancy':            'input_boolean.vaerksted_motion',\n
       \ 'binary_sensor.dor_sensor_vaerksted_contact':        'input_boolean.stuen_dor',\n
-      \ '':   'input_boolean.entre_dor',\n  'binary_sensor.dor_sensor_bryggers_contact':
+      \ '':   'input_boolean.entre_dor',\n  'binary_sensor.sonoff_dor_sensor_bryggers_contact':
       'input_boolean.bryggers_dor',\n  'binary_sensor.dor_sensor_vaerksted_contact':
       \       'input_boolean.vaerksteds_dor',\n  'binary_sensor.vindue_sensor_badevaerelse_contact':
-      \       'input_boolean.badevaerelses_vindue',\n  'binary_sensor.vinduesensor_sovevaerelse_contact':
+      \       'input_boolean.badevaerelses_vindue',\n  'binary_sensor.vindue_sensor_sovevaerelse_contact':
       \       'input_boolean.sovevaerelses_vindue',\n  'binary_sensor.vindue_sensor_jonatans_vaerelse_contact':
-      \       'input_boolean.jonatan_vindue',\n  'binary_sensor.vinduesensor_matias_vaerelse_contact':
+      \       'input_boolean.jonatan_vindue',\n  'binary_sensor.vindue_sensor_matias_vaerelse_contact':
       \       'input_boolean.matias_vindue'\n} %} {{ is_state(map[trigger.entity_id],
       'on') }}\n"
   actions:
   - data:
       title: "\U0001F6A8 Bevægelse / Dør åben"
-      message: "{% set names = {\n  'binary_sensor.dorsensor_stuen':        'Stuen
+      message: "{% set names = {\n  'binary_sensor.dor_sensor_stuen_contact':        'Stuen
         (bevægelse)',\n  'binary_sensor.ikea_vallhorn_hall_occupancy':         'Hall
         (bevægelse)',\n  'binary_sensor.hue_outdoor_motion_sensor_hovedindgang_bevaegelse':
         'Hovedindgang (bevægelse)',\n  'binary_sensor.aqara_p1_motion_sensor_bryggers_occupancy':
@@ -907,21 +738,21 @@
         \        'Entre (bevægelse)',\n  'binary_sensor.motion_sensor_vaerksted_occupancy':
         \           'Værksted (bevægelse)',\n  'binary_sensor.dor_sensor_vaerksted_contact':
         \       'Stuen (dør)',\n  'binary_sensor.dor_sensor_entre_contact':   'Entre
-        (dør)',\n  'binary_sensor.dor_sensor_bryggers_contact': 'Bryggers (dør)',\n
+        (dør)',\n  'binary_sensor.sonoff_dor_sensor_bryggers_contact': 'Bryggers (dør)',\n
         \ 'binary_sensor.dor_sensor_vaerksted_contact':        'Værksted (dør)',\n
         \ 'binary_sensor.vindue_sensor_badevaerelse_contact':        'Badeværelse
-        (vindue)',\n  'binary_sensor.vinduesensor_sovevaerelse_contact':        'Soveværelse
+        (vindue)',\n  'binary_sensor.vindue_sensor_sovevaerelse_contact':        'Soveværelse
         (vindue)',\n  'binary_sensor.vindue_sensor_jonatans_vaerelse_contact':        'Jonatan
-        (vindue)',\n  'binary_sensor.vinduesensor_matias_vaerelse_contact':        'Matias
+        (vindue)',\n  'binary_sensor.vindue_sensor_matias_vaerelse_contact':        'Matias
         (vindue)'\n} %} Nogen i {{ names[trigger.entity_id] }}!\n"
-    action: notify.ios_kims_iphone
+    action: notify.kims_mobiltelefon
   mode: single
 - id: '1752061213091'
   alias: Notifikation – valgte rum - test
   description: Sender notifikation når valgt sensor trigges og home_alone = on
   triggers:
   - entity_id:
-    - binary_sensor.dorsensor_stuen
+    - binary_sensor.dor_sensor_stuen_contact
     - binary_sensor.ikea_vallhorn_hall_occupancy
     - binary_sensor.aqara_p1_motion_sensor_bryggers_occupancy
     to: 'on'
@@ -931,17 +762,19 @@
     entity_id: input_boolean.home_alone
     state: 'on'
   - condition: template
-    value_template: "{%- set helpers = {\n   'binary_sensor.dorsensor_stuen': 'input_boolean.stuen_motion',\n
-      \  'binary_sensor.motion_sensor_hall':  'input_boolean.hall_motion',\n   'binary_sensor.aqara_p1_motion_sensor_bryggers_occupancy':
+    value_template: "{%- set helpers = {\n   'binary_sensor.dor_sensor_stuen_contact':
+      'input_boolean.stuen_motion',\n   'binary_sensor.ikea_vallhorn_hall_occupancy':
+      \ 'input_boolean.hall_motion',\n   'binary_sensor.aqara_p1_motion_sensor_bryggers_occupancy':
       'input_boolean.bryggers_motion',\n} -%} {% set helper = helpers.get(trigger.entity_id)
       %} {{ helper is not none and is_state(helper, 'on') }}\n"
   actions:
   - data:
       title: "\U0001F6A8 Alarm! Sensor aktiveret"
-      message: "{%- set names = {\n   'binary_sensor.dorsensor_stuen': 'Stuen (bevægelse)',\n
-        \  'binary_sensor.motion_sensor_hall':  'Hall (bevægelse)',\n   'binary_sensor.aqara_p1_motion_sensor_bryggers_occupancy':
-        'Bryggers (bevægelse)',\n} -%} Nogen i {{ names[trigger.entity_id] }}!\n"
-    action: notify.ios_kims_iphone
+      message: "{%- set names = {\n   'binary_sensor.dor_sensor_stuen_contact': 'Stuen
+        (bevægelse)',\n   'binary_sensor.ikea_vallhorn_hall_occupancy':  'Hall (bevægelse)',\n
+        \  'binary_sensor.aqara_p1_motion_sensor_bryggers_occupancy': 'Bryggers (bevægelse)',\n}
+        -%} Nogen i {{ names[trigger.entity_id] }}!\n"
+    action: notify.kims_mobiltelefon
   mode: single
 - id: '1755523928868'
   alias: Tænd lys i underskab
@@ -984,7 +817,7 @@
     value_template: '{{ ''OB'' in trigger.to_state.state and ''OL'' in (trigger.from_state.state
       if trigger.from_state else '''') }}'
   actions:
-  - action: notify.ios_kims_iphone
+  - action: notify.kims_mobiltelefon
     data:
       title: 'UPS: På batteri'
       message: 'Strømsvigt detekteret. Status={{ states(''sensor.ups_status'') }},
@@ -1008,7 +841,7 @@
   - condition: template
     value_template: '{{ ''OB'' in states(''sensor.ups_status'') }}'
   actions:
-  - action: notify.ios_kims_iphone
+  - action: notify.kims_mobiltelefon
     data:
       title: 'UPS: Lavt batteri'
       message: 'Batteri {{ states(''sensor.ups_battery_charge'')|int }}%, est. runtime
@@ -1033,7 +866,7 @@
     value_template: "{{ 'OL' in trigger.to_state.state and\n   trigger.from_state
       is not none and 'OB' in trigger.from_state.state }}\n"
   actions:
-  - action: notify.ios_kims_iphone
+  - action: notify.kims_mobiltelefon
     data:
       title: 'UPS: Netstrøm tilbage'
       message: 'Status={{ states(''sensor.ups_status'') }}, Batteri={{ states(''sensor.ups_battery_charge'')|int
@@ -1340,7 +1173,7 @@
     action: media_player.play_media
   - data:
       message: Temperature er lav i badeværelse, tjek om vinduet er lukket
-    action: notify.ios_parents
+    action: notify.gittes_og_kims_mobiltelefon
   mode: single
 - id: f5911802-aec2-48a0-a89d-d6fa9334b4bd
   alias: Afhentning af Mad og Restaffald
@@ -1353,9 +1186,11 @@
     value_template: '{{ state_attr(''sensor.mad_og_restaffald'', ''days_until_collection'')
       | int == 1 }}'
   actions:
-  - data:
+  - action: notify.send_message
+    target:
+      entity_id: notify.gittes_og_kims_mobiltelefon
+    data:
       message: Der bliver afhentet Mad og Rest affald i morgen
-    action: notify.ios_parents
   mode: single
 - id: '1759657155824'
   alias: Terrasse – sluk hvis blæse-lås aktiveres
@@ -1366,11 +1201,11 @@
     trigger: state
   conditions:
   - condition: state
-    entity_id: light.ikea_inspelning_smart_plug_terrrasse_lyskaede
+    entity_id: light.terrasse_ikea_inspelning_smart_plug_terrrasse_lyskaede
     state: 'on'
   actions:
   - target:
-      entity_id: light.ikea_inspelning_smart_plug_terrrasse_lyskaede
+      entity_id: light.terrasse_ikea_inspelning_smart_plug_terrrasse_lyskaede
     action: light.turn_off
   mode: single
 - id: '1760367613982'
@@ -1379,6 +1214,7 @@
   triggers:
   - entity_id:
     - person.kim_vognsen
+    - device_tracker.kims_iphone_17_pro_cloud
     to:
     - home
     for:
@@ -1390,11 +1226,14 @@
     - not_home
   conditions: []
   actions:
-  - data:
-      message: Kim er hjemme
-    action: notify.mobile_app_gittes_iphone
-  - action: notify.mobile_app_kims_iphone17
-    data: {}
+  - action: notify.send_message
+    metadata: {}
+    target:
+      entity_id:
+      - notify.gittes_mobiltelefon
+      - notify.kims_mobiltelefon
+    data:
+      message: Kim er hjemme <3
   mode: single
 - id: '1760426419385'
   alias: Udendørs – sluk når party mode bliver OFF
@@ -1416,7 +1255,7 @@
   variables:
     lights:
     - light.hue_smart_plug_lyskaede
-    - light.ikea_inspelning_smart_plug_terrrasse_lyskaede
+    - light.terrasse_ikea_inspelning_smart_plug_terrrasse_lyskaede
     to_turn_off: "{{ expand(lights)\n   | selectattr('state','eq','on')\n   | map(attribute='entity_id')
       | list }}\n"
 - id: 2d25e8a3ccd59
@@ -1565,9 +1404,11 @@
     value_template: '{{ state_attr(''sensor.metal_affald'', ''days_until_collection'')
       | int == 1 }}'
   actions:
-  - data:
+  - action: notify.send_message
+    target:
+      entity_id: notify.gittes_og_kims_mobiltelefon
+    data:
       message: Der bliver afhentet Metal og Glas affald i morgen
-    action: notify.ios_parents
   mode: single
 - id: '1760435231477'
   alias: Afhentning af Pap
@@ -1580,9 +1421,11 @@
     value_template: '{{ state_attr(''sensor.pap_affald'', ''days_until_collection'')
       | int == 1 }}'
   actions:
-  - data:
+  - action: notify.send_message
+    target:
+      entity_id: notify.gittes_og_kims_mobiltelefon
+    data:
       message: Der bliver afhentet Pap affald i morgen
-    action: notify.ios_parents
   mode: single
 - id: '1760435377940'
   alias: Afhentning af Papir/Plastik og MDK 2
@@ -1595,9 +1438,11 @@
     value_template: '{{ state_attr(''sensor.papir_plast_og_mdk_affald'', ''days_until_collection'')
       | int == 1 }}'
   actions:
-  - data:
-      message: Der bliver afhentet Papir/plastik og MDK affald i morgen 2
-    action: notify.ios_parents
+  - action: notify.send_message
+    target:
+      entity_id: notify.gittes_og_kims_mobiltelefon
+    data:
+      message: Der bliver afhentet Papir/plastik og MDK affald i morgen
   mode: single
 - id: '1760435520814'
   alias: Bestil afhentning af storskrald
@@ -1610,9 +1455,11 @@
     value_template: '{{ state_attr(''sensor.storskrald_affald'', ''days_until_collection'')
       | int == 1 }}'
   actions:
-  - data:
-      message: Bestil afhenting af storskrald
-    action: notify.mobile_app_kims_iphone
+  - action: notify.send_message
+    target:
+      entity_id: notify.kims_mobiltelefon
+    data:
+      message: Bestil afhentetning af storskrald, hvis nødvendigt
   mode: single
 - id: '1760435546795'
   alias: Afhentning af storskrald
@@ -1625,9 +1472,11 @@
     value_template: '{{ state_attr(''sensor.storskrald_affald'', ''days_until_collection'')
       | int == 1 }}'
   actions:
-  - data:
+  - action: notify.send_message
+    target:
+      entity_id: notify.kims_mobiltelefon
+    data:
       message: Der bliver hentet storskrald i morgen
-    action: notify.ios_parents
   mode: single
 - id: '1760435914804'
   alias: Dørklokke, Ringklokke på Matias værelse
@@ -1650,7 +1499,7 @@
     action: media_player.play_media
   mode: restart
 - id: '1760436049739'
-  alias: Stuen, Sluk lRund lampe ved solopgang
+  alias: Stuen, Sluk Rund lampe ved solopgang
   description: Sluk lyset i stuen ved solopgang
   triggers:
   - event: sunrise
@@ -1715,16 +1564,23 @@
   triggers:
   - entity_id:
     - person.gitte_vognsen
-    to: home
+    - device_tracker.gitte_iphone_17_pro_cloud_gitte_iphone_17_pro_cloud_gitte_iphone_17_pro_cloud
+    to:
+    - home
     for:
       hours: 0
       minutes: 0
       seconds: 30
     trigger: state
-    from: not_home
+    from:
+    - not_home
   actions:
-  - action: notify.mobile_app_kims_iphone17
-    data: {}
+  - action: notify.send_message
+    metadata: {}
+    target:
+      entity_id: notify.kims_mobiltelefon
+    data:
+      message: Gitte er hjemme <3
   mode: single
 - id: '1760539435834'
   alias: Hall – dæmp lys kl. 01:00 hvis party mode er OFF
@@ -1750,9 +1606,11 @@
     above: 90
     trigger: numeric_state
   actions:
-  - data:
-      message: ⚠️ Home Assistant RAM >90 %, check Recorder or integration load
-    action: notify.mobile_app_kims_iphone
+  - action: notify.send_message
+    target:
+      entity_id: notify.kims_mobiltelefon
+    data:
+      message: HA Memory warning
 - id: '1763971396570'
   alias: Stuen - Advarsel, luften er beskidt, åbne havedøren (VOC)
   description: ''
@@ -1767,7 +1625,7 @@
     above: 450
   conditions: []
   actions:
-  - action: notify.ios_parents
+  - action: notify.gittes_og_kims_mobiltelefon
     metadata: {}
     data:
       message: Advarsel, luften er forurenet, åbne vinduer!
@@ -1786,150 +1644,11 @@
     above: 15
   conditions: []
   actions:
-  - action: notify.ios_parents
+  - action: notify.gittes_og_kims_mobiltelefon
     metadata: {}
     data:
       message: Advarsel, luften er forurenet, åbne vinduer! (PM2.5)
   mode: single
-- id: '1765125246698'
-  alias: Tænd alt lys i stuen
-  description: Med Ikea dimmer
-  triggers:
-  - domain: mqtt
-    device_id: 498fe383de41ab901ce272ddaaa1eee2
-    type: action
-    subtype: 'on'
-    trigger: device
-  conditions: []
-  actions:
-  - action: light.turn_on
-    metadata: {}
-    target:
-      entity_id: light.alt_lys_i_stuen
-    data: {}
-  mode: single
-- id: '1765125330854'
-  alias: Sluk alt lys i stuen
-  description: Med Ikea Dimmer
-  triggers:
-  - domain: mqtt
-    device_id: 498fe383de41ab901ce272ddaaa1eee2
-    type: action
-    subtype: 'off'
-    trigger: device
-  conditions: []
-  actions:
-  - action: light.turn_off
-    metadata: {}
-    target:
-      entity_id: light.alt_lys_i_stuen
-    data: {}
-  mode: single
-- id: '1765815476616'
-  alias: Sonos Højtaler – IKEA dimmer i køkken (rigtig volume)
-  description: ''
-  triggers:
-  - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
-    trigger: mqtt
-  actions:
-  - choose:
-    - conditions:
-      - condition: template
-        value_template: '{{ action == ''toggle'' }}'
-      sequence:
-      - target:
-          entity_id: '{{ speaker }}'
-        action: media_player.media_play_pause
-    - conditions:
-      - condition: template
-        value_template: '{{ action == ''arrow_right_click'' }}'
-      sequence:
-      - target:
-          entity_id: '{{ speaker }}'
-        action: media_player.media_next_track
-    - conditions:
-      - condition: template
-        value_template: '{{ action == ''arrow_left_click'' }}'
-      sequence:
-      - target:
-          entity_id: '{{ speaker }}'
-        action: media_player.media_previous_track
-    - conditions:
-      - condition: template
-        value_template: '{{ action == ''brightness_up_click'' }}'
-      sequence:
-      - target:
-          entity_id: '{{ speaker }}'
-        action: media_player.volume_up
-    - conditions:
-      - condition: template
-        value_template: '{{ action == ''brightness_down_click'' }}'
-      sequence:
-      - target:
-          entity_id: '{{ speaker }}'
-        action: media_player.volume_down
-    - conditions:
-      - condition: template
-        value_template: '{{ action in [''brightness_up_hold'', ''brightness_up_press'']
-          }}'
-      sequence:
-      - repeat:
-          sequence:
-          - target:
-              entity_id: '{{ speaker }}'
-            action: media_player.volume_up
-          - wait_for_trigger:
-            - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
-              payload: brightness_up_release
-              trigger: mqtt
-            - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
-              payload: brightness_stop
-              trigger: mqtt
-            timeout:
-              milliseconds: '{{ ramp_delay_ms }}'
-            continue_on_timeout: true
-          until:
-          - condition: template
-            value_template: '{{ wait.trigger is not none }}'
-          - condition: template
-            value_template: '{{ repeat.index * (ramp_delay_ms/1000) >= max_ramp_seconds
-              }}
-
-              '
-    - conditions:
-      - condition: template
-        value_template: '{{ action in [''brightness_down_hold'', ''brightness_down_press'']
-          }}'
-      sequence:
-      - repeat:
-          sequence:
-          - target:
-              entity_id: '{{ speaker }}'
-            action: media_player.volume_down
-          - wait_for_trigger:
-            - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
-              payload: brightness_down_release
-              trigger: mqtt
-            - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
-              payload: brightness_stop
-              trigger: mqtt
-            timeout:
-              milliseconds: '{{ ramp_delay_ms }}'
-            continue_on_timeout: true
-          until:
-          - condition: template
-            value_template: '{{ wait.trigger is not none }}'
-          - condition: template
-            value_template: '{{ repeat.index * (ramp_delay_ms/1000) >= max_ramp_seconds
-              }}
-
-              '
-  mode: restart
-  variables:
-    action: '{{ trigger.payload | default('''') }}'
-    speaker: media_player.kokken_hojtaler
-    ramp_delay_ms: 180
-    max_ramp_seconds: 8
 - id: hue_dimmer_stuen_lys
   alias: Hue Dimmer 1 – Stuen lys
   description: ''
@@ -2020,120 +1739,6 @@
           transition: 0.3
         action: light.turn_off
   mode: single
-- id: '1766317925944'
-  alias: Sonos Højtaler – IKEA dimmer i køkken (rigtig volume + power gate)
-  description: ''
-  triggers:
-  - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
-    trigger: mqtt
-  actions:
-  - choose:
-    - conditions:
-      - condition: template
-        value_template: '{{ action == ''toggle'' }}'
-      sequence:
-      - choose:
-        - conditions:
-          - condition: state
-            entity_id: switch.symfonisk_kokken
-            state: 'off'
-          sequence:
-          - target:
-              entity_id: switch.symfonisk_kokken
-            action: switch.turn_on
-        - conditions:
-          - condition: state
-            entity_id: switch.symfonisk_kokken
-            state: 'on'
-          sequence:
-          - target:
-              entity_id: media_player.kokken_hojtaler
-            action: media_player.media_play_pause
-    - conditions:
-      - condition: template
-        value_template: '{{ action == ''arrow_right_click'' }}'
-      sequence:
-      - target:
-          entity_id: media_player.kokken_hojtaler
-        action: media_player.media_next_track
-    - conditions:
-      - condition: template
-        value_template: '{{ action == ''arrow_left_click'' }}'
-      sequence:
-      - target:
-          entity_id: media_player.kokken_hojtaler
-        action: media_player.media_previous_track
-    - conditions:
-      - condition: template
-        value_template: '{{ action == ''brightness_up_click'' }}'
-      sequence:
-      - target:
-          entity_id: media_player.kokken_hojtaler
-        action: media_player.volume_up
-    - conditions:
-      - condition: template
-        value_template: '{{ action == ''brightness_down_click'' }}'
-      sequence:
-      - target:
-          entity_id: media_player.kokken_hojtaler
-        action: media_player.volume_down
-    - conditions:
-      - condition: template
-        value_template: '{{ action in [''brightness_up_hold'', ''brightness_up_press'']
-          }}'
-      sequence:
-      - repeat:
-          sequence:
-          - target:
-              entity_id: media_player.kokken_hojtaler
-            action: media_player.volume_up
-          - wait_for_trigger:
-            - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
-              payload: brightness_up_release
-              trigger: mqtt
-            - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
-              payload: brightness_stop
-              trigger: mqtt
-            timeout:
-              milliseconds: '{{ ramp_delay_ms }}'
-            continue_on_timeout: true
-          until:
-          - condition: template
-            value_template: '{{ wait.trigger is not none }}'
-          - condition: template
-            value_template: '{{ repeat.index * (ramp_delay_ms/1000) >= max_ramp_seconds
-              }}'
-    - conditions:
-      - condition: template
-        value_template: '{{ action in [''brightness_down_hold'', ''brightness_down_press'']
-          }}'
-      sequence:
-      - repeat:
-          sequence:
-          - target:
-              entity_id: media_player.kokken_hojtaler
-            action: media_player.volume_down
-          - wait_for_trigger:
-            - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
-              payload: brightness_down_release
-              trigger: mqtt
-            - topic: zigbee2mqtt/Ikea_dimmer_til højtaler_i_køkken/action
-              payload: brightness_stop
-              trigger: mqtt
-            timeout:
-              milliseconds: '{{ ramp_delay_ms }}'
-            continue_on_timeout: true
-          until:
-          - condition: template
-            value_template: '{{ wait.trigger is not none }}'
-          - condition: template
-            value_template: '{{ repeat.index * (ramp_delay_ms/1000) >= max_ramp_seconds
-              }}'
-  mode: restart
-  variables:
-    action: '{{ trigger.payload | default('''') }}'
-    ramp_delay_ms: 180
-    max_ramp_seconds: 8
 - id: '1766321476299'
   alias: Sluk Sonos højtaler i køkken efter 1 time uden afspilning
   description: ''
@@ -2299,195 +1904,6 @@
     action: '{{ trigger.payload | default('''') }}'
     ramp_delay_ms: 180
     max_ramp_seconds: 8
-- id: '1766491489275'
-  alias: H2D - log print cost
-  description: Logger strøm + filament pris for H2D til CSV
-  triggers:
-  - entity_id: sensor.h2d_0948db552101895_print_status
-    trigger: state
-  actions:
-  - choose:
-    - conditions:
-      - condition: template
-        value_template: "{% set active = ['running','paused','preparing','heating','calibrating','homing']
-          %} {{ trigger.to_state is not none and trigger.from_state is not none\n
-          \  and trigger.to_state.state in active\n   and trigger.from_state.state
-          not in active }}\n"
-      sequence:
-      - target:
-          entity_id: counter.h2d_print_counter
-        action: counter.increment
-      - target:
-          entity_id: input_number.h2d_start_wh
-        data:
-          value: '{{ energy_wh }}'
-        action: input_number.set_value
-      - target:
-          entity_id: input_number.h2d_price_start_kr_kwh
-        data:
-          value: '{{ price_kr_kwh_now }}'
-        action: input_number.set_value
-      - target:
-          entity_id: input_text.h2d_job_name
-        data:
-          value: '{% set n = states(''counter.h2d_print_counter'') | int(0) %} {{
-            ''H2D-'' ~ ''{:06d}''.format(n) ~ '' '' ~ now().strftime(''%Y-%m-%d %H:%M'')
-            }}
-
-            '
-        action: input_text.set_value
-      - target:
-          entity_id: input_number.h2d_filament_grams
-        data:
-          value: '{{ weight_g }}'
-        action: input_number.set_value
-    - conditions:
-      - condition: template
-        value_template: "{{ trigger.to_state is not none\n   and trigger.to_state.state
-          == 'finished' }}\n"
-      sequence:
-      - target:
-          entity_id: input_number.h2d_filament_grams
-        data:
-          value: '{{ weight_g }}'
-        action: input_number.set_value
-      - variables:
-          used_wh: '{{ (energy_wh - start_wh) | max(0) }}'
-          used_kwh: '{{ (used_wh / 1000) }}'
-          price_kr_kwh: '{{ price_kr_kwh_start if price_kr_kwh_start > 0 else price_kr_kwh_now
-            }}'
-          el_kr: '{{ used_kwh * price_kr_kwh }}'
-          filament_kr: '{{ (filament_g / 1000) * filament_kr_per_kg }}'
-          total_kr: '{{ el_kr + filament_kr }}'
-          ts: '{{ now().isoformat() }}'
-          job_csv: '{{ (job | default('''')) | replace(''"'',''""'') }}'
-          filament_type_csv: '{{ (filament_type | default('''')) | replace(''"'',''""'')
-            }}'
-          line: '{{ ts }},H2D,"{{ job_csv }}",{{ used_wh | round(1) }}, {{ used_kwh
-            | round(3) }},{{ price_kr_kwh | round(3) }}, {{ el_kr | round(2) }},"{{
-            filament_type_csv }}", {{ filament_g | round(1) }},{{ filament_kr | round(2)
-            }}, {{ total_kr | round(2) }}'
-      - data:
-          message: '{{ line | replace(''
-
-            '','''') | replace(''  '','' '') }}'
-        action: notify.print_cost_log
-  variables:
-    active_states: '[''running'',''paused'']'
-    energy_raw: '{{ states(''sensor.lvd_smart_plug_bambu_h2d_energy'') | float(0)
-      }}'
-    energy_uom: '{{ state_attr(''sensor.lvd_smart_plug_bambu_h2d_energy'', ''unit_of_measurement'')
-      | default('''') }}'
-    energy_wh: "{% if energy_uom in ['kWh','KWH','kwh'] %}\n  {{ energy_raw * 1000
-      }}\n{% else %}\n  {{ energy_raw }}\n{% endif %}\n"
-    weight_raw: '{{ states(''sensor.h2d_0948db552101895_printvaegt'') | float(0) }}'
-    weight_uom: '{{ state_attr(''sensor.h2d_0948db552101895_printvaegt'', ''unit_of_measurement'')
-      | default('''') }}'
-    weight_g: "{% if weight_uom in ['kg','KG'] %}\n  {{ weight_raw * 1000 }}\n{% else
-      %}\n  {{ weight_raw }}\n{% endif %}\n"
-    price_kr_kwh_start: '{{ states(''input_number.h2d_price_start_kr_kwh'') | float(0)
-      }}'
-    price_kr_kwh_now: '{{ states(''sensor.elpris_nu_kr_kwh_inkl_moms'') | float(0)
-      }}'
-    start_wh: '{{ states(''input_number.h2d_start_wh'') | float(0) }}'
-    job: '{{ states(''input_text.h2d_job_name'') }}'
-    filament_type: '{{ states(''input_text.h2d_filament_type'') }}'
-    filament_g: '{{ states(''input_number.h2d_filament_grams'') | float(0) }}'
-    filament_kr_per_kg: '{{ states(''input_number.h2d_filament_kr_per_kg'') | float(0)
-      }}'
-  mode: single
-- id: '1766491555955'
-  alias: P1S - log print cost
-  description: Logger strøm + filament pris for P1S til CSV
-  triggers:
-  - entity_id: sensor.ps1_01_print_status
-    trigger: state
-  actions:
-  - choose:
-    - conditions:
-      - condition: template
-        value_template: "{% set active = ['running','paused','preparing','heating','calibrating','homing']
-          %} {{ trigger.to_state is not none and trigger.from_state is not none\n
-          \  and trigger.to_state.state in active\n   and trigger.from_state.state
-          not in active }}\n"
-      sequence:
-      - target:
-          entity_id: input_number.p1s_start_wh
-        data:
-          value: '{{ energy_wh }}'
-        action: input_number.set_value
-      - target:
-          entity_id: input_number.p1s_price_start_kr_kwh
-        data:
-          value: '{{ price_kr_kwh_now }}'
-        action: input_number.set_value
-      - target:
-          entity_id: input_text.p1s_job_name
-        data:
-          value: "{% set fn = states('sensor.ps1_01_gcode_filename') %} {% if fn not
-            in ['unknown','unavailable','none',''] %}\n  {{ fn }}\n{% else %}\n  {{
-            states('sensor.ps1_01_task_name') }}\n{% endif %}\n"
-        action: input_text.set_value
-      - target:
-          entity_id: input_number.p1s_filament_grams
-        data:
-          value: '{{ weight_g }}'
-        action: input_number.set_value
-    - conditions:
-      - condition: template
-        value_template: "{{ trigger.to_state is not none\n  and trigger.to_state.state
-          == 'finished' }}\n"
-      sequence:
-      - target:
-          entity_id: input_number.p1s_filament_grams
-        data:
-          value: '{{ weight_g }}'
-        action: input_number.set_value
-      - variables:
-          used_wh: '{{ (energy_wh - start_wh) | max(0) }}'
-          used_kwh: '{{ (used_wh / 1000) }}'
-          price_kr_kwh: '{{ price_kr_kwh_start if price_kr_kwh_start > 0 else price_kr_kwh_now
-            }}'
-          el_kr: '{{ used_kwh * price_kr_kwh }}'
-          filament_kr: '{{ (filament_g / 1000) * filament_kr_per_kg }}'
-          total_kr: '{{ el_kr + filament_kr }}'
-          ts: '{{ now().isoformat() }}'
-          job_csv: '{{ (job | default('''')) | replace(''"'',''""'') }}'
-          filament_type_csv: '{{ (filament_type | default('''')) | replace(''"'',''""'')
-            }}'
-          line: '{{ ts }},P1S,"{{ job_csv }}",{{ used_wh | round(1) }}, {{ used_kwh
-            | round(3) }},{{ price_kr_kwh | round(3) }}, {{ el_kr | round(2) }},"{{
-            filament_type_csv }}", {{ filament_g | round(1) }},{{ filament_kr | round(2)
-            }}, {{ total_kr | round(2) }}'
-      - data:
-          message: '{{ line | replace(''
-
-            '','''') | replace(''  '','' '') }}'
-        action: notify.print_cost_log
-  variables:
-    active_states: '[''running'',''paused'']'
-    energy_raw: '{{ states(''sensor.lvd_smart_plug_bambu_p1s_energy'') | float(0)
-      }}'
-    energy_uom: '{{ state_attr(''sensor.lvd_smart_plug_bambu_p1s_energy'', ''unit_of_measurement'')
-      | default('''') }}'
-    energy_wh: "{% if energy_uom in ['kWh','KWH','kwh'] %}\n  {{ energy_raw * 1000
-      }}\n{% else %}\n  {{ energy_raw }}\n{% endif %}\n"
-    weight_raw: '{{ states(''sensor.ps1_01_print_weight'') | float(0) }}'
-    weight_uom: '{{ state_attr(''sensor.ps1_01_print_weight'', ''unit_of_measurement'')
-      | default('''') }}'
-    weight_g: "{% if weight_uom in ['kg','KG'] %}\n  {{ weight_raw * 1000 }}\n{% else
-      %}\n  {{ weight_raw }}\n{% endif %}\n"
-    price_kr_kwh_start: '{{ states(''input_number.p1s_price_start_kr_kwh'') | float(0)
-      }}'
-    price_kr_kwh_now: '{{ states(''sensor.elpris_nu_kr_kwh_inkl_moms'') | float(0)
-      }}'
-    start_wh: '{{ states(''input_number.p1s_start_wh'') | float(0) }}'
-    job: '{{ states(''input_text.p1s_job_name'') }}'
-    filament_type: '{{ states(''input_text.p1s_filament_type'') }}'
-    filament_g: '{{ states(''input_number.p1s_filament_grams'') | float(0) }}'
-    filament_kr_per_kg: '{{ states(''input_number.p1s_filament_kr_per_kg'') | float(0)
-      }}'
-  mode: single
 - id: '1766506103842'
   alias: Hue Dimmer 2 - Lys i stuen
   description: ''
@@ -2569,9 +1985,8 @@
     value_template: '{{ trigger.to_state is not none and trigger.to_state.state !=
       ''ingen'' }}'
   actions:
-  - action: notify.mobile_app_kims_iphone
-    data:
-      message: Zigbee sensor alarm
+  - action: notify.mobile_app_kims_iphone17
+    data: {}
   - delay: 00:30:00
   mode: single
 - id: '1767627490503'
@@ -2816,8 +2231,8 @@
   - target:
       entity_id: input_number.jonatan_last_year_kwh
     data:
-      value: '{{ state_attr(''sensor.jonatan_yearly_energy'', ''last_period'') | float(0)
-        }}'
+      value: '{{ state_attr(''sensor.jonatans_yearly_energy'', ''last_period'') |
+        float(0) }}'
     action: input_number.set_value
   - target:
       entity_id: input_number.matias_last_year_kwh
@@ -2892,3 +2307,107 @@
     target:
       entity_id: light.hue_smart_plug_lyskaede
   mode: single
+- id: '1777455934805'
+  alias: Opdater OpenUV
+  description: ''
+  triggers:
+  - minutes: /30
+    trigger: time_pattern
+  conditions:
+  - condition: sun
+    after: sunrise
+    before: sunset
+  actions:
+  - target:
+      entity_id:
+      - sensor.openuv_current_uv_index
+      - sensor.openuv_max_uv_index
+    action: homeassistant.update_entity
+  mode: single
+- id: '1779344263993'
+  alias: Kalender påmindelse - Family
+  description: ''
+  triggers:
+  - trigger: calendar
+    entity_id: calendar.family
+    event: start
+    offset: -01:00:00
+  conditions: []
+  actions:
+  - action: notify.mobile_app_kims_iphone17
+    data:
+      title: Kalender
+      message: 'Husk: {{ trigger.calendar_event.summary }} starter kl. {{ as_timestamp(trigger.calendar_event.start)
+        | timestamp_custom(''%H:%M'') }}
+
+        '
+  mode: single
+- id: '1780949041352'
+  alias: Opdater OpenUV v.2
+  description: dette er chatgpt version 2,
+  triggers:
+  - trigger: time_pattern
+    minutes: 0
+  conditions:
+  - condition: time
+    after: 08:00:00
+    before: '18:00:00'
+  actions:
+  - action: homeassistant.update_entity
+    target:
+      entity_id:
+      - sensor.openuv_current_uv_index
+  mode: single
+- id: '1785165877708'
+  alias: Afhentning af haveaffald
+  description: Alarmer om at der afhentes haveaffald i morgen
+  triggers:
+  - at: '17:00:00'
+    trigger: time
+  conditions:
+  - condition: template
+    value_template: '{{ state_attr(''sensor.haveaffald'', ''days_until_collection'')
+      | int == 1 }}'
+  actions:
+  - action: notify.send_message
+    target:
+      entity_id: notify.kims_mobiltelefon
+    data:
+      message: Der bliver hentet haveaffald i morgen
+  mode: single
+- id: '1785165978351'
+  alias: Bestil afhentning af haveaffald
+  description: 'Alarmer - Bestil afhentes af haveaffald '
+  triggers:
+  - at: '17:00:00'
+    trigger: time
+  conditions:
+  - condition: template
+    value_template: '{{ state_attr(''sensor.haveaffald'', ''days_until_collection'')
+      | int == 1 }}'
+  actions:
+  - action: notify.send_message
+    target:
+      entity_id: notify.kims_mobiltelefon
+    data:
+      message: Bestil afhentetning af haveaffald, hvis nødvendigt
+  mode: single
+- id: '1785769541686'
+  alias: Regnmåler - Registrer tip
+  description: Registrerer hvert mekanisk vip fra regnmåleren
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.regnmaler_contact
+    from: 'off'
+    to: 'on'
+  - trigger: state
+    entity_id: binary_sensor.regnmaler_contact
+    from: 'on'
+    to: 'off'
+  conditions: []
+  actions:
+  - action: counter.increment
+    target:
+      entity_id: counter.regnmaler_tip
+  mode: queued
+  max: 50

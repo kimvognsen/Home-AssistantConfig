@@ -1,0 +1,251 @@
+- sensor:
+    - name: "Badeværelse – strømforbrug"
+      unique_id: badevaerelse_stromforbrug_w
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {% set ents = expand(area_entities('badevaerelse')) %}
+        {% set ids =
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.unit_of_measurement', 'eq', 'W')
+            | map(attribute='entity_id') | list)
+          +
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.device_class', 'eq', 'power')
+            | map(attribute='entity_id') | list)
+        %}
+        {% set all = ids | unique | list %}
+        {{ all | map('states') | map('float', 0) | sum | round(0) }}
+
+    - name: "Bryggers – strømforbrug"
+      unique_id: bryggers_stromforbrug_w
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {% set ents = expand(area_entities('bryggers')) %}
+        {% set ids =
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.unit_of_measurement', 'eq', 'W')
+            | map(attribute='entity_id') | list)
+          +
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.device_class', 'eq', 'power')
+            | map(attribute='entity_id') | list)
+        %}
+        {% set all = ids | unique | list %}
+        {{ all | map('states') | map('float', 0) | sum | round(0) }}
+
+    - name: "Entre – strømforbrug"
+      unique_id: entre_stromforbrug_w
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {% set ents = expand(area_entities('entre')) %}
+        {% set ids =
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.unit_of_measurement', 'eq', 'W')
+            | map(attribute='entity_id') | list)
+          +
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.device_class', 'eq', 'power')
+            | map(attribute='entity_id') | list)
+        %}
+        {% set all = ids | unique | list %}
+        {{ all | map('states') | map('float', 0) | sum | round(0) }}
+
+    - name: "Hall – strømforbrug"
+      unique_id: hall_stromforbrug_w
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {% set ents = expand(area_entities('hall')) %}
+        {% set ids =
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.unit_of_measurement', 'eq', 'W')
+            | map(attribute='entity_id') | list)
+          +
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.device_class', 'eq', 'power')
+            | map(attribute='entity_id') | list)
+        %}
+        {% set all = ids | unique | list %}
+        {{ all | map('states') | map('float', 0) | sum | round(0) }}
+
+    - name: "Jonatans værelse – strømforbrug"
+      unique_id: jonatans_vaerelse_stromforbrug_w
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {% set ents = expand(area_entities('jonatans værelse')) %}
+        {% set ids =
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.unit_of_measurement', 'eq', 'W')
+            | map(attribute='entity_id') | list)
+          +
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.device_class', 'eq', 'power')
+            | map(attribute='entity_id') | list)
+        %}
+        {% set all = ids | unique | list %}
+        {{ all | map('states') | map('float', 0) | sum | round(0) }}
+
+    - name: "Kontor – strømforbrug"
+      unique_id: kontor_stromforbrug_w
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {% set ents = expand(area_entities('kontor')) %}
+        {% set ids =
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.unit_of_measurement', 'eq', 'W')
+            | map(attribute='entity_id') | list)
+          +
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.device_class', 'eq', 'power')
+            | map(attribute='entity_id') | list)
+        %}
+        {% set all = ids | unique | list %}
+        {{ all | map('states') | map('float', 0) | sum | round(0) }}
+
+    - name: "Køkken – strømforbrug"
+      unique_id: kokken_stromforbrug_w
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {% set ents = expand(area_entities('køkken')) %}
+        {% set ids =
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.unit_of_measurement', 'eq', 'W')
+            | map(attribute='entity_id') | list)
+          +
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.device_class', 'eq', 'power')
+            | map(attribute='entity_id') | list)
+        %}
+        {% set all = ids | unique | list %}
+        {{ all | map('states') | map('float', 0) | sum | round(0) }}
+
+    - name: "Matias værelse – strømforbrug"
+      unique_id: matias_vaerelse_stromforbrug_w
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {% set ents = expand(area_entities('matias værelse')) %}
+        {% set ids =
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.unit_of_measurement', 'eq', 'W')
+            | map(attribute='entity_id') | list)
+          +
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.device_class', 'eq', 'power')
+            | map(attribute='entity_id') | list)
+        %}
+        {% set all = ids | unique | list %}
+        {{ all | map('states') | map('float', 0) | sum | round(0) }}
+
+    - name: "Soveværelse – strømforbrug"
+      unique_id: sovevaerelse_stromforbrug_w
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {% set ents = expand(area_entities('soveværelse')) %}
+        {% set ids =
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.unit_of_measurement', 'eq', 'W')
+            | map(attribute='entity_id') | list)
+          +
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.device_class', 'eq', 'power')
+            | map(attribute='entity_id') | list)
+        %}
+        {% set all = ids | unique | list %}
+        {{ all | map('states') | map('float', 0) | sum | round(0) }}
+
+    - name: "Stuen – strømforbrug"
+      unique_id: stuen_stromforbrug_w
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {% set ents = expand(area_entities('stuen')) %}
+        {% set ids =
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.unit_of_measurement', 'eq', 'W')
+            | map(attribute='entity_id') | list)
+          +
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.device_class', 'eq', 'power')
+            | map(attribute='entity_id') | list)
+        %}
+        {% set all = ids | unique | list %}
+        {{ all | map('states') | map('float', 0) | sum | round(0) }}
+
+    - name: "Værksted – strømforbrug"
+      unique_id: vaerksted_stromforbrug_w
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {% set ents = expand(area_entities('værksted')) %}
+        {% set ids =
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.unit_of_measurement', 'eq', 'W')
+            | map(attribute='entity_id') | list)
+          +
+          (ents
+            | rejectattr('state', 'in', ['unknown','unavailable','none',''])
+            | selectattr('attributes.device_class', 'eq', 'power')
+            | map(attribute='entity_id') | list)
+        %}
+        {% set all = ids | unique | list %}
+        {{ all | map('states') | map('float', 0) | sum | round(0) }}
+
+#    - name: "Værksted – strømforbrug"
+#      unique_id: vaerksted_stromforbrug
+#      unit_of_measurement: "W"
+#      device_class: power
+#      state_class: measurement
+#      state: >
+#        {% set self_id = 'sensor.vaerksted_stromforbrug' %}
+#        {% set ents = expand(area_entities('værksted')) %}
+#        {% set ids =
+#          (
+#            ents
+#            | rejectattr('entity_id', 'eq', self_id)
+#            | rejectattr('state', 'in', ['unknown', 'unavailable', 'none', ''])
+#            | selectattr('attributes.device_class', 'eq', 'power')
+#            | map(attribute='entity_id')
+#            | list
+#          )
+#        %}
+#        {{ ids | map('states') | map('float', 0) | sum | round(0) }}

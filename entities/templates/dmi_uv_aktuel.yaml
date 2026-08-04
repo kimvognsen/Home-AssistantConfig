@@ -1,0 +1,30 @@
+- sensor:
+
+    - name: "UV DMI Aktuel"
+      unique_id: uv_dmi_aktuel_v1
+      state_class: measurement
+      state: >-
+        {% set rows = state_attr('sensor.uv_dmi', 'List') | default([], true) %}
+        {% set now_hour = now().strftime('%Y-%m-%d %H:59') %}
+        {% set past = rows | selectattr('Time', '<=', now_hour) | list %}
+        {% if past | count > 0 %}
+          {{ past[-1].UVcloud | float(0) }}
+        {% else %}
+          0
+        {% endif %}
+
+    - name: "UV DMI Dagens Maks"
+      unique_id: uv_dmi_dagens_maks_v1
+      state_class: measurement
+      state: >-
+        {% set rows = state_attr('sensor.uv_dmi', 'List') | default([], true) %}
+        {% set vals = rows | map(attribute='UVcloud') | map('float', default=0) | list %}
+        {{ vals | max if vals | count > 0 else 0 }}
+
+    - name: "UV DMI Dagens Maks Skyfri"
+      unique_id: uv_dmi_dagens_maks_skyfri_v1
+      state_class: measurement
+      state: >-
+        {% set rows = state_attr('sensor.uv_dmi', 'List') | default([], true) %}
+        {% set vals = rows | map(attribute='UVclear') | map('float', default=0) | list %}
+        {{ vals | max if vals | count > 0 else 0 }}

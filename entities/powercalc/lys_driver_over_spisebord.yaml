@@ -9,7 +9,7 @@
 # 
 powercalc:
   sensors:
-    - entity_id: light.ikea_driver_over_spisebord
+    - entity_id: light.driver_vitrineskab_ved_spisebord
       unique_id: 8d352035-e68e-43d7-9b94-9337568553dd
       standby_power: 0.18
       fixed:

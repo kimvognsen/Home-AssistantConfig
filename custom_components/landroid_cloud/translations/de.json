@@ -49,9 +49,19 @@
       "init": {
         "title": "Landroid Cloud Optionen",
         "data": {
-          "command_timeout": "Befehls-Timeout (Sekunden)"
+          "email": "E-Mail",
+          "password": "Passwort"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "Verbindung ist nicht möglich",
+      "invalid_auth": "Fehler bei der Authentifizierung",
+      "too_many_requests": "Zu viele API-Anfragen - In 24 Stunden erneut versuchen",
+      "api_error": "Die Cloud-API hat die Anfrage abgelehnt",
+      "timeout": "Zeitüberschreitung bei der Verbindung",
+      "unknown": "Unerwarteter Fehler",
+      "already_exists": "Dieses Benutzerkonto wurde bereits konfiguriert"
     }
   },
   "entity": {
@@ -166,6 +176,9 @@
       }
     },
     "binary_sensor": {
+      "mqtt_connected": {
+        "name": "MQTT"
+      },
       "rain_sensor": {
         "name": "Regensensor"
       },
@@ -322,6 +335,20 @@
     }
   },
   "services": {
+    "ots": {
+      "name": "Einmaligen Zeitplan starten",
+      "description": "Startet einen einmaligen Mähvorgang, wenn der Mäher ihn unterstützt.",
+      "fields": {
+        "boundary": {
+          "name": "Kante",
+          "description": "Ob ein Kantenmähvorgang enthalten sein soll."
+        },
+        "runtime": {
+          "name": "Laufzeit",
+          "description": "Laufzeit in Minuten."
+        }
+      }
+    },
     "set_nutrition": {
       "name": "Set nutrition",
       "description": "Set auto-schedule nutrition values.",

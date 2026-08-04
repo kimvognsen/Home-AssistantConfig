@@ -1,0 +1,10 @@
+- trigger:
+    - platform: state
+      entity_id: lawn_mower.bob
+      to: "mowing"
+
+  sensor:
+    - name: "Hvornår har Bob sidst Kørt"
+      unique_id: bob_sidst_kort
+      device_class: timestamp
+      state: "{{ now().isoformat() }}"

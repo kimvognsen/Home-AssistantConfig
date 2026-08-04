@@ -49,9 +49,19 @@
       "init": {
         "title": "Landroid Cloud beállítások",
         "data": {
-          "command_timeout": "Parancs időtúllépés (másodperc)"
+          "email": "E-mail",
+          "password": "Jelszó"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "Kapcsolódási hiba",
+      "invalid_auth": "Hitelesítési hiba",
+      "too_many_requests": "Túl sok API hívás. Próbálja meg 24 óra múlva",
+      "api_error": "A felhő API elutasította a kérést",
+      "timeout": "Kapcsolódási időtúllépés",
+      "unknown": "Váratlan hiba",
+      "already_exists": "Ez a felhasználói fiók már be van állítva"
     }
   },
   "entity": {
@@ -166,6 +176,9 @@
       }
     },
     "binary_sensor": {
+      "mqtt_connected": {
+        "name": "MQTT"
+      },
       "rain_sensor": {
         "name": "Esőérzékelő"
       },
@@ -322,6 +335,20 @@
     }
   },
   "services": {
+    "ots": {
+      "name": "Egyszeri ütemezés indítása",
+      "description": "Egyszeri nyírást indít, ha a fűnyíró támogatja.",
+      "fields": {
+        "boundary": {
+          "name": "Szegély",
+          "description": "Legyen-e szegélynyírás."
+        },
+        "runtime": {
+          "name": "Futási idő",
+          "description": "Futási idő percben."
+        }
+      }
+    },
     "set_nutrition": {
       "name": "Set nutrition",
       "description": "Set auto-schedule nutrition values.",

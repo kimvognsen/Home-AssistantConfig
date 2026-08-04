@@ -1,0 +1,32 @@
+esphome:
+  name: esphome-web-f1ba90
+  friendly_name: Bryggers Bluetooth Proxy
+  name_add_mac_suffix: false
+
+esp32:
+  board: esp32-poe
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG
+
+api:
+
+ota:
+  - platform: esphome
+
+ethernet:
+  type: LAN8720
+  mdc_pin: GPIO23
+  mdio_pin: GPIO18
+  clk:
+    mode: CLK_OUT
+    pin: GPIO17
+  power_pin: GPIO5
+  phy_addr: 0
+
+esp32_ble_tracker:
+
+bluetooth_proxy:
+  active: true

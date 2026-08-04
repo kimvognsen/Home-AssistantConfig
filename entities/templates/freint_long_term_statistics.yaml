@@ -51,9 +51,9 @@
       device_class: energy
       state_class: total
       availability: >
-        {{ states('sensor.energiforbrug_total') not in ['unknown','unavailable','none',''] }}
+        {{ states('sensor.frient_energiforbrug_total_power') not in ['unknown','unavailable','none',''] }}
       state: >
-        {{ states('sensor.energiforbrug_total') | float }}
+        {{ states('sensor.frient_energiforbrug_total_power') | float }}
 
     # Frient øjeblikseffekt (fra attribute 'power' på energiforbrug_total)
     # NB, tjek om det er samme som ovenover

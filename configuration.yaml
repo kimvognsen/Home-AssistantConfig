@@ -21,7 +21,6 @@ input_select:   !include_dir_merge_named entities/input_selects
 input_text:     !include_dir_merge_named entities/input_text
 group: !include_dir_merge_named entities/groups
 
-
 ## End ny struktur
 #
 script: !include scripts.yaml

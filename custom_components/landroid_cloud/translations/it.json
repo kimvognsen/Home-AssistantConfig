@@ -49,9 +49,19 @@
       "init": {
         "title": "Opzioni Landroid Cloud",
         "data": {
-          "command_timeout": "Timeout comando (secondi)"
+          "email": "Email",
+          "password": "Password"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "Impossibile connettersi",
+      "invalid_auth": "Errore di autenticazione",
+      "too_many_requests": "Troppe richieste alle API - Riprova tra 24 ore",
+      "api_error": "La Cloud API ha rifiutato la richiesta",
+      "timeout": "Timeout di connessione",
+      "unknown": "Errore inaspettato",
+      "already_exists": "Questo account è già stato configurato"
     }
   },
   "entity": {
@@ -166,6 +176,9 @@
       }
     },
     "binary_sensor": {
+      "mqtt_connected": {
+        "name": "MQTT"
+      },
       "rain_sensor": {
         "name": "Sensore pioggia"
       },
@@ -322,6 +335,20 @@
     }
   },
   "services": {
+    "ots": {
+      "name": "Avvia pianificazione una tantum",
+      "description": "Avvia una pianificazione di taglio una tantum se il tosaerba la supporta.",
+      "fields": {
+        "boundary": {
+          "name": "Bordo",
+          "description": "Indica se includere un taglio del bordo."
+        },
+        "runtime": {
+          "name": "Durata",
+          "description": "Durata in minuti."
+        }
+      }
+    },
     "set_nutrition": {
       "name": "Set nutrition",
       "description": "Set auto-schedule nutrition values.",

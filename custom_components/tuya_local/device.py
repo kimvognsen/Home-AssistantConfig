@@ -34,6 +34,14 @@ from .helpers.log import log_json
 
 _LOGGER = logging.getLogger(__name__)
 
+# Extra context for tinytuya error codes whose message does not fully describe
+# the possible causes.  Error 914 in particular is reported for any failure to
+# negotiate a session, which includes a device that is refusing connections
+# until it is power cycled, not just a misconfigured key or protocol version.
+_ERROR_HINTS = {
+    "914": "  If previously running OK, likely the device needs to be power cycled.",
+}
+
 
 def _collect_possible_matches(cached_state, product_ids):
     """Collect possible matches from generator into an array."""
@@ -149,7 +157,7 @@ class TuyaLocalDevice(object):
         # its switches.
         self._FAKE_IT_TIMEOUT = 5
         self._CACHE_TIMEOUT = 30
-        self._HEARTBEAT_INTERVAL = 10
+        self._HEARTBEAT_INTERVAL = 5
         # More attempts are needed in auto mode so we can cycle through all
         # the possibilities a couple of times
         self._AUTO_CONNECTION_ATTEMPTS = len(API_PROTOCOL_VERSIONS) * 2 + 1
@@ -264,7 +272,17 @@ class TuyaLocalDevice(object):
 
                     for entity in self._children:
                         # let entities trigger off poll contents directly
-                        entity.on_receive(poll, full_poll)
+                        try:
+                            entity.on_receive(poll, full_poll)
+                        except Exception as e:
+                            # Don't let exceptions thrown by the entities interrupt the communication loop
+                            # Just log them and move on.
+                            _LOGGER.exception(
+                                "%s on_receive error for entity %s: %s",
+                                self.name,
+                                entity.entity_id,
+                                e,
+                            )
                         # clear non-persistant dps that were not in a full poll
                         if full_poll:
                             for dp in entity._config.dps():
@@ -293,6 +311,7 @@ class TuyaLocalDevice(object):
 
     def pause(self):
         self._temporary_poll = True
+        _LOGGER.debug("%s pausing connection temporarily", self.name, False)
         self._api.set_socketPersistent(False)
         if self._api.parent:
             self._api.parent.set_socketPersistent(False)
@@ -334,6 +353,7 @@ class TuyaLocalDevice(object):
                     self._api.set_socketPersistent(persist)
                     if self._api.parent:
                         self._api.parent.set_socketPersistent(persist)
+                    self._last_full_poll = 0  # ensure we start with a full poll
 
                 needs_full_poll = now - self._last_full_poll > self._CACHE_TIMEOUT
                 if now - last_cache > self._CACHE_TIMEOUT or (
@@ -398,12 +418,15 @@ class TuyaLocalDevice(object):
                     else:
                         if "dps" in poll:
                             poll = poll["dps"]
-                        poll["full_poll"] = full_poll
-                        yield poll
+                        if isinstance(poll, dict):
+                            poll["full_poll"] = full_poll
+                            yield poll
 
             except CancelledError:
                 self._running = False
                 # Close the persistent connection when exiting the loop
+                persist = False
+                _LOGGER.debug("%s receive loop interrupted", self.name)
                 self._api.set_socketPersistent(False)
                 if self._api.parent:
                     self._api.parent.set_socketPersistent(False)
@@ -415,6 +438,7 @@ class TuyaLocalDevice(object):
                     type(t).__name__,
                     t,
                 )
+                persist = False
                 self._api.set_socketPersistent(False)
                 if self._api.parent:
                     self._api.parent.set_socketPersistent(False)
@@ -622,7 +646,6 @@ class TuyaLocalDevice(object):
         try:
             self._lock.acquire()
             self._api.set_multiple_values(properties, nowait=True)
-            self._cached_state["updated_at"] = 0
             now = time()
             self._last_connection = now
             pending_updates = self._get_pending_updates()
@@ -645,12 +668,14 @@ class TuyaLocalDevice(object):
         )
 
         last_err_code = None
+        last_err_msg = None
         for i in range(connections):
             try:
                 if not self._hass.is_stopping:
                     retval = await self._hass.async_add_executor_job(func)
                     if isinstance(retval, dict) and "Error" in retval:
                         last_err_code = retval.get("Err")
+                        last_err_msg = retval.get("Error")
                         if last_err_code == "900":
                             # Some devices (e.g. IR/RF remotes) never return
                             # status data; error 900 is their normal response
@@ -686,12 +711,24 @@ class TuyaLocalDevice(object):
                         self._api_protocol_working = False
                         for entity in self._children:
                             entity.async_schedule_update_ha_state()
+                    if last_err_code:
+                        log_format = "%s Device reported error %s: %s%s"
+                        log_args = (
+                            error_message,
+                            last_err_code,
+                            last_err_msg,
+                            _ERROR_HINTS.get(last_err_code, ""),
+                        )
+                    else:
+                        log_format = "%s"
+                        log_args = (error_message,)
+
                     if self._api_working_protocol_failures == 1 and not (
                         last_err_code == "914" and self._protocol_configured == "auto"
                     ):
-                        _LOGGER.error(error_message)
+                        _LOGGER.error(log_format, *log_args)
                     else:
-                        _LOGGER.debug(error_message)
+                        _LOGGER.debug(log_format, *log_args)
 
                 if not self._api_protocol_working:
                     await self._rotate_api_protocol_version()
@@ -701,10 +738,7 @@ class TuyaLocalDevice(object):
         return {**cached_state, **self._get_pending_properties()}
 
     def _get_pending_properties(self):
-        return {
-            key: property["value"]
-            for key, property in self._get_pending_updates().items()
-        }
+        return {key: prop["value"] for key, prop in self._get_pending_updates().items()}
 
     def _get_unsent_properties(self):
         return {
@@ -749,12 +783,18 @@ class TuyaLocalDevice(object):
             self.name,
             new_version,
         )
-        # Only enable tinytuya's auto-detect when using 3.22
+        # Only enable tinytuya's "device22" auto-detect when using 3.22, 3.4, or 3.5
+        # Enabling this on 3.1 or 3.3 devices can cause them to stop responding to commands.
+        # 3.2 always uses the "device22" protocol variant.
+        # 3.22 is a fake version that actually means 3.3 with auto-detect enabled
+        #
+        # Note: "device22" is a misnomer for historical reasons. Not all devices with
+        # 22 character device ids use this protocol variant.
         if new_version == 3.22:
             new_version = 3.3
             self._api.disabledetect = False
         else:
-            self._api.disabledetect = True
+            self._api.disabledetect = new_version < 3.4
 
         await self._hass.async_add_executor_job(
             self._api.set_version,
@@ -802,7 +842,19 @@ def setup_device(hass: HomeAssistant, config: dict):
 async def async_delete_device(hass: HomeAssistant, config: dict):
     device_id = get_device_id(config)
     _LOGGER.info("Deleting device: %s", device_id)
-    await hass.data[DOMAIN][device_id]["device"].async_stop()
-    del hass.data[DOMAIN][device_id]["device"]
-    del hass.data[DOMAIN][device_id]["tuyadevice"]
-    del hass.data[DOMAIN][device_id]["tuyadevicelock"]
+    domain_data = hass.data.get(DOMAIN, {})
+    device_entry = domain_data.get(device_id)
+    if device_entry is None:
+        return
+
+    device = device_entry.get("device")
+    if device is not None:
+        await device.async_stop()
+        device_entry.pop("device", None)
+    device_entry.pop("tuyadevice", None)
+    device_entry.pop("tuyadevicelock", None)
+    # Platform setup may cache entity instances in this bucket by config_id.
+    # Only drop empty buckets here; async_unload_entry removes the whole bucket
+    # after forwarded platform unloads complete.
+    if not device_entry:
+        domain_data.pop(device_id, None)

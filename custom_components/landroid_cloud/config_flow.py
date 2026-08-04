@@ -22,15 +22,10 @@ from pyworxcloud.exceptions import (
     TooManyRequestsError,
 )
 
-from .awsiot import async_prime_awsiot_metrics
 from .const import (
     CONF_CLOUD,
-    CONF_COMMAND_TIMEOUT,
     DEFAULT_CLOUD,
-    DEFAULT_COMMAND_TIMEOUT,
     DOMAIN,
-    MAX_COMMAND_TIMEOUT,
-    MIN_COMMAND_TIMEOUT,
 )
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
@@ -47,6 +42,23 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 )
 
 
+def _target_unique_id(email: str, cloud: str) -> str:
+    """Return the canonical config entry unique id."""
+    return f"{email.lower()}::{cloud}"
+
+
+def _unique_id_conflicts(hass, config_entry, unique_id: str) -> bool:
+    """Return whether another config entry already uses the target unique id."""
+    for other_entry in hass.config_entries.async_entries(DOMAIN):
+        if (
+            other_entry.entry_id != config_entry.entry_id
+            and other_entry.unique_id == unique_id
+        ):
+            return True
+
+    return False
+
+
 async def _validate_input(user_input: dict[str, Any]) -> dict[str, Any]:
     """Validate the user input allows us to connect."""
     cloud = WorxCloud(
@@ -57,7 +69,6 @@ async def _validate_input(user_input: dict[str, Any]) -> dict[str, Any]:
 
     try:
         await cloud.authenticate()
-        await async_prime_awsiot_metrics()
         connected = await asyncio.wait_for(cloud.connect(), timeout=30)
         if not connected:
             return {"title": user_input[CONF_EMAIL], "device_count": 0}
@@ -82,7 +93,9 @@ class LandroidCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            unique_id = f"{user_input[CONF_EMAIL].lower()}::{user_input[CONF_CLOUD]}"
+            unique_id = _target_unique_id(
+                user_input[CONF_EMAIL], user_input[CONF_CLOUD]
+            )
             await self.async_set_unique_id(unique_id)
             self._abort_if_unique_id_configured()
 
@@ -124,24 +137,53 @@ class LandroidCloudOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Manage options."""
-        if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+        errors: dict[str, str] = {}
 
-        current = self._config_entry.options.get(
-            CONF_COMMAND_TIMEOUT, DEFAULT_COMMAND_TIMEOUT
-        )
+        if user_input is not None:
+            updated_data = {
+                **self._config_entry.data,
+                CONF_EMAIL: user_input[CONF_EMAIL],
+                CONF_PASSWORD: user_input[CONF_PASSWORD],
+            }
+            cloud = updated_data.get(CONF_CLOUD, DEFAULT_CLOUD)
+            updated_data[CONF_CLOUD] = cloud
+            unique_id = _target_unique_id(user_input[CONF_EMAIL], cloud)
+
+            if _unique_id_conflicts(self.hass, self._config_entry, unique_id):
+                errors["base"] = "already_exists"
+            else:
+                try:
+                    info = await _validate_input(updated_data)
+                except AuthorizationError:
+                    errors["base"] = "invalid_auth"
+                except TooManyRequestsError:
+                    errors["base"] = "too_many_requests"
+                except NoConnectionError, ServiceUnavailableError:
+                    errors["base"] = "cannot_connect"
+                except RequestError, ForbiddenError, NotFoundError, InternalServerError:
+                    errors["base"] = "api_error"
+                except APIException:
+                    errors["base"] = "unknown"
+                except TimeoutError:
+                    errors["base"] = "timeout"
+                else:
+                    self.hass.config_entries.async_update_entry(
+                        self._config_entry,
+                        data=updated_data,
+                        title=info["title"],
+                        unique_id=unique_id,
+                    )
+                    return self.async_create_entry(title="", data={})
+
+        current_email = self._config_entry.data[CONF_EMAIL]
 
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_COMMAND_TIMEOUT, default=current): vol.All(
-                        vol.Coerce(float),
-                        vol.Range(
-                            min=MIN_COMMAND_TIMEOUT,
-                            max=MAX_COMMAND_TIMEOUT,
-                        ),
-                    )
+                    vol.Required(CONF_EMAIL, default=current_email): str,
+                    vol.Required(CONF_PASSWORD): str,
                 }
             ),
+            errors=errors,
         )

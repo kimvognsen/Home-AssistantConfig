@@ -13,7 +13,7 @@
         "pyworxcloud"
     ],
     "requirements": [
-        "pyworxcloud==6.3.6"
+        "pyworxcloud==6.4.2"
     ],
-    "version": "7.0.5"
+    "version": "7.1.3"
 }

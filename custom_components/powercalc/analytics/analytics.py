@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from asyncio import timeout
 from collections import Counter
 from collections.abc import Hashable
@@ -12,7 +10,7 @@ import uuid
 
 import aiohttp
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import __version__ as HA_VERSION  # noqa
+from homeassistant.const import __version__ as HA_VERSION  # noqa: N812
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -123,7 +121,7 @@ class AnalyticsCollector:
         counter: Counter[Hashable] = self._data.setdefault(key, Counter())  # type:ignore
         counter[value] += 1
 
-    def add(self, key: str, value: Any) -> None:  # noqa: ANN401
+    def add(self, key: str, value: object) -> None:
         """Add value to listing"""
         if self._already_seen(key) or value is None:
             return
@@ -152,7 +150,7 @@ class Analytics:
     def install_id(self) -> str | None:
         return self._data.install_id
 
-    async def _prepare_payload(self) -> dict:
+    async def _prepare_payload(self) -> dict[str, Any]:
         powercalc_integration = await async_get_integration(self.hass, DOMAIN)
         runtime_data: RuntimeAnalyticsData = self.hass.data[DOMAIN][DATA_ANALYTICS]
         power_profiles: list[PowerProfile] = runtime_data.get(DATA_POWER_PROFILES, [])
@@ -194,7 +192,11 @@ class Analytics:
         cutoff = datetime(2000, 1, 1, tzinfo=UTC)
         dates = chain(
             (e.created_at for e in self.hass.config_entries.async_entries(DOMAIN) if e.created_at > cutoff),
-            (e.created_at for e in entity_registry.async_get(self.hass).entities.values() if e.domain != DOMAIN and e.created_at > cutoff),
+            (
+                e.created_at
+                for e in entity_registry.async_get(self.hass).entities.values()
+                if e.domain != DOMAIN and e.created_at > cutoff
+            ),
         )
 
         try:

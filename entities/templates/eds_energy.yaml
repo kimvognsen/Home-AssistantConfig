@@ -135,13 +135,13 @@
       unique_id: historic_energy_price_percentiles
       state: OK
       attributes:
-        25th: "{{ states('sensor.average_energy_price_last_30d_mean') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * -0.63 }}"
-        50th: "{{ states('sensor.average_energy_price_last_30d_mean') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 0 }}"
-        75th: "{{ states('sensor.average_energy_price_last_30d_mean') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 0.57 }}"
-        90th: "{{ states('sensor.average_energy_price_last_30d_mean') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 1.29 }}"
-        95th: "{{ states('sensor.average_energy_price_last_30d_mean') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 1.65 }}"
-        99th: "{{ states('sensor.average_energy_price_last_30d_mean') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 2.33 }}"
-        100th: "{{ states('sensor.average_energy_price_last_30d_mean') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 3.9 }}"
+        25th: "{{ states('sensor.energy_price_last_30d_std') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * -0.63 }}"
+        50th: "{{ states('sensor.energy_price_last_30d_std') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 0 }}"
+        75th: "{{ states('sensor.energy_price_last_30d_std') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 0.57 }}"
+        90th: "{{ states('sensor.energy_price_last_30d_std') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 1.29 }}"
+        95th: "{{ states('sensor.energy_price_last_30d_std') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 1.65 }}"
+        99th: "{{ states('sensor.energy_price_last_30d_std') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 2.33 }}"
+        100th: "{{ states('sensor.energy_price_last_30d_std') | float(0) + states('sensor.energy_price_last_30d_std') | float(0) * 3.9 }}"
 
     - name: "EDS pris (DKK/kWh)"
       unique_id: eds_price_dkk_per_kwh
@@ -176,7 +176,7 @@
       unique_id: elpris_nu_kr_kwh_inkl_moms
       unit_of_measurement: "DKK/kWh"
       state: >
-        {% set spot = states('sensor.eds_price_now')|float(0) %}
+        {% set spot = states('sensor.eds_pris_dkk_kwh')|float(0) %}
         {% set tarif = 0.132|float(0) %}
         {% set moms = 1.25 %}
         {{ ((spot + tarif) * moms) | round(3) }}

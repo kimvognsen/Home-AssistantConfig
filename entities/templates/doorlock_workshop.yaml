@@ -1,6 +1,22 @@
 - binary_sensor:
-    - name: "Workshop dør låst"
-      unique_id: doorlock_workshop_closed
+    - name: "Værkstedsdør"
+      unique_id: vaerkstedsdor_laas_status
       device_class: lock
-      state: >-
-        {{ not is_state('binary_sensor.dorlas_vaerksted_water_leak', 'locked') }}
+      state: >
+        {{ is_state(
+          'binary_sensor.dorlas_vaerksted_water_leak_water_leak',
+          'off'
+        ) }}
+      availability: >
+        {{ states(
+          'binary_sensor.dorlas_vaerksted_water_leak_water_leak'
+        ) not in ['unknown', 'unavailable']
+        }}
+
+
+#
+# Brug denne i automation eller lignende 
+# condition:
+#  - condition: state
+#    entity_id: binary_sensor.vaerkstedsdor
+#    state: "off"

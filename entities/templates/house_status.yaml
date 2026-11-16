@@ -1,0 +1,134 @@
+- sensor:
+    - name: "Husstatus"
+      unique_id: house_status
+      icon: >
+        {% if this.state == 'ok' %}
+          mdi:home-check
+        {% else %}
+          mdi:home-alert
+        {% endif %}
+
+      state: >
+        {% set monitored = [
+          'binary_sensor.sonoff_dor_sensor_bryggers_contact',
+          'binary_sensor.dor_sensor_stuen_contact',
+          'binary_sensor.dor_sensor_entre_contact',
+          'binary_sensor.dor_sensor_vaerksted_contact',
+          'binary_sensor.vindue_sensor_badevaerelse_contact',
+          'binary_sensor.vindue_sensor_sovevaerelse_contact',
+          'binary_sensor.vindue_sensor_matias_vaerelse_contact',
+          'binary_sensor.vindue_sensor_jonatans_vaerelse_contact'
+        ] %}
+
+        {% set ns = namespace(attention=0) %}
+
+        {% for entity in monitored %}
+          {% if states(entity) != 'off' %}
+            {% set ns.attention = ns.attention + 1 %}
+          {% endif %}
+        {% endfor %}
+
+        {# En lock binary_sensor er on, når den er ulåst #}
+        {% if states('binary_sensor.vaerkstedsdor') != 'off' %}
+          {% set ns.attention = ns.attention + 1 %}
+        {% endif %}
+
+        {{ 'ok' if ns.attention == 0 else 'attention' }}
+
+      attributes:
+        attention_count: >
+          {% set monitored = [
+            'binary_sensor.sonoff_dor_sensor_bryggers_contact',
+            'binary_sensor.dor_sensor_stuen_contact',
+            'binary_sensor.dor_sensor_entre_contact',
+            'binary_sensor.dor_sensor_vaerksted_contact',
+            'binary_sensor.vindue_sensor_badevaerelse_contact',
+            'binary_sensor.vindue_sensor_sovevaerelse_contact',
+            'binary_sensor.vindue_sensor_matias_vaerelse_contact',
+            'binary_sensor.vindue_sensor_jonatans_vaerelse_contact'
+          ] %}
+
+          {% set ns = namespace(count=0) %}
+
+          {% for entity in monitored %}
+            {% if states(entity) != 'off' %}
+              {% set ns.count = ns.count + 1 %}
+            {% endif %}
+          {% endfor %}
+
+          {% if states('binary_sensor.vaerkstedsdor') != 'off' %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+
+          {{ ns.count }}
+
+        summary: >
+          {% set names = {
+            'binary_sensor.sonoff_dor_sensor_bryggers_contact': 'Bryggersdør',
+            'binary_sensor.dor_sensor_stuen_contact': 'Stuedør',
+            'binary_sensor.dor_sensor_entre_contact': 'Entredør',
+            'binary_sensor.dor_sensor_vaerksted_contact': 'Værkstedsdør',
+            'binary_sensor.vindue_sensor_badevaerelse_contact': 'Badeværelsesvindue',
+            'binary_sensor.vindue_sensor_sovevaerelse_contact': 'Soveværelsesvindue',
+            'binary_sensor.vindue_sensor_matias_vaerelse_contact': 'Matias’ vindue',
+            'binary_sensor.vindue_sensor_jonatans_vaerelse_contact': 'Jonatans vindue'
+          } %}
+
+          {% set monitored = names.keys() | list %}
+          {% set ns = namespace(items=[]) %}
+
+          {% for entity in monitored %}
+            {% if states(entity) == 'on' %}
+              {% set ns.items = ns.items + [names[entity] ~ ' åben'] %}
+            {% elif states(entity) in ['unknown', 'unavailable'] %}
+              {% set ns.items = ns.items + [names[entity] ~ ' utilgængelig'] %}
+            {% endif %}
+          {% endfor %}
+
+          {% if is_state('binary_sensor.vaerkstedsdor', 'on') %}
+            {% set ns.items = ns.items + ['Værkstedsdør ulåst'] %}
+          {% elif states('binary_sensor.vaerkstedsdor')
+                in ['unknown', 'unavailable'] %}
+            {% set ns.items =
+              ns.items + ['Værkstedsdørens låsesensor utilgængelig'] %}
+          {% endif %}
+
+          {% if ns.items | count == 0 %}
+            Huset OK
+          {% elif ns.items | count == 1 %}
+            {{ ns.items[0] }}
+          {% else %}
+            {{ ns.items | count }} ting kræver opmærksomhed
+          {% endif %}
+
+        details: >
+          {% set names = {
+            'binary_sensor.sonoff_dor_sensor_bryggers_contact': 'Bryggersdør',
+            'binary_sensor.dor_sensor_stuen_contact': 'Stuedør',
+            'binary_sensor.dor_sensor_entre_contact': 'Entredør',
+            'binary_sensor.dor_sensor_vaerksted_contact': 'Værkstedsdør',
+            'binary_sensor.vindue_sensor_badevaerelse_contact': 'Badeværelsesvindue',
+            'binary_sensor.vindue_sensor_sovevaerelse_contact': 'Soveværelsesvindue',
+            'binary_sensor.vindue_sensor_matias_vaerelse_contact': 'Matias’ vindue',
+            'binary_sensor.vindue_sensor_jonatans_vaerelse_contact': 'Jonatans vindue'
+          } %}
+
+          {% set ns = namespace(items=[]) %}
+
+          {% for entity, name in names.items() %}
+            {% if states(entity) == 'on' %}
+              {% set ns.items = ns.items + [name ~ ' åben'] %}
+            {% elif states(entity) in ['unknown', 'unavailable'] %}
+              {% set ns.items = ns.items + [name ~ ' utilgængelig'] %}
+            {% endif %}
+          {% endfor %}
+
+          {% if is_state('binary_sensor.vaerkstedsdor', 'on') %}
+            {% set ns.items = ns.items + ['Værkstedsdør ulåst'] %}
+          {% elif states('binary_sensor.vaerkstedsdor')
+                in ['unknown', 'unavailable'] %}
+            {% set ns.items =
+              ns.items + ['Værkstedsdørens låsesensor utilgængelig'] %}
+          {% endif %}
+
+          {{ ns.items | join(', ') if ns.items else 'Alle døre og vinduer er lukkede, og værkstedet er låst' }}

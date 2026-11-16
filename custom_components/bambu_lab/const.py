@@ -18,6 +18,9 @@ LOGGER = logging.getLogger(__package__)
 LOGGERFORHA = logging.getLogger(f"{__package__}_HA")
 
 SERVICE_CALL_EVENT = "bambu_lab_service_call"
+# hass.data[DOMAIN] key holding the pending service calls, by the id sent in the event data.
+SERVICE_CALL_FUTURES = "service_call_futures"
+SERVICE_CALL_ID = "service_call_id"
 
 PLATFORMS = (
     Platform.BINARY_SENSOR,
@@ -37,7 +40,7 @@ BAMBU_LAB_CARDS = [
     {
         'name': 'Bambu Lab Cards',
         'filename': 'ha-bambulab-cards.js',
-        'version': '0.6.51'
+        'version': '0.8.1'
     }
 ]
 

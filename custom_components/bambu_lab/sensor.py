@@ -6,6 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, LOGGER
@@ -15,13 +16,46 @@ from .definitions import (
     AMS_SENSORS,
     HOTEND_RACK_SENSORS,
     HOTEND_RACK_HOTEND_SENSORS,
+    X2D_TRANSLATION_KEYS,
+    MAKERWORLD_SENSORS,
     BambuLabAMSSensorEntityDescription,
     BambuLabHotendRackSensorEntityDescription,
+    BambuLabMakerWorldSensorEntityDescription,
     BambuLabSensorEntityDescription,
 )
 from .coordinator import BambuDataUpdateCoordinator
+from .makerworld import MakerWorldDataUpdateCoordinator, MakerWorldEntity
 from .models import BambuLabEntity, AMSEntity, VirtualTrayEntity, HotendRackEntity
-from .pybambu.const import Features
+from .pybambu.const import Features, Printers
+
+
+def _migrate_h3c_storage_entities(registry, entry_id, printer):
+    """Preserve existing registry entries while renaming the initial USB sensors."""
+    if printer.device_type != Printers.H3C:
+        return
+    keys = {
+        "usb_connection": "external_storage_connection",
+        "usb_storage_total": "external_storage_total",
+        "usb_storage_used": "external_storage_used",
+        "usb_storage_free": "external_storage_free",
+    }
+    for old_key, new_key in keys.items():
+        old_id = registry.async_get_entity_id("sensor", DOMAIN, f"{printer.serial}_{old_key}")
+        if old_id is None:
+            continue
+        old = registry.async_get(old_id)
+        if old.config_entry_id != entry_id:
+            continue
+        unique_id = f"{printer.serial}_{new_key}"
+        if registry.async_get_entity_id("sensor", DOMAIN, unique_id) is not None:
+            continue
+        new_id = f"sensor.h3c_{printer.serial.lower()}_{new_key}"
+        if registry.async_get(new_id) is not None:
+            # Keep a conflicting entity's ID; still migrate the unique ID so
+            # setup reuses this registry entry instead of creating a duplicate.
+            registry.async_update_entity(old_id, new_unique_id=unique_id)
+        else:
+            registry.async_update_entity(old_id, new_unique_id=unique_id, new_entity_id=new_id)
 
 
 async def async_setup_entry(
@@ -32,8 +66,18 @@ async def async_setup_entry(
     """Set up BambuLab sensor based on a config entry."""
 
     coordinator: BambuDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+
+    # The MakerWorld stats belong to the cloud account rather than to the printer,
+    # so they are added before the printer data check below and stay available
+    # even while the printer itself hasn't reported in yet.
+    if coordinator.makerworld is not None:
+        for sensor in MAKERWORLD_SENSORS:
+            async_add_entities([BambuLabMakerWorldSensor(coordinator.makerworld, sensor)])
+
     if not coordinator.get_model().has_full_printer_data:
         return
+
+    _migrate_h3c_storage_entities(er.async_get(hass), entry.entry_id, coordinator.get_model().info)
 
     for sensor in VIRTUAL_TRAY_SENSORS:
         if sensor.exists_fn(coordinator):
@@ -45,6 +89,13 @@ async def async_setup_entry(
 
     for sensor in AMS_SENSORS:
         for index in coordinator.get_model().ams.data.keys():
+            ams_instance = coordinator.get_model().ams.data[index]
+            # push_status can arrive before complete get_version metadata and create
+            # a placeholder AMS with no serial. Device/entity identity depends on the
+            # real AMS serial, so wait for version metadata instead of registering a
+            # transient placeholder that HA cannot later reconcile cleanly.
+            if ams_instance is None or not ams_instance.serial:
+                continue
             if sensor.exists_fn(coordinator, index):
                 async_add_entities([BambuLabAMSSensor(coordinator, sensor, index)])
 
@@ -75,6 +126,8 @@ class BambuLabSensor(BambuLabEntity, SensorEntity):
         self.entity_description = description
         printer = coordinator.get_model().info
         self._attr_unique_id = f"{printer.serial}_{description.key}"
+        if printer.device_type == Printers.X2D and description.key in X2D_TRANSLATION_KEYS:
+            self._attr_translation_key = X2D_TRANSLATION_KEYS[description.key]
         if description.options_fn is not None:
             self._attr_options = description.options_fn(coordinator)
 
@@ -272,3 +325,36 @@ class BambuLabHotendSensor(HotendRackEntity, SensorEntity):
     @property
     def available(self) -> bool:
         return self.entity_description.available_fn(self)
+
+
+class BambuLabMakerWorldSensor(MakerWorldEntity, SensorEntity):
+    """A MakerWorld creator stat for the linked Bambu Lab account."""
+
+    def __init__(
+            self,
+            coordinator: MakerWorldDataUpdateCoordinator,
+            description: BambuLabMakerWorldSensorEntityDescription,
+    ) -> None:
+        """Initialise the sensor."""
+        super().__init__(coordinator=coordinator)
+        self.entity_description = description
+        self._attr_unique_id = f"{coordinator.unique_id_prefix}_{description.key}"
+
+    @property
+    def native_value(self) -> StateType:
+        """Return the state of the sensor."""
+        if self.profile is None:
+            return None
+        return self.entity_description.value_fn(self)
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return super().available and self.profile is not None
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        """Return the state attributes."""
+        if self.profile is None:
+            return {}
+        return self.entity_description.extra_attributes(self)

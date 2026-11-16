@@ -1,0 +1,5641 @@
+# ha_mcp_backup
+schema_version: 1
+domain: dashboard
+entity_id: kims-varksted
+captured: '2026-11-15T21:35:46.199024+00:00'
+tool: ha_config_set_dashboard
+config:
+  dashboard:
+    require_admin: false
+    show_in_sidebar: true
+    title: "Kims v\xE6rksted"
+    url_path: kims-varksted
+    mode: storage
+    id: kims_varksted
+    icon: mdi:factory
+  config:
+    button_card_templates:
+      light_button:
+        aspect_ratio: 4/3
+        color_type: icon
+        hold_action:
+          action: more-info
+          haptic: selection
+        label: "[[[ var bri = entity.attributes.brightness && Math.round(entity.attributes.brightness\
+          \ / 2.55);  if\n  (entity.state === 'on') return (bri ? (bri+\"%\") : 'On');\
+          \ else return \"Off\"; ]]]\n"
+        layout: icon_label
+        show_label: true
+        show_name: true
+        state:
+        - styles:
+            card:
+            - border: solid 1px var(--paper-item-icon-active-color)
+            - box-shadow: 0px 0px 10px 3px var(--paper-item-icon-active-color)
+            label:
+            - color: var(--paper-item-icon-active-color)
+          value: 'on'
+        - styles:
+            card:
+            - border: solid 1px var(--primary-color)
+            - box-shadow: none
+          value: 'off'
+        - icon: mdi:alert
+          label: Lost
+          styles:
+            card:
+            - border: 'solid 1px #7f7f7f'
+            - box-shadow: none
+            icon:
+            - color: '#ff0000'
+            - opacity: 0.4
+            label:
+            - color: '#7f7f7f'
+            name:
+            - color: '#7f7f7f'
+          value: unavailable
+        styles:
+          card:
+          - border-radius: 10px
+          - padding: 6px 6px 6px 6px
+          - margin: 0% 0% 0% 0%
+          - --ha-card-background: rgba(0, 0, 0, 0)
+          grid:
+          - grid-template-areas: '"i l l" "n n n"'
+          - grid-template-rows: 33% auto
+          - grid-template-columns: 33% auto
+          icon:
+          - width: 28px
+          - padding: 0px 0px 0px 0px
+          - color: var(--button-card-light-color-no-temperature)
+          label:
+          - font-size: 12px
+          - justify-self: right
+          - padding: 0px 0px 0px 0px
+          - color: var(--secondary-text-color)
+          name:
+          - justify-self: middle
+          - align-self: end
+          - font-size: 14px
+          - padding: 0px 0px 0px 0px
+          - color: var(--primary-text-color)
+          - white-space: normal
+        tap_action:
+          action: toggle
+    title: Hasselhaven
+    views:
+    - theme: Backend-selected
+      title: Home-Assistant-view
+      path: home-assistant-view
+      icon: mdi:home-assistant
+      badges: []
+      cards:
+      - type: vertical-stack
+        cards:
+        - type: markdown
+          content: '# Oversigt over udstyr'
+        - type: horizontal-stack
+          cards:
+          - cards: null
+            color_type: blank-card
+            show_icon: true
+            show_name: true
+            show_state: true
+            title: false
+            type: glance
+            styles:
+              card:
+              - width: 25px
+            entities:
+            - entity: sensor.dor_sensorer_aben
+              name: "D\xF8re"
+          - cards: null
+            color_type: blank-card
+            show_icon: true
+            show_name: true
+            show_state: true
+            title: false
+            type: glance
+            styles:
+              card:
+              - width: 25px
+            entities:
+            - entity: sensor.vindue_sensors_aben
+              name: Vindue
+        - type: horizontal-stack
+          cards:
+          - entities:
+            - entity: sensor.ucg_ultra_state
+              name: Internet
+            - entity: sensor.u7_pro_state
+              name: Wifi Hall
+            - entity: sensor.u7_lite_state
+              name: "Wifi V\xE6rksted"
+            type: glance
+        - show_name: true
+          show_icon: true
+          show_state: true
+          entities:
+          - entity: sensor.z_wave
+          - entity: sensor.hue
+          - entity: sensor.esphome
+          - entity: sensor.broadlink
+          - entity: sensor.hue_bridge_zigbee_forbindelse
+            name: Hue Zigbee
+          - entity: update.home_assistant_uptime_kuma_version
+            name: Uptime Kuma
+          - entity: binary_sensor.zigbee2mqtt_bridge_connection_state
+            icon: phu:zigbee2mqtt
+          type: glance
+          state_color: false
+        - show_name: true
+          show_icon: true
+          show_state: true
+          entities:
+          - entity: binary_sensor.smoke_detector_hall_smoke
+            name: Hall
+          - entity: binary_sensor.smoke_detector_stuen_smoke_detected
+            name: Stuen
+          - entity: binary_sensor.smoke_detector_bryggers_smoke_detected
+            name: Bryggers
+          - entity: binary_sensor.smoke_detector_vaerksted_smoke
+            name: "V\xE6rksted"
+          type: glance
+          title: "R\xF8galarm"
+        - show_name: true
+          show_icon: true
+          show_state: true
+          entities:
+          - entity: binary_sensor.ikea_vallhorn_hall_occupancy
+            name: Hall
+          - entity: binary_sensor.motions_sensor_stuen_occupancy
+            name: Stuen
+          - entity: binary_sensor.motion_sensor_vaerksted_occupancy
+            name: "V\xE6rksted"
+          - entity: binary_sensor.hue_outdoor_sensor_indkoersel_bevaegelse
+            name: "Indk\xF8rsels"
+          - entity: binary_sensor.hue_outdoor_sensor_terrasse_bevaegelse
+            name: Terrassen
+          - entity: binary_sensor.hue_outdoor_motion_sensor_hovedindgang_bevaegelse
+            name: "Hoveded\xF8r"
+          - entity: binary_sensor.motion_sensor_entre_occupancy
+            name: Entre
+          - entity: binary_sensor.aqara_p1_motion_sensor_bryggers_occupancy
+            name: Bryggers
+          - entity: binary_sensor.aqara_motion_sensor_p1_carport_occupancy
+            name: Carport
+          type: glance
+      - type: logbook
+        hours_to_show: 24
+        title: Logbog for motion sensor
+        target:
+          entity_id:
+          - binary_sensor.ikea_vallhorn_hall_occupancy
+          - binary_sensor.motions_sensor_stuen_occupancy
+          - binary_sensor.aqara_motion_sensor_p1_carport_occupancy
+          - binary_sensor.motion_sensor_vaerksted_occupancy
+          - binary_sensor.hue_outdoor_sensor_indkoersel_bevaegelse
+          - binary_sensor.hue_outdoor_sensor_terrasse_bevaegelse
+          - binary_sensor.hue_outdoor_motion_sensor_hovedindgang_bevaegelse
+          - binary_sensor.motion_sensor_entre_occupancy
+      - type: entities
+        entities:
+        - entity: binary_sensor.sonoff_dor_sensor_bryggers_contact
+        - entity: binary_sensor.dor_sensor_stuen_contact
+        - entity: binary_sensor.dor_sensor_entre_contact
+        - entity: binary_sensor.dor_sensor_vaerksted_contact
+        - entity: binary_sensor.vindue_sensor_badevaerelse_contact
+        - entity: binary_sensor.vindue_sensor_sovevaerelse_contact
+        - entity: binary_sensor.vindue_sensor_matias_vaerelse_contact
+        - entity: binary_sensor.vindue_sensor_jonatans_vaerelse_contact
+        - entity: binary_sensor.vaerkstedsdor
+        state_color: true
+        title: "Logbog for d\xF8r og vindue sensor"
+      - type: vertical-stack
+        cards:
+        - type: custom:mushroom-title-card
+          title: "Str\xF8mforbrug pr. rum"
+          subtitle: Aktuelt forbrug
+        - type: grid
+          columns: 3
+          square: false
+          cards:
+          - type: custom:mushroom-template-card
+            entity: sensor.vaerksted_stromforbrug
+            primary: "V\xE6rksted"
+            secondary: '{{ states(entity) }} W'
+            icon: mdi:hammer-wrench
+            tap_action:
+              action: more-info
+            color: '{% set w = states(entity)|float(0) %} {% if w >= 1000 %} purple
+              {% elif w >= 400 %} red {% elif w >= 150 %} orange {% elif w >= 30 %}
+              yellow {% else %} green {% endif %}
+
+              '
+            features_position: bottom
+          - type: custom:mushroom-template-card
+            entity: sensor.matias_vaerelse_stromforbrug
+            primary: "Matias v\xE6relse"
+            secondary: '{{ states(entity) }} W'
+            icon: mdi:bed
+            icon_color: '{% set w = states(entity)|float(0) %} {% if w >= 1000 %}
+              purple {% elif w >= 400 %} red {% elif w >= 150 %} orange {% elif w
+              >= 30 %} yellow {% else %} green {% endif %}
+
+              '
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.bryggers_stromforbrug
+            primary: Bryggers
+            secondary: '{{ states(entity) }} W'
+            icon: mdi:washing-machine
+            icon_color: '{% set w = states(entity)|float(0) %} {% if w >= 1000 %}
+              purple {% elif w >= 400 %} red {% elif w >= 150 %} orange {% elif w
+              >= 30 %} yellow {% else %} green {% endif %}
+
+              '
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.sovevaerelse_stromforbrug
+            primary: "Sovev\xE6relse"
+            secondary: '{{ states(entity) }} W'
+            icon: mdi:bed-king
+            icon_color: '{% set w = states(entity)|float(0) %} {% if w >= 1000 %}
+              purple {% elif w >= 400 %} red {% elif w >= 150 %} orange {% elif w
+              >= 30 %} yellow {% else %} green {% endif %}
+
+              '
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.jonatans_vaerelse_stromforbrug
+            primary: "Jonatans v\xE6relse"
+            secondary: '{{ states(entity) }} W'
+            icon: mdi:bed-single
+            icon_color: '{% set w = states(entity)|float(0) %} {% if w >= 1000 %}
+              purple {% elif w >= 400 %} red {% elif w >= 150 %} orange {% elif w
+              >= 30 %} yellow {% else %} green {% endif %}
+
+              '
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.kontor_stromforbrug
+            primary: Kontor
+            secondary: '{{ states(entity) }} W'
+            icon: mdi:desk
+            icon_color: '{% set w = states(entity)|float(0) %} {% if w >= 1000 %}
+              purple {% elif w >= 400 %} red {% elif w >= 150 %} orange {% elif w
+              >= 30 %} yellow {% else %} green {% endif %}
+
+              '
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.kokken_stromforbrug
+            primary: "K\xF8kken"
+            secondary: '{{ states(entity) }} W'
+            icon: mdi:chef-hat
+            icon_color: '{% set w = states(entity)|float(0) %} {% if w >= 1000 %}
+              purple {% elif w >= 400 %} red {% elif w >= 150 %} orange {% elif w
+              >= 30 %} yellow {% else %} green {% endif %}
+
+              '
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.entre_stromforbrug
+            primary: "Entr\xE9"
+            secondary: '{{ states(entity) }} W'
+            icon: mdi:door
+            icon_color: '{% set w = states(entity)|float(0) %} {% if w >= 1000 %}
+              purple {% elif w >= 400 %} red {% elif w >= 150 %} orange {% elif w
+              >= 30 %} yellow {% else %} green {% endif %}
+
+              '
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.hall_stromforbrug
+            primary: Hall
+            secondary: '{{ states(entity) }} W'
+            icon: mdi:mirror
+            icon_color: '{% set w = states(entity)|float(0) %} {% if w >= 1000 %}
+              purple {% elif w >= 400 %} red {% elif w >= 150 %} orange {% elif w
+              >= 30 %} yellow {% else %} green {% endif %}
+
+              '
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.badevaerelse_stromforbrug
+            primary: "Badev\xE6relse"
+            secondary: '{{ states(entity) }} W'
+            icon: mdi:shower
+            icon_color: '{% set w = states(entity)|float(0) %} {% if w >= 1000 %}
+              purple {% elif w >= 400 %} red {% elif w >= 150 %} orange {% elif w
+              >= 30 %} yellow {% else %} green {% endif %}
+
+              '
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.stuen_stromforbrug
+            primary: Stuen
+            secondary: '{{ states(entity) }} W'
+            icon: mdi:sofa
+            icon_color: '{% set w = states(entity)|float(0) %} {% if w >= 1000 %}
+              purple {% elif w >= 400 %} red {% elif w >= 150 %} orange {% elif w
+              >= 30 %} yellow {% else %} green {% endif %}
+
+              '
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.frient_energiforbrug_total_power
+            primary: Huset
+            secondary: '{{ states(entity) }} W'
+            icon: mdi:home-lightning-bolt
+            icon_color: '{% set w = states(entity)|float(0) %} {% if w >= 1000 %}
+              purple {% elif w >= 400 %} red {% elif w >= 150 %} orange {% elif w
+              >= 30 %} yellow {% else %} green {% endif %}
+
+              '
+            tap_action:
+              action: more-info
+      - type: custom:mushroom-template-card
+        primary: Hus (total)
+        secondary: "{{ states('sensor.frient_energiforbrug_total_power') }} W \u2022\
+          \ {{ ((states('sensor.frient_energiforbrug_total_power')|float(0)/1000)\
+          \ * (states('sensor.energi_data_service')|float(0))) | round(2) }} kr/t\n"
+        icon: mdi:home-lightning-bolt
+        tap_action:
+          action: more-info
+      - type: vertical-stack
+        cards:
+        - type: custom:mushroom-template-card
+          entity: sensor.frosne_klima_sensorer
+          primary: "{% if states(entity) == 'ingen' %}\n  Klima-sensorer OK\n{% else\
+            \ %}\n  Frosne klima-sensorer\n{% endif %}\n"
+          secondary: "{% if states(entity) == 'ingen' %}\n  Ingen sensorer er frosne\
+            \ (sidst tjek: {{ now().strftime('%H:%M') }})\n{% else %}\n  {{ states(entity)\
+            \ }}\n{% endif %}\n{% set v = states(entity) %}\n{% if v == 'ingen' %}\n\
+            0 frosne\n{% else %}\n{{ v.split(',') | length }} frosne\n{% endif %}\n"
+          icon: "{% if states(entity) == 'ingen' %}\n  mdi:check-circle\n{% else %}\n\
+            \  mdi:snowflake-alert\n{% endif %}\n"
+          multiline_secondary: true
+          tap_action:
+            action: more-info
+          hold_action:
+            action: navigate
+            navigation_path: /config/integrations
+          color: "{% if states(entity) == 'ingen' %}\n  green\n{% else %}\n  red\n\
+            {% endif %}\n"
+          features_position: bottom
+        - type: custom:mushroom-entity-card
+          entity: sensor.frosne_klima_sensorer
+          name: "Debug (r\xE5 v\xE6rdi)"
+          icon: mdi:bug
+      - type: entities
+        title: "Regnm\xE5ler test"
+        entities:
+        - entity: binary_sensor.regnmaler_contact
+          name: Vippe
+        - entity: counter.regnmaler_tip
+          name: Antal tip
+      - type: custom:mushroom-template-card
+        entity: sensor.husstatus
+        primary: Husstatus
+        secondary: "{% set count = state_attr(entity, 'attention_count') | int(0)\
+          \ %} {% if count == 0 %}\n  Huset OK\n{% elif count <= 2 %}\n  {{ state_attr(entity,\
+          \ 'details') }}\n{% else %}\n  {{ state_attr(entity, 'summary') }}\n{% endif\
+          \ %}\n"
+        icon: '{{ ''mdi:home-check'' if is_state(entity, ''ok'') else ''mdi:home-alert''
+          }}
+
+          '
+        icon_color: '{{ ''green'' if is_state(entity, ''ok'') else ''orange'' }}
+
+          '
+        multiline_secondary: true
+        tap_action:
+          action: navigate
+          navigation_path: '#husstatus'
+        hold_action:
+          action: more-info
+        double_tap_action:
+          action: none
+    - title: Infrastruktur
+      path: infrastruktur
+      icon: mdi:cog-stop-outline
+      badges: []
+      cards:
+      - type: vertical-stack
+        cards:
+        - type: custom:auto-entities
+          card:
+            type: entities
+            show_header_toggle: false
+            header:
+              type: picture
+              image: /api/image/serve/1ee01fa290bb828fb3a62ded144d1a04/512x512
+          filter:
+            include:
+            - options: {}
+              entity_id: sensor.ha_uptime
+          sort:
+            method: attribute
+            numeric: true
+            attribute: days
+        - type: custom:vertical-stack-in-card
+          style: "ha-card {\n  color: teal;\n  background-color: var();\n  border-radius:\
+            \ 10px;\n}\n"
+          cards:
+          - type: vertical-stack
+            cards:
+            - type: markdown
+              style: "ha-card { box-shadow: none; \nbackground-color: var();}\nha-markdown\
+                \ { padding-bottom: 1px !important; }\n"
+              content: '**Home Assistant**
+
+                '
+          - type: vertical-stack
+            cards:
+            - type: entities
+              style: 'ha-card { box-shadow: none;
+
+                background-color: var(); }
+
+                '
+              entities:
+              - type: custom:bar-card
+                name: null
+                entity: sensor.processor_use_percent
+                entity_row: true
+                animation:
+                  state: 'on'
+                positions:
+                  name: inside
+                  value: inside
+                icon: null
+                severity:
+                - color: green
+                  from: 0
+                  to: 29
+                - color: orange
+                  from: 30
+                  to: 79
+                - color: red
+                  from: 80
+                  to: 100
+                style: "ha-card {\n  --paper-item-icon-color: rgb(47,186,229);\n \
+                  \ border-radius: 10px;\n  height: 40px;\n}\nha-icon\t {\n  margin-top:\
+                  \ -7px;\n  color: var(--dwains-theme-accent) !important;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-indicator\t {\n  margin-top: -12px;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-name\t {\n  margin-top: -4.5px;\n  padding-left:\
+                  \ 5px;\n}\nbar-card-backgroundbar\t {\n  margin-top: -3.5px;\n \
+                  \ border-radius: 10px;\n}\nbar-card-currentbar\t {\n  margin-top:\
+                  \ -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetbar\t {\n \
+                  \ margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetmarker\t\
+                  \ {\n  margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-value\t\
+                  \ {\n  margin-top: -4.5px;\n  padding-left: 5px;\n}\n"
+              - type: custom:bar-card
+                name: null
+                entity: sensor.memory_use_percent
+                entity_row: true
+                animation:
+                  state: 'on'
+                positions:
+                  name: inside
+                  value: inside
+                icon: null
+                severity:
+                - color: green
+                  from: 0
+                  to: 29
+                - color: orange
+                  from: 30
+                  to: 79
+                - color: red
+                  from: 80
+                  to: 100
+                style: "ha-card {\n  --paper-item-icon-color: rgb(47,186,229);\n \
+                  \ border-radius: 10px;\n  height: 40px;\n}\nha-icon\t {\n  margin-top:\
+                  \ -7px;\n  color: var(--dwains-theme-accent) !important;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-indicator\t {\n  margin-top: -12px;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-name\t {\n  margin-top: -4.5px;\n  padding-left:\
+                  \ 5px;\n}\nbar-card-backgroundbar\t {\n  margin-top: -3.5px;\n \
+                  \ border-radius: 10px;\n}\nbar-card-currentbar\t {\n  margin-top:\
+                  \ -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetbar\t {\n \
+                  \ margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetmarker\t\
+                  \ {\n  margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-value\t\
+                  \ {\n  margin-top: -4.5px;\n  padding-left: 5px;\n}\n"
+              - type: custom:bar-card
+                name: null
+                entity: sensor.disk_use_percent
+                entity_row: true
+                animation:
+                  state: 'on'
+                positions:
+                  name: inside
+                  value: inside
+                icon: null
+                severity:
+                - color: green
+                  from: 0
+                  to: 29
+                - color: orange
+                  from: 30
+                  to: 79
+                - color: red
+                  from: 80
+                  to: 100
+                style: "ha-card {\n  --paper-item-icon-color: rgb(47,186,229);\n \
+                  \ border-radius: 10px;\n  height: 40px;\n}\nha-icon\t {\n  margin-top:\
+                  \ -7px;\n  color: var(--dwains-theme-accent) !important;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-indicator\t {\n  margin-top: -12px;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-name\t {\n  margin-top: -4.5px;\n  padding-left:\
+                  \ 5px;\n}\nbar-card-backgroundbar\t {\n  margin-top: -3.5px;\n \
+                  \ border-radius: 10px;\n}\nbar-card-currentbar\t {\n  margin-top:\
+                  \ -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetbar\t {\n \
+                  \ margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetmarker\t\
+                  \ {\n  margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-value\t\
+                  \ {\n  margin-top: -4.5px;\n  padding-left: 5px;\n}\n"
+      - type: vertical-stack
+        cards:
+        - show_state: true
+          show_name: true
+          camera_view: auto
+          fit_mode: cover
+          type: picture-entity
+          image:
+            media_content_id: /local/images/lovelace/nuc_4.png
+          entity: sensor.disk_pve_wd_red_sn700_1000gb_temperature
+          name: CPU Temp
+        - type: custom:vertical-stack-in-card
+          cards:
+          - type: vertical-stack
+            cards:
+            - type: markdown
+              style: "ha-card { box-shadow: none; \nbackground-color: var();}\nha-markdown\
+                \ { padding-bottom: 1px !important; }\n"
+              content: '**NUC og Proxmox**
+
+                '
+          - type: vertical-stack
+            cards:
+            - type: entities
+              style: 'ha-card { box-shadow: none;
+
+                background-color: var(); }
+
+                '
+              entities:
+              - type: custom:bar-card
+                name: null
+                entity: sensor.node_pve_cpu_used
+                entity_row: true
+                decimal: 2
+                animation:
+                  state: 'on'
+                positions:
+                  name: inside
+                  value: inside
+                icon: null
+                severity:
+                - color: green
+                  from: 0
+                  to: 29
+                - color: orange
+                  from: 30
+                  to: 79
+                - color: red
+                  from: 80
+                  to: 100
+                style: "ha-card {\n  --paper-item-icon-color: rgb(47,186,229);\n \
+                  \ border-radius: 10px;\n  height: 40px;\n}\nha-icon\t {\n  margin-top:\
+                  \ -7px;\n  color: var(--dwains-theme-accent) !important;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-indicator\t {\n  margin-top: -12px;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-name\t {\n  margin-top: -4.5px;\n  padding-left:\
+                  \ 5px;\n}\nbar-card-backgroundbar\t {\n  margin-top: -3.5px;\n \
+                  \ border-radius: 10px;\n}\nbar-card-currentbar\t {\n  margin-top:\
+                  \ -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetbar\t {\n \
+                  \ margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetmarker\t\
+                  \ {\n  margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-value\t\
+                  \ {\n  margin-top: -4.5px;\n  padding-left: 5px;\n}\n"
+              - type: custom:bar-card
+                name: null
+                entity: sensor.node_pve_memory_used_percentage
+                entity_row: true
+                decimal: 2
+                animation:
+                  state: 'on'
+                positions:
+                  name: inside
+                  value: inside
+                icon: null
+                severity:
+                - color: green
+                  from: 0
+                  to: 29
+                - color: orange
+                  from: 30
+                  to: 79
+                - color: red
+                  from: 80
+                  to: 100
+                style: "ha-card {\n  --paper-item-icon-color: rgb(47,186,229);\n \
+                  \ border-radius: 10px;\n  height: 40px;\n}\nha-icon\t {\n  margin-top:\
+                  \ -7px;\n  color: var(--dwains-theme-accent) !important;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-indicator\t {\n  margin-top: -12px;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-name\t {\n  margin-top: -4.5px;\n  padding-left:\
+                  \ 5px;\n}\nbar-card-backgroundbar\t {\n  margin-top: -3.5px;\n \
+                  \ border-radius: 10px;\n}\nbar-card-currentbar\t {\n  margin-top:\
+                  \ -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetbar\t {\n \
+                  \ margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetmarker\t\
+                  \ {\n  margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-value\t\
+                  \ {\n  margin-top: -4.5px;\n  padding-left: 5px;\n}\n"
+              - type: custom:bar-card
+                name: null
+                entity: sensor.node_pve_disk_used_percentage
+                entity_row: true
+                decimal: 2
+                animation:
+                  state: 'on'
+                positions:
+                  name: inside
+                  value: inside
+                icon: null
+                severity:
+                - color: green
+                  from: 0
+                  to: 29
+                - color: orange
+                  from: 30
+                  to: 79
+                - color: red
+                  from: 80
+                  to: 100
+                style: "ha-card {\n  --paper-item-icon-color: rgb(47,186,229);\n \
+                  \ border-radius: 10px;\n  height: 40px;\n}\nha-icon\t {\n  margin-top:\
+                  \ -7px;\n  color: var(--dwains-theme-accent) !important;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-indicator\t {\n  margin-top: -12px;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-name\t {\n  margin-top: -4.5px;\n  padding-left:\
+                  \ 5px;\n}\nbar-card-backgroundbar\t {\n  margin-top: -3.5px;\n \
+                  \ border-radius: 10px;\n}\nbar-card-currentbar\t {\n  margin-top:\
+                  \ -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetbar\t {\n \
+                  \ margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetmarker\t\
+                  \ {\n  margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-value\t\
+                  \ {\n  margin-top: -4.5px;\n  padding-left: 5px;\n}\n"
+      - type: custom:auto-entities
+        card:
+          type: entities
+          title: Adguard oversigt
+          show_header_toggle: false
+          header:
+            type: picture
+            image: /local/images/lovelace/adguard.PNG
+        filter:
+          include:
+          - entity_id: '*adguard*'
+        sort:
+          method: attribute
+          numeric: true
+          attribute: days
+      - type: vertical-stack
+        cards:
+        - type: horizontal-stack
+          cards:
+          - type: markdown
+            content: '### CPU'
+            card_mod:
+              style: "ha-card {\n  background: rgba(0,0,0,0);\n  text-align: center;\n\
+                \  margin: -20px -0px -20px 0px;\n}\n"
+          - type: markdown
+            content: '### DISK'
+            card_mod:
+              style: "ha-card {\n  background: rgba(0,0,0,0);\n  text-align: center;\n\
+                \  margin: -20px -0px -20px 0px;\n}\n"
+          - type: markdown
+            content: '### RAM'
+            card_mod:
+              style: "ha-card {\n  background: rgba(0,0,0,0);\n  text-align: center;\n\
+                \  margin: -20px -0px -20px 0px;\n}\n"
+          - type: markdown
+            content: '### SWAP'
+            card_mod:
+              style: "ha-card {\n  background: rgba(0,0,0,0);\n  text-align: center;\n\
+                \  margin: -20px -0px -20px 0px;\n}\n"
+          card_mod:
+            style: "ha-card {\n  box-shadow: none;\n  background: rgba(0,0,0,0);\n\
+              \  text-align: center;\n  margin: -40px -0px -20px 0px;\n}\n"
+        - type: vertical-stack
+          cards:
+          - type: custom:stack-in-card
+            mode: vertical
+            cards:
+            - type: vertical-stack
+              cards:
+              - type: conditional
+                conditions:
+                - condition: state
+                  entity: binary_sensor.node_pve_status
+                  state: 'on'
+                card:
+                  type: vertical-stack
+                  cards:
+                  - type: horizontal-stack
+                    cards:
+                    - type: gauge
+                      entity: sensor.node_pve_cpu_used
+                      min: 0
+                      max: 100
+                      severity:
+                        green: 0
+                        yellow: 40
+                        red: 75
+                      needle: false
+                      name: ' '
+                    - type: gauge
+                      entity: sensor.node_pve_disk_used_percentage
+                      min: 0
+                      max: 100
+                      severity:
+                        green: 0
+                        yellow: 75
+                        red: 90
+                      needle: false
+                      name: ' '
+                    - type: gauge
+                      entity: sensor.node_pve_memory_used_percentage
+                      min: 0
+                      max: 100
+                      severity:
+                        green: 0
+                        yellow: 90
+                        red: 95
+                      needle: false
+                      name: ' '
+                    - type: gauge
+                      entity: sensor.node_pve_swap_used_percentage
+                      min: 0
+                      max: 100
+                      severity:
+                        green: 0
+                        yellow: 90
+                        red: 95
+                      needle: false
+                      name: ' '
+        - type: conditional
+          conditions:
+          - condition: state
+            entity: binary_sensor.node_pve_status
+            state_not: 'on'
+          card:
+            type: vertical-stack
+            cards:
+            - type: entities
+              entities:
+              - entity: binary_sensor.node_pve_status
+                type: custom:multiple-entity-row
+                name: Proxmox
+                entities:
+                - icon: mdi:play
+                  state_color: true
+                  tap_action:
+                    action: call-service
+                    service: button.press
+                    service_data:
+                      entity_id: button.node_pve_start
+              state_color: true
+              card_mod:
+                style: "ha-card {\n  box-shadow: none;\n  background: rgba(120,40,20,0.2);\n\
+                  \  text-align: left;\n  margin: -8px -0px -8px 0px;\n}\n"
+      - type: tile
+        entity: sensor.bt_temperatur_i_rackskab_temperature_2
+      - type: tile
+        entity: sensor.bt_temperatur_i_bryggers_gasskab_temperature_3
+    - title: "Str\xF8mforbrug"
+      path: stromforbrug
+      icon: mdi:flash
+      badges: []
+      cards:
+      - type: vertical-stack
+        cards:
+        - type: markdown
+          content: '## Kims computer'
+        - type: custom:mini-graph-card
+          entities:
+          - sensor.shelly_plug_1_power
+          name: "Kims nuv\xE6rende forbrug"
+          height: 46
+          line_width: 2
+          font_size: 65
+          hours_to_show: 168
+          points_per_hour: 1
+          show:
+            icon: false
+            extrema: true
+            average: true
+          color_thresholds:
+          - value: 28
+            color: '#e74c3c'
+          - value: 15
+            color: '#1db954'
+          - value: 0
+            color: '#3498db'
+        - type: entities
+          entities:
+          - entity: sensor.kims_daily_energy
+          - entity: sensor.kims_monthly_energy
+          - entity: sensor.kims_yearly_energy
+      - type: vertical-stack
+        cards:
+        - type: markdown
+          content: '## Jonatans computer'
+        - type: custom:mini-graph-card
+          entities:
+          - sensor.shelly_plug_2_power
+          name: "Jonatans nuv\xE6rende forbrug"
+          height: 46
+          line_width: 2
+          font_size: 65
+          hours_to_show: 168
+          points_per_hour: 1
+          show:
+            icon: false
+            extrema: true
+            average: true
+          color_thresholds:
+          - value: 28
+            color: '#e74c3c'
+          - value: 15
+            color: '#1db954'
+          - value: 0
+            color: '#3498db'
+        - type: entities
+          entities:
+          - entity: sensor.jonatans_daily_energy
+          - entity: sensor.jonatans_monthly_energy
+          - entity: sensor.jonatans_yearly_energy
+          - entity: sensor.jonatan_forecast_kwh_ar
+      - type: vertical-stack
+        cards:
+        - type: markdown
+          content: '## Matias computer'
+        - type: custom:mini-graph-card
+          entities:
+          - sensor.shelly_plug_3_power
+          name: "Matias nuv\xE6rende forbrug"
+          height: 46
+          line_width: 2
+          font_size: 65
+          hours_to_show: 168
+          points_per_hour: 1
+          show:
+            icon: false
+            extrema: true
+            average: true
+          color_thresholds:
+          - value: 28
+            color: '#e74c3c'
+          - value: 15
+            color: '#1db954'
+          - value: 0
+            color: '#3498db'
+        - type: entities
+          entities:
+          - entity: sensor.matias_daily_energy
+          - entity: sensor.matias_monthly_energy
+          - entity: sensor.matias_yearly_energy
+          - entity: sensor.matias_forecast_kwh_ar
+      - type: vertical-stack
+        cards:
+        - type: markdown
+          content: '## Rackskab computer'
+        - type: custom:mini-graph-card
+          entities:
+          - sensor.shelly_plug_4_power
+          name: "Rackskab nuv\xE6rende forbrug"
+          height: 46
+          line_width: 2
+          font_size: 65
+          hours_to_show: 168
+          points_per_hour: 1
+          show:
+            icon: false
+            extrema: true
+            average: true
+          color_thresholds:
+          - value: 110
+            color: '#e74c3c'
+          - value: 100
+            color: '#1db954'
+          - value: 80
+            color: '#3498db'
+        - type: entities
+          entities:
+          - entity: sensor.rackskab_daily_energy
+          - entity: sensor.rackskab_monthly_energy
+          - entity: sensor.rackskab_yearly_energy
+      - type: vertical-stack
+        cards:
+        - type: markdown
+          content: '## 3D printerer'
+        - type: custom:mini-graph-card
+          entities:
+          - sensor.shellyplug_6_power
+          name: "3D printer nuv\xE6rende forbrug"
+          height: 46
+          line_width: 2
+          font_size: 65
+          hours_to_show: 168
+          points_per_hour: 1
+          show:
+            icon: false
+            extrema: true
+            average: true
+          color_thresholds:
+          - value: 28
+            color: '#e74c3c'
+          - value: 15
+            color: '#1db954'
+          - value: 0
+            color: '#3498db'
+        - type: entities
+          entities:
+          - entity: sensor.3d_printer_daily_energy
+          - entity: sensor.3d_printer_monthly_energy
+          - entity: sensor.3d_printer_yearly_energy
+      - type: vertical-stack
+        cards:
+        - type: markdown
+          content: "## V\xE6rksted-radiator"
+        - type: custom:mini-graph-card
+          entities:
+          - sensor.shelly_plug_7_power
+          name: "V\xE6rksted-radiator nuv\xE6rende forbrug"
+          height: 46
+          line_width: 2
+          font_size: 65
+          hours_to_show: 168
+          points_per_hour: 1
+          show:
+            icon: false
+            extrema: true
+            average: true
+          color_thresholds:
+          - value: 28
+            color: '#e74c3c'
+          - value: 15
+            color: '#1db954'
+          - value: 0
+            color: '#3498db'
+        - type: entities
+          entities:
+          - entity: sensor.vaerksted_radiator_daily_energy
+          - entity: sensor.vaerksted_radiator_monthly_energy
+          - entity: sensor.vaerksted_radiator_yearly_energy
+          - entity: sensor.vaerksted_radiator_forecast_kwh_ar
+          - entity: sensor.vaerksted_radiator_ytd_vs_sidste_ar_kwh
+      - type: vertical-stack
+        cards:
+        - type: markdown
+          content: "## V\xE6rksted-K\xF8leskab"
+        - type: custom:mini-graph-card
+          entities:
+          - sensor.shelly_plug_8_power
+          name: "V\xE6rksted-k\xF8leskab nuv\xE6rende forbrug"
+          height: 46
+          line_width: 2
+          font_size: 65
+          hours_to_show: 168
+          points_per_hour: 1
+          show:
+            icon: false
+            extrema: true
+            average: true
+          color_thresholds:
+          - value: 28
+            color: '#e74c3c'
+          - value: 15
+            color: '#1db954'
+          - value: 0
+            color: '#3498db'
+        - type: entities
+          entities:
+          - entity: sensor.vaerksted_koleskab_daily_energy
+          - entity: sensor.vaerksted_koleskab_monthly_energy
+          - entity: sensor.vaerksted_koleskab_yearly_energy
+          - entity: sensor.vaerksted_koleskab_forecast_kwh_ar
+      - type: vertical-stack
+        cards:
+        - type: markdown
+          content: '## Gittes computer og Apple Tv'
+        - type: custom:mini-graph-card
+          entities:
+          - sensor.shelly_plug_9_power
+          name: "Gittes nuv\xE6rende forbrug"
+          height: 46
+          line_width: 2
+          font_size: 65
+          hours_to_show: 168
+          points_per_hour: 1
+          show:
+            icon: false
+            extrema: true
+            average: true
+          color_thresholds:
+          - value: 28
+            color: '#e74c3c'
+          - value: 15
+            color: '#1db954'
+          - value: 0
+            color: '#3498db'
+        - type: entities
+          entities:
+          - entity: sensor.gittes_computer_daily_energy
+          - entity: sensor.gittes_computer_monthly_energy
+          - entity: sensor.gittes_computer_yearly_energy
+      - type: entities
+        entities:
+        - entity: sensor.energi_data_service
+          name: Aktueller pris
+        - entity: sensor.gennemsnit_el_pris_i_dag
+          name: Gennemsnit pris i dag
+        - entity: sensor.hojeste_el_pris_i_dag
+        - entity: sensor.laveste_el_pris_i_dag
+        - entity: sensor.gennemsnit_el_pris_i_morgen
+        title: Energi Data Service
+      - type: entities
+        entities:
+        - entity: sensor.daily_energy
+          name: "Dagens str\xF8mforbrug"
+        title: Data fra frient (sensor i El-kabet)
+      - type: gauge
+        entity: sensor.frient_energiforbrug_total_power
+        min: 0
+        max: 6000
+        needle: true
+        severity:
+          green: 600
+          yellow: 1800
+          red: 3200
+        name: El-forbrug i dag
+      - type: vertical-stack
+        cards:
+        - type: markdown
+          content: '## Unifi Brygger'
+        - type: custom:mini-graph-card
+          entities:
+          - sensor.tuya_smart_plug2_power
+          name: "Rackskab nuv\xE6rende forbrug"
+          height: 46
+          line_width: 2
+          font_size: 65
+          hours_to_show: 168
+          points_per_hour: 1
+          show:
+            icon: false
+            extrema: true
+            average: true
+          color_thresholds:
+          - value: 110
+            color: '#e74c3c'
+          - value: 100
+            color: '#1db954'
+          - value: 80
+            color: '#3498db'
+        - type: entities
+          entities:
+          - entity: sensor.unifi_bryggers_daily_energy
+          - entity: sensor.unifi_bryggers_monthly_energy
+          - entity: sensor.unifi_bryggers_yearly_energy
+      - type: custom:auto-entities
+        card:
+          type: entities
+          title: PowerCalc Energiforbrug (kWh)
+          show_header_toggle: false
+        filter:
+          include:
+          - domain: sensor
+            integration: powercalc
+            attributes:
+              unit_of_measurement: kWh
+          exclude:
+          - state: unknown
+          - state: unavailable
+        sort:
+          method: name
+          numeric: false
+      - type: entities
+        entities:
+        - entity: sensor.samsung_fryser_forecast_kwh_ar
+        - entity: sensor.samsung_koleskab_forecast_kwh_ar
+      - type: vertical-stack
+        cards:
+        - type: markdown
+          content: '## energy kort'
+        - type: energy-date-selection
+        - type: energy-usage-graph
+        - type: energy-distribution
+          link_dashboard: true
+        - type: energy-devices-graph
+        - type: energy-devices-detail-graph
+          max_devices: 5
+        - type: energy-sankey
+      - type: distribution
+        entities:
+        - sensor.lvd_smart_plug_bambu_p1s_strom_2
+        - sensor.lvd_smart_plug_bambu_h2d_strom
+        - sensor.dobbelt_udtag_energimaler_power
+    - title: 3D-printere
+      path: 3d-printere-ny
+      icon: mdi:printer-3d
+      type: sections
+      max_columns: 2
+      sections:
+      - type: grid
+        cards:
+        - type: heading
+          heading: Bambu H2D
+          heading_style: title
+        - type: gauge
+          entity: sensor.h2d_0948db552101895_print_fremskridt
+          name: "Print f\xE6rdigt"
+          min: 0
+          max: 100
+        - type: entities
+          title: Printopgave
+          show_header_toggle: false
+          entities:
+          - entity: sensor.h2d_0948db552101895_print_status
+            name: Printstatus
+          - entity: sensor.h2d_0948db552101895_opgavenavn
+            name: Opgave
+          - entity: sensor.h2d_0948db552101895_resterende_tid
+            name: Resterende tid (timer)
+          - entity: sensor.h2d_0948db552101895_sluttidspunkt
+            name: Forventet sluttid
+          - entity: sensor.h2d_0948db552101895_aktuelt_lag
+            name: Aktuelt lag
+          - entity: sensor.h2d_0948db552101895_samlet_antal_lag
+            name: Lag i alt
+          - entity: sensor.h2d_0948db552101895_aktiv_bakke
+            name: Aktiv filament
+        - type: picture-entity
+          entity: image.h2d_0948db552101895_forsidebillede
+          name: Modelbillede
+          show_state: false
+          show_name: true
+        - type: entities
+          title: Temperaturer
+          show_header_toggle: false
+          entities:
+          - entity: sensor.h2d_0948db552101895_dysetemperatur
+            name: Dyse
+          - entity: sensor.h2d_0948db552101895_bed_temperatur
+            name: Byggeplade
+          - entity: sensor.h2d_0948db552101895_kabinetemperatur
+            name: Enclosure
+        - type: tile
+          entity: light.h2d_0948db552101895_kabinelys
+          name: Kabinelys
+      - type: grid
+        cards:
+        - type: heading
+          heading: Bambu P1S
+          heading_style: title
+        - type: gauge
+          entity: sensor.ps1_01_print_progress
+          name: "Print f\xE6rdigt"
+          min: 0
+          max: 100
+        - type: entities
+          title: Printopgave
+          show_header_toggle: false
+          entities:
+          - entity: sensor.ps1_01_print_status
+            name: Printstatus
+          - entity: sensor.ps1_01_task_name
+            name: Opgave
+          - entity: sensor.ps1_01_remaining_time
+            name: Resterende tid (timer)
+          - entity: sensor.ps1_01_end_time
+            name: Forventet sluttid
+          - entity: sensor.ps1_01_current_layer
+            name: Aktuelt lag
+          - entity: sensor.ps1_01_total_layer_count
+            name: Lag i alt
+          - entity: sensor.ps1_01_active_tray
+            name: Aktiv filament
+        - type: picture-entity
+          entity: image.ps1_01_cover_image
+          name: Modelbillede
+          show_state: false
+          show_name: true
+        - type: entities
+          title: Temperaturer
+          show_header_toggle: false
+          entities:
+          - entity: sensor.ps1_01_nozzle_temperature
+            name: Dyse
+          - entity: sensor.ps1_01_bed_temperature
+            name: Byggeplade
+          - entity: sensor.weather_bambu_p1s_temperature
+            name: Enclosure
+        - type: tile
+          entity: light.ps1_01_chamber_light
+          name: Kabinelys
+      - type: grid
+        cards:
+        - type: heading
+          heading: "H2D \xB7 AMS 1 og AMS 2"
+          heading_style: title
+        - type: entities
+          title: AMS 1
+          show_header_toggle: false
+          entities:
+          - entity: sensor.h2d_0948db552101895_ams_1_fugtighed
+            name: Luftfugtighed
+          - entity: sensor.h2d_0948db552101895_ams_1_temperatur
+            name: Temperatur
+          - entity: sensor.h2d_0948db552101895_ams_1_fugtighedsindeks
+            name: Fugtighedsindeks
+          - entity: sensor.h2d_0948db552101895_ams_1_bakke
+            name: Plads 1
+          - entity: sensor.h2d_0948db552101895_ams_1_bakke_2
+            name: Plads 2
+          - entity: sensor.h2d_0948db552101895_ams_1_bakke_3
+            name: Plads 3
+          - entity: sensor.h2d_0948db552101895_ams_1_bakke_4
+            name: Plads 4
+        - type: entities
+          title: AMS 2
+          show_header_toggle: false
+          entities:
+          - entity: sensor.h2d_0948db552101895_ams_2_fugtighed
+            name: Luftfugtighed
+          - entity: sensor.h2d_0948db552101895_ams_2_temperatur
+            name: Temperatur
+          - entity: sensor.h2d_0948db552101895_ams_2_fugtighedsindeks
+            name: Fugtighedsindeks
+          - entity: sensor.h2d_0948db552101895_ams_2_bakke_1
+            name: Plads 1
+          - entity: sensor.h2d_0948db552101895_ams_2_bakke_2
+            name: Plads 2
+          - entity: sensor.h2d_0948db552101895_ams_2_bakke_3
+            name: Plads 3
+          - entity: sensor.h2d_0948db552101895_ams_2_bakke_4
+            name: Plads 4
+      - type: grid
+        cards:
+        - type: heading
+          heading: "H2D \xB7 AMS HT og P1S \xB7 AMS"
+          heading_style: title
+        - type: entities
+          title: "H2D \xB7 AMS HT"
+          show_header_toggle: false
+          entities:
+          - entity: sensor.h2d_0948db552101895_ams_128_fugtighed
+            name: Luftfugtighed
+          - entity: sensor.h2d_0948db552101895_ams_128_temperatur
+            name: Temperatur
+          - entity: sensor.h2d_0948db552101895_ams_128_fugtighedsindeks
+            name: Fugtighedsindeks
+          - entity: sensor.h2d_0948db552101895_ams_128_bakke_1
+            name: Plads 1
+          - entity: sensor.h2d_0948db552101895_ams_128_resterende_torretid
+            name: "Resterende t\xF8rretid"
+        - type: entities
+          title: "P1S \xB7 AMS 1"
+          show_header_toggle: false
+          entities:
+          - entity: sensor.p1s_01p00a452601054_ams_1_fugtighed
+            name: Luftfugtighed
+          - entity: sensor.p1s_01p00a452601054_ams_1_temperatur
+            name: Temperatur
+          - entity: sensor.p1s_01p00a452601054_ams_1_fugtighedsindeks
+            name: Fugtighedsindeks
+          - entity: sensor.p1s_01p00a452601054_ams_1_bakke_1
+            name: Plads 1
+          - entity: sensor.p1s_01p00a452601054_ams_1_bakke_2
+            name: Plads 2
+          - entity: sensor.p1s_01p00a452601054_ams_1_bakke_3
+            name: Plads 3
+          - entity: sensor.p1s_01p00a452601054_ams_1_bakke_4
+            name: Plads 4
+      - type: grid
+        cards:
+        - type: heading
+          heading: "Str\xF8m og drift"
+          heading_style: title
+        - type: entities
+          title: Smart plugs
+          show_header_toggle: false
+          entities:
+          - entity: switch.lvd_smart_plug_bambu_h2d
+            name: "H2D str\xF8m"
+          - entity: switch.lvd_smart_plug_bambu_p1s
+            name: "P1S str\xF8m"
+          - entity: sensor.lvd_smart_plug_bambu_h2d_strom
+            name: "H2D effekt (kontroll\xE9r enhed)"
+          - entity: sensor.lvd_smart_plug_bambu_p1s_strom
+            name: "P1S effekt (kontroll\xE9r enhed)"
+          - entity: sensor.lvd_smart_plug_bambu_h2d_energy
+            name: H2D energi
+          - entity: sensor.lvd_smart_plug_bambu_p1s_energy
+            name: P1S energi
+        - type: entities
+          title: Printerforbindelse
+          show_header_toggle: false
+          entities:
+          - entity: binary_sensor.h2d_0948db552101895_online
+            name: H2D online
+          - entity: binary_sensor.ps1_01_online
+            name: P1S online
+          - entity: binary_sensor.h2d_0948db552101895_hms_fejl
+            name: H2D HMS-fejl
+          - entity: binary_sensor.ps1_01_hms_errors
+            name: P1S HMS-fejl
+        - type: heading
+          heading: Saturn
+          heading_style: title
+        - type: tile
+          entity: sensor.weather_saturn_resin_printer_humidity
+          vertical: false
+          features_position: bottom
+        - type: tile
+          entity: sensor.weather_saturn_resin_printer_pressure
+          vertical: false
+          features_position: bottom
+        - type: tile
+          entity: sensor.weather_saturn_resin_printer_temperature
+          vertical: false
+          features_position: bottom
+        - type: tile
+          entity: sensor.weather_saturn_resin_printer_device_temperature
+          vertical: false
+          features_position: bottom
+      cards:
+      - type: vertical-stack
+        cards:
+        - type: markdown
+          content: '## 3D printerer'
+        - type: custom:mini-graph-card
+          entities:
+          - sensor.shellyplug_6_power
+          name: "3D printer nuv\xE6rende forbrug"
+          height: 46
+          line_width: 2
+          font_size: 65
+          hours_to_show: 168
+          points_per_hour: 1
+          show:
+            icon: false
+            extrema: true
+            average: true
+          color_thresholds:
+          - value: 28
+            color: '#e74c3c'
+          - value: 15
+            color: '#1db954'
+          - value: 0
+            color: '#3498db'
+        - type: entities
+          entities:
+          - entity: sensor.3d_printer_daily_energy
+          - entity: sensor.3d_printer_monthly_energy
+          - entity: sensor.3d_printer_yearly_energy
+    - title: Shelly
+      path: shelly
+      icon: phu:shelly-logo
+      badges: []
+      cards:
+      - card:
+          show_header_toggle: false
+          title: Shelly
+          type: entities
+        filter:
+          exclude:
+          - entity_id: '*rssi*'
+          - entity_id: '*uptime*'
+          - entity_id: '*firmware*'
+          include:
+          - entity_id: '*shelly*'
+        type: custom:auto-entities
+      - card:
+          show_header_toggle: false
+          title: Shelly need update
+          type: entities
+        filter:
+          include:
+          - entity_id: '*firmware_update*'
+        type: custom:auto-entities
+    - title: Unifi
+      path: unifi
+      icon: phu:ubiquiti-logo
+      badges: []
+      cards:
+      - type: custom:vertical-stack-in-card
+        style: "ha-card {\n  color: teal;\n  background-color: var();\n  border-radius:\
+          \ 10px;\n}\n"
+        cards:
+        - type: vertical-stack
+          cards:
+          - type: markdown
+            style: "ha-card { box-shadow: none; \nbackground-color: var();}\nha-markdown\
+              \ { padding-bottom: 1px !important; }\n"
+            content: '<img width="125" src="https://brands.home-assistant.io/unifi/logo.png"/><br/>
+
+              '
+          - type: custom:button-card
+            show_state: false
+            styles:
+              grid:
+              - grid-template-areas: '"i n" "i n" "i n"'
+              - grid-template-columns: 25% 75%
+              - grid-template-rows: min-content min-content
+              card:
+              - background-color: var()
+              - border-radius: 10px
+              - box-shadow: none
+              - width: 250px
+              - margin-left: 10px
+              - padding-top: 10px
+              - padding-bottom: 10px
+              - margin-bottom: 5px
+              name:
+              - font-size: 15px
+              - font-weight: bold
+              - color: var()
+              - justify-self: start
+              state:
+              - justify-self: start
+              - font-size: 13px
+              - color: var()
+              label:
+              - padding-top: 0px
+              - padding-bottom: 0px
+              - font-size: 12px
+              - color: var()
+              - justify-self: start
+              icon:
+              - color: var()
+            name: UniFi Controller
+            icon: mdi:web
+            color: var()
+            tap_action:
+              action: url
+              url_path: https://10.0.0.55:8443
+      - type: vertical-stack
+        cards:
+        - show_state: true
+          show_name: true
+          camera_view: auto
+          type: picture-entity
+          entity: sensor.ucg_ultra_uptime
+          image: /local/images/lovelace/unifi_usg_small.jpg
+        - type: custom:vertical-stack-in-card
+          cards:
+          - type: vertical-stack
+            cards:
+            - type: markdown
+              style: "ha-card { box-shadow: none; \nbackground-color: var();}\nha-markdown\
+                \ { padding-bottom: 1px !important; }\n"
+              content: '**UniFi Ultra**
+
+                '
+            - type: entities
+              style: 'ha-card { box-shadow: none;
+
+                background-color: var(); }
+
+                '
+              entities:
+              - type: custom:bar-card
+                name: null
+                entity: sensor.ucg_ultra_hasselhaven_20_cpu_temperature
+                entity_row: true
+                animation:
+                  state: 'on'
+                positions:
+                  name: inside
+                  value: inside
+                icon: mdi:cpu-64-bit
+                severity:
+                - color: green
+                  from: 0
+                  to: 29
+                - color: orange
+                  from: 30
+                  to: 79
+                - color: red
+                  from: 80
+                  to: 100
+                style: "ha-card {\n  --paper-item-icon-color: rgb(47,186,229);\n \
+                  \ border-radius: 10px;\n  height: 40px;\n}\nha-icon\t {\n  margin-top:\
+                  \ -7px;\n  color: var(--dwains-theme-accent) !important;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-indicator\t {\n  margin-top: -12px;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-name\t {\n  margin-top: -4.5px;\n  padding-left:\
+                  \ 5px;\n}\nbar-card-backgroundbar\t {\n  margin-top: -3.5px;\n \
+                  \ border-radius: 10px;\n}\nbar-card-currentbar\t {\n  margin-top:\
+                  \ -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetbar\t {\n \
+                  \ margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetmarker\t\
+                  \ {\n  margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-value\t\
+                  \ {\n  margin-top: -4.5px;\n  padding-left: 5px;\n}\n"
+              - type: custom:bar-card
+                name: null
+                entity: sensor.ucg_ultra_cpu_utilization
+                entity_row: true
+                animation:
+                  state: 'on'
+                positions:
+                  name: inside
+                  value: inside
+                icon: mdi:memory
+                severity:
+                - color: green
+                  from: 0
+                  to: 29
+                - color: orange
+                  from: 30
+                  to: 79
+                - color: red
+                  from: 80
+                  to: 100
+                style: "ha-card {\n  --paper-item-icon-color: rgb(47,186,229);\n \
+                  \ border-radius: 10px;\n  height: 40px;\n}\nha-icon\t {\n  margin-top:\
+                  \ -7px;\n  color: var(--dwains-theme-accent) !important;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-indicator\t {\n  margin-top: -12px;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-name\t {\n  margin-top: -4.5px;\n  padding-left:\
+                  \ 5px;\n}\nbar-card-backgroundbar\t {\n  margin-top: -3.5px;\n \
+                  \ border-radius: 10px;\n}\nbar-card-currentbar\t {\n  margin-top:\
+                  \ -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetbar\t {\n \
+                  \ margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetmarker\t\
+                  \ {\n  margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-value\t\
+                  \ {\n  margin-top: -4.5px;\n  padding-left: 5px;\n}\n"
+              - type: custom:bar-card
+                name: null
+                entity: sensor.ucg_ultra_memory_utilization
+                entity_row: true
+                animation:
+                  state: 'on'
+                positions:
+                  name: inside
+                  value: inside
+                icon: mdi:memory
+                severity:
+                - color: green
+                  from: 0
+                  to: 29
+                - color: orange
+                  from: 30
+                  to: 79
+                - color: red
+                  from: 80
+                  to: 100
+                style: "ha-card {\n  --paper-item-icon-color: rgb(47,186,229);\n \
+                  \ border-radius: 10px;\n  height: 40px;\n}\nha-icon\t {\n  margin-top:\
+                  \ -7px;\n  color: var(--dwains-theme-accent) !important;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-indicator\t {\n  margin-top: -12px;\n  padding-right:\
+                  \ 5px;\n}\nbar-card-name\t {\n  margin-top: -4.5px;\n  padding-left:\
+                  \ 5px;\n}\nbar-card-backgroundbar\t {\n  margin-top: -3.5px;\n \
+                  \ border-radius: 10px;\n}\nbar-card-currentbar\t {\n  margin-top:\
+                  \ -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetbar\t {\n \
+                  \ margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-targetmarker\t\
+                  \ {\n  margin-top: -3.5px;\n  border-radius: 10px;\n}\nbar-card-value\t\
+                  \ {\n  margin-top: -4.5px;\n  padding-left: 5px;\n}\n"
+      - type: custom:vertical-stack-in-card
+        cards:
+        - type: custom:mini-graph-card
+          style: "ha-card {\n  border-radius: 10px;\n  background-color: var();\n\
+            }\n:host {\n  --paper-item-icon-color: var() !important;\n}\n"
+          entities:
+          - entity: sensor.ucg_ultra_google_wan_latency
+            name: Latency (Ms)
+          name: Google WAN latency
+          height: 10
+          line_color: var)
+          line_width: 2
+          font_size: 70
+          hours_to_show: 168
+          points_per_hour: 1
+          align_state: center
+          show:
+            fill: fade
+      - type: entities
+        entities:
+        - entity: sensor.u7_pro_state
+          name: State
+        - entity: sensor.u7_pro_clients
+          name: Clients
+        - entity: sensor.u7_pro_uptime
+          name: Uptime
+        - entity: sensor.u7_lite_cpu_utilization
+          name: CPU utilization
+        - entity: sensor.u7_lite_memory_utilization
+          name: Memory utilization
+        - entity: button.u7_pro_restart
+        title: Access Point U7 Pro
+      - type: entities
+        entities:
+        - entity: sensor.u7_lite_state
+          name: State
+        - entity: sensor.u7_lite_clients
+          name: Clients
+        - entity: sensor.u7_lite_uptime
+          name: Uptime
+        - entity: sensor.u7_lite_cpu_utilization
+          name: CPU utilization
+        - entity: sensor.u7_lite_memory_utilization
+          name: Memory utilization
+        - entity: button.u7_lite_restart
+        title: Access Point U7-Lite
+      - type: entities
+        entities:
+        - entity: sensor.us_8_60w_entre_state
+          name: State
+        - entity: sensor.us_8_60w_entre_clients
+        - entity: sensor.us_8_60w_entre_uptime
+          name: Uptime
+        - entity: sensor.us_8_60w_entre_cpu_utilization
+          name: CPU utilization
+        - entity: sensor.us_8_60w_entre_memory_utilization
+          name: Memory utilization
+        title: US-8-60W Entre
+      - type: entities
+        entities:
+        - entity: sensor.us_8_60w_bryggers_state
+          name: State
+        - entity: sensor.us_8_60w_bryggers_uptime
+          name: Uptime
+        - entity: sensor.us_8_60w_bryggers_clients
+        - entity: sensor.us_8_60w_bryggers_cpu_utilization
+          name: CPU utilization
+        - entity: sensor.us_8_60w_bryggers_memory_utilization
+          name: Memory utilization
+        title: US-8-60W -bryggers
+      - type: entities
+        entities:
+        - entity: sensor.us_8_60w_vaerksted_state
+          name: State
+        - entity: sensor.us_8_60w_vaerksted_clients
+          name: Clients
+        - entity: sensor.us_8_60w_vaerksted_uptime
+          name: Uptime
+        - entity: sensor.us_8_60w_vaerksted_cpu_utilization
+          name: CPU utilization
+        - entity: sensor.us_8_60w_vaerksted_memory_utilization
+          name: Memory utilization
+        title: "US-8-60W V\xE6rksted"
+      - type: entities
+        entities:
+        - entity: sensor.ucg_ultra_state
+          name: State
+        - entity: sensor.ucg_ultra_clients
+          name: Clients
+        - entity: sensor.ucg_ultra_uptime
+          name: Uptime
+        - entity: sensor.ucg_ultra_microsoft_wan_latency
+          name: Microsoft WAN latency
+        - entity: sensor.ucg_ultra_google_wan_latency
+          name: Google WAN latency
+        - entity: sensor.ucg_ultra_cloudflare_wan_latency
+          name: Cloudflare WAN latency
+        - entity: sensor.ucg_ultra_hasselhaven_20_cpu_temperature
+          name: CPU Temperatur
+        - entity: sensor.ucg_ultra_cpu_utilization
+          name: CPU utilization
+        - entity: sensor.ucg_ultra_memory_utilization
+          name: Memory utilization
+        title: UCG Ultra
+      - type: entities
+        entities:
+        - entity: sensor.usw_flex_mini_vaerksted_state
+          name: State
+        - entity: sensor.usw_flex_mini_vaerksted_clients
+          name: Clients
+        - entity: sensor.usw_flex_mini_vaerksted_uptime
+          name: Uptime
+        - entity: sensor.usw_flex_mini_vaerksted_cpu_utilization
+          name: CPU utilization
+        - entity: sensor.usw_flex_mini_vaerksted_memory_utilization
+          name: Memory utilization
+        title: "USW-Flex-Mini -v\xE6rksted"
+      - type: entities
+        entities:
+        - entity: sensor.usw_flex_mini_sovevaerelse_clients
+          name: Clients
+        - entity: sensor.usw_flex_mini_sovevaerelse_cpu_utilization
+          name: CPU utilization
+        - entity: sensor.usw_flex_mini_sovevaerelse_memory_utilization
+          name: Memory utilization
+        - entity: sensor.usw_flex_mini_sovevaerelse_state
+          name: State
+        - entity: sensor.usw_flex_mini_sovevaerelse_uptime
+          name: Uptime
+        - entity: device_tracker.usw_flex_mini_sovevaerelse
+        title: "USW-Flex-Mini -sovev\xE6relse"
+      - type: entities
+        entities:
+        - entity: update.uap_ac_lr
+        - entity: update.u6_lite
+        - entity: update.ucg_ultra
+        - entity: update.us_8_60w_bryggers
+        - entity: update.us_8_60w_entre
+        - entity: update.us_8_60w_vaerksted
+        - entity: update.usw_flex_mini_sovevaerelse
+        - entity: update.usw_flex_mini_vaerksted
+        title: Update
+    - title: Alarm
+      path: alarm
+      icon: mdi:shield-home
+      badges: []
+      cards:
+      - type: alarm-panel
+        states:
+        - arm_home
+        - arm_away
+        entity: alarm_control_panel.alarmo
+      - type: entities
+        entities:
+        - entity: input_boolean.stuen_motion
+        - entity: input_boolean.hall_motion
+        - entity: input_boolean.entre_motion
+        - entity: input_boolean.bryggers_motion
+        - entity: input_boolean.indkoersel_motion
+        - entity: input_boolean.terrasse_motion
+        - entity: input_boolean.vaerksted_motion
+        - entity: input_boolean.hovedindgang_motion
+        title: Motin sensor
+      - type: entities
+        entities:
+        - entity: input_boolean.entre_dor
+        - entity: input_boolean.bryggers_dor
+        - entity: input_boolean.stuen_dor
+        title: "D\xF8r sensor"
+      - type: entities
+        entities:
+        - entity: input_boolean.badevaerelses_vindue
+        - entity: input_boolean.jonatan_vindue
+        - entity: input_boolean.matias_vindue
+        - entity: input_boolean.sovevaerelses_vindue
+        title: Vinduet sensor
+      - clock_style: analog
+        clock_size: small
+        show_seconds: false
+        no_background: false
+        border: false
+        ticks: hour
+        type: clock
+    - title: Batteri
+      path: batteri
+      icon: mdi:battery
+      badges: []
+      cards:
+      - type: custom:auto-entities
+        card:
+          type: custom:bar-card
+          title: Batterier Unavailable
+          icon: mdi:battery-off-outline
+          show_header_toggle: false
+          severity:
+          - color: Red
+            from: 0
+            to: 100
+          position:
+            icon: 'off'
+            indicator: inside
+            name: outside
+            value: inside
+          height: 2vh
+          width: 50%
+        filter:
+          include:
+          - domain: sensor
+            attributes:
+              device_class: battery
+            state: unavailable
+        sort:
+          method: state
+          numeric: true
+      - type: custom:auto-entities
+        card:
+          type: custom:bar-card
+          title: test batteri advarelse
+          show_header_toggle: false
+          severity:
+          - color: Red
+            from: 0
+            to: 20
+          - color: Orange
+            from: 21
+            to: 49
+          - color: Yellow
+            from: 50
+            to: 60
+          - color: LawnGreen
+            from: 61
+            to: 74
+          - color: Green
+            from: 75
+            to: 100
+          positions:
+            icon: 'off'
+            indicator: inside
+            name: outside
+            value: inside
+          height: 2vh
+          width: 50%
+        filter:
+          include:
+          - domain: sensor
+            attributes:
+              device_class: battery
+              unit_of_measurement: '%'
+            state: < 50
+          exclude:
+          - attributes:
+              is_changing: true
+          - attributes:
+              is_charging: false
+        sort:
+          method: state
+          numeric: true
+      - type: custom:battery-state-card
+        title: Batteri status
+        sort_by_level: asc
+        bulk_rename:
+        - from: Battery Level
+          to: sensor
+        - from: /\s(temperature|temp)\s/
+          to: ' temp. '
+        filter:
+          include:
+          - name: entity_id
+            value: '*battery*'
+          - name: attributes.device_class
+            value: battery
+          exclude:
+          - name: entity_id
+            value: Body
+          - name: '*state*'
+            value: 99
+            operator: '>'
+          - name: entity_id
+            value: '*status*'
+          - name: entity_id
+            value: '*temperature*'
+          - name: entity_id
+            value: '*battery_state*'
+          - name: entity_id
+            value: '*ipad*'
+          - name: entity_id
+            value: '*iphone*'
+          - name: entity_id
+            value: sensor.apc_back_ups_bx1600mi_battery_runtime
+          - name: entity_id
+            value: '*Mover*'
+    - title: Alt om kim
+      path: alt-om-kim
+      icon: mdi:face-man
+      badges: []
+      cards:
+      - type: entities
+        entities:
+        - entity: person.kim_vognsen
+      - card:
+          show_header_toggle: false
+          title: Kims iDimser
+          type: entities
+        filter:
+          exclude:
+          - entity_id: '*rssi*'
+          - entity_id: '*uptime*'
+          - entity_id: '*firmware*'
+          include:
+          - entity_id: '*sensor.kims*'
+        type: custom:auto-entities
+      - card:
+          show_header_toggle: false
+          title: Gittes iDimser
+          type: entities
+        filter:
+          exclude:
+          - entity_id: '*rssi*'
+          - entity_id: '*uptime*'
+          - entity_id: '*firmware*'
+          include:
+          - entity_id: '*sensor.gittes*'
+        type: custom:auto-entities
+    - title: iCloud3
+      path: icloud3
+      icon: mdi:weather-cloudy
+      badges: []
+      cards:
+      - title: icloud3 event log
+        type: entities
+        entities:
+        - entity: sensor.icloud3_event_log
+          type: custom:icloud3-event-log-card
+          icon: mdi:map-marker
+        show_header_toggle: false
+      - type: horizontal-stack
+        cards:
+        - type: glance
+          entities:
+          - entity: device_tracker.kims_iphone17
+            name: Kims iPhone
+          - entity: device_tracker.kims_iphone_17_pro_cloud
+            name: Kims iPhone Cloud
+          - entity: device_tracker.gittes_iphone_2
+            name: Gittes iPhone
+          - entity: device_tracker.gitte_iphone_17_pro_cloud_gitte_iphone_17_pro_cloud_gitte_iphone_17_pro_cloud
+            name: Gittes iPhone Cloud
+          show_icon: true
+    - title: Sound
+      path: sound
+      icon: mdi:music
+      badges: []
+      cards:
+      - type: media-control
+        entity: media_player.nest_mini_bryggers
+      - type: media-control
+        entity: media_player.nest_mini_drengevaerelse
+      - type: media-control
+        entity: media_player.apple_tv_stuen
+      - type: media-control
+        entity: media_player.jbl
+      - type: media-control
+        entity: media_player.spotify_kims
+      - type: entities
+        entities:
+        - entity: input_select.radio_station
+        - entity: input_select.radio_speaker
+        - entity: input_number.radio_volume
+        - entity: script.radio_play
+      - type: media-control
+        entity: media_player.apple_tv_kokken
+      - type: entities
+        entities:
+        - entity: input_select.radio_speaker
+        - entity: script.radio_stop
+      - type: custom:mini-media-player
+        entity: media_player.kokken
+        volume_stateless: true
+        toggle_power: false
+        replace_mute: play_pause
+        group: false
+        source: full
+      - type: media-control
+        entity: media_player.stue_arc
+      - type: entities
+        title: Set Hue scenes
+        show_header_toggle: false
+        card_mod:
+          style: ".card-header {\n  background-color: var(--background-color-off);\n\
+            \  color: var(--text-color-off);\n  padding-top: 0px;\n  padding-bottom:\
+            \ 0px;\n  margin: 0px 0px 16px 0px;\n}\nha-card {\n  margin: 0px 0px 16px\
+            \ 0px; /* create space before next card in view*/\n}\n"
+        entities:
+        - input_select.hue_group
+        - type: custom:fold-entity-row
+          card_mod:
+            style: "#measure {\n  max-height: 300px;\n  overflow-x: hidden;\n  overflow-y:\
+              \ scroll;\n}\n"
+          head:
+            type: section
+            label: Regular scenes
+            card_mod:
+              style: ".label {\n  margin-left: 0px;\n}\n"
+          padding: 0
+          no_animation: true
+          entities:
+          - type: custom:auto-entities
+            card:
+              type: entities
+              card_mod:
+                style: "ha-card {\n  box-shadow: none;\n  margin: 0px -16px;\n}\n"
+            show_empty: false
+            filter:
+              template: "{% set hue_group = states('input_select.hue_group') %}\n\
+                {% set ns = namespace(scenes=[]) %}\n{%- for s in states.scene\n \
+                \ if hue_group == s.attributes.group_name and\n      s.attributes.is_dynamic\
+                \ != true %}\n    {% set ns.scenes = ns.scenes + [{'entity':s.entity_id,\n\
+                \      'name': s.object_id.split(hue_group|slugify +'_')[1]|capitalize|replace('_','\
+                \ ') }] %}\n{%- endfor %}\n{{ns.scenes}}\n"
+        - type: conditional
+          conditions:
+          - entity: binary_sensor.selected_hue_group_has_active_scenes_available
+            state: 'on'
+          row:
+            type: custom:fold-entity-row
+            head:
+              type: section
+              label: Dynamic scenes
+              card_mod:
+                style: ".label {\n  margin-left: 0px;\n}\n"
+            padding: 0
+            no_animation: true
+            entities:
+            - type: custom:auto-entities
+              card:
+                type: entities
+                card_mod:
+                  style: "ha-card {\n  box-shadow: none;\n  margin: 0px -16px;\n}\n\
+                    .card-content {\n   max-height: 250px;\n   overflow-y: scroll;\n\
+                    }\n"
+              filter:
+                template: "{% set hue_group = states('input_select.hue_group') %}\n\
+                  {% set ns = namespace(scenes=[]) %}\n{%- for s in states.scene\n\
+                  \  if hue_group == s.attributes.group_name and\n      s.attributes.is_dynamic\
+                  \ == true %}\n    {% set ns.scenes = ns.scenes + [{'entity':s.entity_id,\n\
+                  \      'name': s.object_id.split(hue_group|slugify +'_')[1]|capitalize|replace('_','\
+                  \ ') }] %}\n{%- endfor %}\n{{ns.scenes}}\n"
+            - input_select.hue_dynamic_scene
+            - input_number.hue_dynamic_scene_speed
+            - input_number.hue_dynamic_scene_brightness
+            - type: conditional
+              conditions:
+              - entity: binary_sensor.selected_hue_group_active_scene
+                state: 'off'
+              row:
+                entity: script.activate_hue_dynamic_scene
+                icon: mdi:play
+                action_name: play
+            - type: conditional
+              conditions:
+              - entity: binary_sensor.selected_hue_group_active_scene
+                state: 'on'
+              row:
+                entity: script.deactivate_hue_dynamic_scene
+                icon: mdi:stop
+                action_name: stop
+            - type: conditional
+              conditions:
+              - entity: binary_sensor.hue_groups_dynamic_scening
+                state: 'on'
+              row:
+                type: custom:fold-entity-row
+                head:
+                  type: section
+                  label: Currently scening group
+                  card_mod:
+                    style: ".label {\n  margin-left: 0px;\n}\n"
+                padding: 0
+                no_animation: true
+                entities:
+                - type: custom:auto-entities
+                  card:
+                    type: entities
+                    card_mod:
+                      style: "ha-card {\n  box-shadow: none;\n  margin: 0px -16px;\n\
+                        }\n"
+                  show_empty: false
+                  filter:
+                    include:
+                    - attributes:
+                        dynamics: true
+            - type: conditional
+              conditions:
+              - entity: binary_sensor.hue_groups_dynamic_scening
+                state: 'on'
+              row:
+                type: custom:fold-entity-row
+                head:
+                  type: section
+                  label: Currently scening lights
+                  card_mod:
+                    style: ".label {\n  margin-left: 0px;\n}\n"
+                padding: 0
+                no_animation: true
+                entities:
+                - type: custom:auto-entities
+                  card:
+                    type: entities
+                    card_mod:
+                      style: "ha-card {\n  box-shadow: none;\n  margin: 0px -16px;\n\
+                        }\n"
+                  show_empty: false
+                  filter:
+                    include:
+                    - attributes:
+                        dynamics: dynamic_palette
+        - type: custom:template-entity-row
+          entity: 'light.{{states(''input_select.hue_group'')|slugify}}
+
+            '
+          secondary: "{% set x = ['unknown','unavailable'] %} {% if states('input_select.hue_group')\
+            \ not in x %} {% set object = states('input_select.hue_group')|slugify\
+            \ %} {% set group = 'light.' + object %}\n  {% set bri = state_attr(group,'brightness')\
+            \ %}\n  {% set rgb = state_attr(group,'rgb_color') %}\n  {% if states(group)\
+            \ == 'on' %} Bri: {{bri}}, Rgb: {{rgb}}\n  {% else %} Off\n  {% endif\
+            \ %} since {{relative_time(states[group].last_changed) if (states[group]\n\
+            \    and states[group].last_changed not in x) else 'Initializing....'}}\n\
+            {% else %} Not yet set {% endif %}\n"
+          toggle: true
+        - type: custom:fold-entity-row
+          head:
+            type: section
+            label: Automations
+            card_mod:
+              style: ".label {\n  margin-left: 0px;\n}\n"
+          padding: 0
+          no_animation: true
+          entities:
+          - entity: automation.auto_populate_hue_group_input_select
+            secondary_info: last-triggered
+          - entity: automation.auto_populate_hue_dynamic_scene_input_select
+            secondary_info: last-triggered
+    - theme: Backend-selected
+      title: test
+      path: test
+      icon: mdi:handshake
+      badges: []
+      cards:
+      - card:
+          show_header_toggle: false
+          title: Input Boolean
+          type: entities
+        filter:
+          exclude:
+          - entity_id: '*rssi*'
+          - entity_id: '*uptime*'
+          - entity_id: '*firmware*'
+          include:
+          - entity_id: input_boolean.*
+        type: custom:auto-entities
+      - card:
+          show_header_toggle: false
+          title: Input Daytime
+          type: entities
+        filter:
+          exclude:
+          - entity_id: '*rssi*'
+          - entity_id: '*uptime*'
+          - entity_id: '*firmware*'
+          include:
+          - entity_id: input_datetime.*
+        type: custom:auto-entities
+      - card:
+          show_header_toggle: false
+          title: Input Select
+          type: entities
+        filter:
+          exclude:
+          - entity_id: '*rssi*'
+          - entity_id: '*uptime*'
+          - entity_id: '*firmware*'
+          include:
+          - entity_id: input_select.*
+        type: custom:auto-entities
+      - type: vertical-stack
+        cards:
+        - entities:
+          - type: custom:hui-element
+            card_type: horizontal-stack
+            cards:
+            - entity: null
+              template: null
+              show_name: true
+              show_icon: true
+              type: button
+              tap_action:
+                action: call-service
+                service: watchman.report
+                data: {}
+                target: {}
+              name: Watchman Rapport
+              icon: mdi:book-open-blank-variant
+            - entity: null
+              template: null
+              type: custom:button-card
+              show_name: true
+              show_icon: true
+              tap_action:
+                action: call-service
+                service: pyscript.synctuyakeys
+                data: {}
+                target: {}
+              name: Pyscript Ledvance
+              icon: mdi:language-python
+          show_header_toggle: false
+          title: Kald Service
+          type: entities
+      - type: markdown
+        content: "<h2 class=\"some\">\n  <ha-icon icon=\"mdi:shield-half-full\"></ha-icon>\n\
+          \  Watchman report\n</h2>\n<h3>\n  Missing Services:\n  {{ states('sensor.watchman_missing_services')\
+          \ }}\n</h3>\n{% set services = state_attr('sensor.watchman_missing_services',\
+          \ 'entities') or [] %}\n{% if services | count == 0 %}\n  <p>\u2705 Ingen\
+          \ manglende services registreret</p>\n{% else %}\n  {% for item in services\
+          \ %}\n    <hr>\n    <table>\n      <tr>\n        <td>\n          <ha-icon\
+          \ icon=\"mdi:cloud-alert\"></ha-icon>\n          {{ item.id }}\n       \
+          \   <a title=\"{{ item.occurrences }}\">\n            {{ item.occurrences.split('/')[-1].split(':')[0]\
+          \ }}\n          </a>\n        </td>\n      </tr>\n    </table>\n  {% endfor\
+          \ %}\n{% endif %}"
+        card_mod:
+          style:
+            ha-markdown:
+              $: "ha-markdown-element:first-of-type hr {\n  border-color: #303030;\n\
+                }\n"
+      - type: markdown
+        content: '<h2> <ha-icon icon=''mdi:shield-half-full''></ha-icon> Watchman
+          report</h2> <h3>Missing Entities: {{ states.sensor.watchman_missing_entities.state
+          }} </h3> {%- for item in state_attr("sensor.watchman_missing_entities",
+          "entities") %} <hr> <table><tr> <td> <ha-icon icon=''mdi: {%- if item.state=="missing"-%}cloud-alert''
+          {%- elif item.state=="unavail" -%}cloud-off-outline'' {%- else-%}cloud-question''
+          {%- endif -%} ></ha-icon> {{ item.id }} [{{item.state}}] <a title="{{item.occurrences}}">
+          {{item.occurrences.split(''/'')[-1].split('':'')[0]}}</a> </td></tr></table>
+          {%- endfor %}'
+        card_mod:
+          style:
+            ha-markdown:
+              $: "ha-markdown-element:first-of-type hr{\n  border-color: #303030;\n\
+                }\n"
+      - card:
+          show_header_toggle: false
+          title: Input Number
+          type: entities
+        filter:
+          exclude:
+          - entity_id: '*rssi*'
+          - entity_id: '*uptime*'
+          - entity_id: '*firmware*'
+          include:
+          - entity_id: input_number.*
+        type: custom:auto-entities
+    - theme: Backend-selected
+      path: default_view
+      title: Home
+      icon: mdi:view-column
+      badges: []
+      cards:
+      - cards:
+        - content: '# Antal enheder
+
+            '
+          type: markdown
+        - card:
+            show_header_toggle: false
+            type: entities
+          filter:
+            exclude:
+            - entity_id: '*lightning*'
+            - entity_id: '*poll*'
+            - entity_id: '*yousee*'
+            include:
+            - entity_id: '*count*'
+          show_empty: false
+          sort:
+            method: state
+            numeric: true
+          type: custom:auto-entities
+        id: antal_enheder
+        type: vertical-stack
+      - card:
+          show_header_toggle: false
+          title: Script
+          type: entities
+        filter:
+          exclude:
+          - entity_id: '*rssi*'
+          - entity_id: '*uptime*'
+          - entity_id: '*firmware*'
+          include:
+          - entity_id: script*
+        type: custom:auto-entities
+      - card:
+          show_header_toggle: false
+          title: Scene
+          type: entities
+        filter:
+          exclude:
+          - entity_id: '*rssi*'
+          - entity_id: '*uptime*'
+          - entity_id: '*firmware*'
+          include:
+          - entity_id: scene.*
+        type: custom:auto-entities
+      - card:
+          show_header_toggle: false
+          title: switch
+          type: entities
+        filter:
+          exclude:
+          - entity_id: '*rssi*'
+          - entity_id: '*uptime*'
+          - entity_id: '*firmware*'
+          include:
+          - entity_id: switch.*
+        type: custom:auto-entities
+    - title: advarelse
+      path: advarelse
+      icon: mdi:alarm-light
+      badges: []
+      cards:
+      - show_name: true
+        show_icon: true
+        type: button
+        tap_action:
+          action: toggle
+        entity: automation.lav_en_watchman_rapport
+      - card:
+          show_header_toggle: false
+          title: "Advarelse p\xE5 enhder"
+          type: entities
+        filter:
+          exclude:
+          - entity_id: '*rssi*'
+          - entity_id: '*device_tracker*'
+          - entity_id: '*meater*'
+          - entity_id: '*person*'
+          - entity_id: '*diskstation*'
+          include:
+          - state: '*unavailable*'
+          - domain: sensor
+            attributes:
+              device_class: battery
+        type: custom:auto-entities
+      - type: markdown
+        content: '<h2> <ha-icon icon=''mdi:shield-half-full''></ha-icon> Watchman
+          report<h2> <h3>Missing Entities: {{ states.sensor.watchman_missing_entities.state
+          }} </h3> {%- for item in state_attr("sensor.watchman_missing_entities",
+          "entities") %} <hr> <table><tr> <td> <ha-icon icon=''mdi: {%- if item.state=="missing"-%}cloud-alert''
+          {%- elif item.state=="unavail" -%}cloud-off-outline'' {%- else-%}cloud-question''
+          {%- endif -%} ></ha-icon> {{ item.id }} [{{item.state}}] <a title="{{item.occurrences}}">
+          {{item.occurrences.split(''/'')[-1].split('':'')[0]}}</a> </td></tr></table>
+          {%- endfor %}'
+        card_mod:
+          style:
+            ha-markdown:
+              $: "ha-markdown-element:first-of-type hr{\n  border-color: #303030;\n\
+                }\n"
+    - theme: Backend-selected
+      title: "Str\xF8m m.m"
+      path: Powet
+      icon: mdi:power-plug
+      badges: []
+      cards:
+      - card:
+          show_header_toggle: false
+          title: Alt med "Energy"
+          type: entities
+        filter:
+          exclude: null
+          include:
+          - entity_id: '*_energy'
+        type: custom:auto-entities
+      - card:
+          show_header_toggle: false
+          title: Alt med "Power"
+          type: entities
+        filter:
+          exclude: null
+          include:
+          - entity_id: '*_power'
+        type: custom:auto-entities
+      - type: entities
+        entities:
+        - entity: sensor.daily_energy
+        - entity: sensor.monthly_energy
+        - entity: sensor.yearly_energy
+        - entity: sensor.frient_total_consumption
+        - entity: sensor.frient_total_power_real_time
+    - theme: Backend-selected
+      title: 918+
+      badges: []
+      cards:
+      - type: picture-elements
+        image: local/images/lovelace/diskstation_918v2.png
+        title: TheCloud
+        elements:
+        - type: custom:button-card
+          entity: sensor.thecloud_uptime
+          name: Synology 918+
+          show_name: true
+          show_state: true
+          show_icon: false
+          style:
+            top: 56.5%
+            left: 25%
+            width: 25%
+            height: 100%
+          tap_action:
+            action: none
+          hold_action:
+            action: none
+          styles:
+            name:
+            - color: rgba(255,255,255,0.5)
+            - padding-left: 14px
+            - font-weight: bold
+            - justify-self: start
+            card:
+            - font-size: 12px
+            - height: 10%
+            - border-radius: 0px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(65,65,65,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: sensor.thecloud_drive_1_status
+          name: STATUS
+          show_name: true
+          show_state: false
+          show_icon: false
+          style:
+            top: 27%
+            left: 8.5%
+            width: 17%
+          tap_action:
+            action: none
+          hold_action:
+            action: none
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-left: 14px
+            - font-weight: normal
+            - justify-self: end
+            card:
+            - font-size: 10px
+            - height: 10%
+            - border-radius: 0px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(65,65,65,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: sensor.thecloud_volume_1_average_disk_temp
+          name: TEMP
+          show_name: true
+          show_state: false
+          show_icon: false
+          style:
+            top: 38.5%
+            left: 8.5%
+            width: 17%
+          tap_action:
+            action: none
+          hold_action:
+            action: none
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-left: 14px
+            - font-weight: normal
+            - justify-self: end
+            card:
+            - font-size: 10px
+            - height: 10%
+            - border-radius: 0px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(65,65,65,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: sensor.thecloud_drive_1_status
+          name: LIFE
+          show_name: true
+          show_state: false
+          show_icon: false
+          style:
+            top: 48%
+            left: 8.5%
+            width: 17%
+          tap_action:
+            action: none
+          hold_action:
+            action: none
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-left: 14px
+            - font-weight: normal
+            - justify-self: end
+            card:
+            - font-size: 10px
+            - height: 10%
+            - border-radius: 0px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(65,65,65,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: sensor.thecloud_drive_1_status
+          name: BAD SECTORS
+          show_name: true
+          show_state: false
+          show_icon: false
+          style:
+            top: 59.5%
+            left: 8.5%
+            width: 18%
+          tap_action:
+            action: none
+          hold_action:
+            action: none
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-left: 14px
+            - font-weight: normal
+            - justify-self: end
+            card:
+            - font-size: 10px
+            - height: 10%
+            - border-radius: 0px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(65,65,65,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: sensor.thecloud_drive_1_status
+          name: SMART
+          show_name: true
+          show_state: false
+          show_icon: false
+          style:
+            top: 70.5%
+            left: 8.5%
+            width: 17%
+          tap_action:
+            action: none
+          hold_action:
+            action: none
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-left: 14px
+            - font-weight: normal
+            - justify-self: end
+            card:
+            - font-size: 11px
+            - height: 10%
+            - border-radius: 0px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(65,65,65,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: switch.thecloud
+          name: POWER
+          icon: mdi:power
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 11.5%
+            left: 80.8%
+            width: 6%
+            height: 8%
+          tap_action:
+            action: none
+          hold_action:
+            action: more-info
+          state:
+          - operator: ==
+            value: 'off'
+            styles:
+              icon:
+              - color: black
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,0)
+          - operator: ==
+            value: 'on'
+            styles:
+              icon:
+              - color: lightgreen
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,0)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 5px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - border-radius: 6px
+            - height: 100%
+            - width: 50px
+            - border: 2px solid rgba(255,255,255,0.1)
+            - background-color: rgba(32,32,32,0.2)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 0px
+            - padding-bottom: 1px
+            - color: gray
+            - border-radius: 4px
+            - border: 0px solid rgba(60,60,60,0)
+            - background-color: rgba(0,0,0,0)
+            - filter: drop-shadow(0px 0px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: sensor.thecloud_drive_1_status
+          name: DISK 1
+          icon: mdi:harddisk
+          show_name: true
+          show_state: false
+          show_icon: true
+          style:
+            top: 74.0%
+            left: 28.45%
+            width: 12.1%
+            height: 106%
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: '!='
+            value: normal
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 4px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - height: 63.2%
+            - border-radius: 4px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(32,32,32,1)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - top: 2px
+            - height: 25px
+            - width: 25px
+            - padding-top: 0px
+            - padding-bottom: 5px
+            - color: lightgreen
+            - transform: rotate(0deg)
+        - type: custom:button-card
+          entity: sensor.thecloud_drive_1_temperature
+          name: Temperature
+          show_name: false
+          show_state: true
+          show_icon: false
+          style:
+            top: 33%
+            left: 28.5%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: '>'
+            value: 60
+            styles:
+              state:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            state:
+            - padding-top: 4px
+            - padding-bottom: 4px
+            - font-size: 12px
+            - color: lightgreen
+            card:
+            - font-size: 13px
+            - height: 30px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: binary_sensor.thecloud_drive_1_below_min_remaining_life
+          name: Life
+          icon: mdi:cards-heart
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 43%
+            left: 28.5%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: binary_sensor.thecloud_drive_1_exceeded_max_bad_sectors
+          name: Bad Sector
+          icon: mdi:hexagon-slice-5
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 54%
+            left: 28.5%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: sensor.thecloud_drive_1_status_smart
+          name: Bad Sector
+          icon: mdi:checkbox-marked-circle-outline
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 65%
+            left: 28.5%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: sensor.thecloud_drive_2_status
+          name: DISK 2
+          icon: mdi:harddisk
+          show_name: true
+          show_state: false
+          show_icon: true
+          style:
+            top: 74%
+            left: 42.6%
+            width: 12.1%
+            height: 106%
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: '!='
+            value: normal
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 4px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - height: 63.2%
+            - border-radius: 4px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(32,32,32,1)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - top: 2px
+            - height: 25px
+            - width: 25px
+            - padding-top: 0px
+            - padding-bottom: 5px
+            - color: lightgreen
+            - transform: rotate(0deg)
+        - type: custom:button-card
+          entity: sensor.thecloud_drive_2_temperature
+          name: Temperature
+          show_name: false
+          show_state: true
+          show_icon: false
+          style:
+            top: 33%
+            left: 42.5%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: '>'
+            value: 60
+            styles:
+              state:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            state:
+            - padding-top: 4px
+            - padding-bottom: 4px
+            - font-size: 12px
+            - color: lightgreen
+            card:
+            - font-size: 13px
+            - height: 30px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: binary_sensor.thecloud_drive_2_below_min_remaining_life
+          name: Life
+          icon: mdi:cards-heart
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 43%
+            left: 42.5%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: binary_sensor.thecloud_drive_2_exceeded_max_bad_sectors
+          name: Bad Sector
+          icon: mdi:hexagon-slice-5
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 54%
+            left: 42.5%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: sensor.thecloud_drive_2_status_smart
+          name: Bad Sector
+          icon: mdi:checkbox-marked-circle-outline
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 65%
+            left: 42.5%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: sensor.thecloud_drive_3_status
+          name: DISK 3
+          icon: mdi:harddisk
+          show_name: true
+          show_state: false
+          show_icon: true
+          style:
+            top: 74%
+            left: 56.8%
+            width: 12.1%
+            height: 106%
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: '!='
+            value: normal
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 4px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - height: 63.2%
+            - border-radius: 4px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(32,32,32,1)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - top: 2px
+            - height: 25px
+            - width: 25px
+            - padding-top: 0px
+            - padding-bottom: 5px
+            - color: lightgreen
+            - transform: rotate(0deg)
+        - type: custom:button-card
+          entity: sensor.thecloud_drive_3_temperature
+          name: Temperature
+          show_name: false
+          show_state: true
+          show_icon: false
+          style:
+            top: 33%
+            left: 56.8%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: '>'
+            value: 60
+            styles:
+              state:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            state:
+            - padding-top: 4px
+            - padding-bottom: 4px
+            - font-size: 12px
+            - color: lightgreen
+            card:
+            - font-size: 13px
+            - height: 30px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: binary_sensor.thecloud_drive_3_below_min_remaining_life
+          name: Life
+          icon: mdi:cards-heart
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 43%
+            left: 56.8%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: binary_sensor.thecloud_drive_3_exceeded_max_bad_sectors
+          name: Bad Sector
+          icon: mdi:hexagon-slice-5
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 54%
+            left: 56.8%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: sensor.thecloud_drive_3_status_smart
+          name: Bad Sector
+          icon: mdi:checkbox-marked-circle-outline
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 65%
+            left: 56.8%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: sensor.td_ds1_drive_4_status
+          name: DISK 4
+          icon: mdi:harddisk
+          show_name: true
+          show_state: false
+          show_icon: true
+          style:
+            top: 74%
+            left: 72%
+            width: 12.1%
+            height: 106%
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: '!='
+            value: normal
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 4px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - height: 63.2%
+            - border-radius: 4px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(32,32,32,1)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - top: 2px
+            - height: 25px
+            - width: 25px
+            - padding-top: 0px
+            - padding-bottom: 5px
+            - color: lightgreen
+            - transform: rotate(0deg)
+        - type: custom:button-card
+          entity: sensor.thecloud_drive_4_temperature
+          name: Temperature
+          show_name: false
+          show_state: true
+          show_icon: false
+          style:
+            top: 33%
+            left: 72.8%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: '>'
+            value: 60
+            styles:
+              state:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            state:
+            - padding-top: 4px
+            - padding-bottom: 4px
+            - font-size: 12px
+            - color: lightgreen
+            card:
+            - font-size: 13px
+            - height: 30px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: binary_sensor.thecloud_drive_4_below_min_remaining_life
+          name: Life
+          icon: mdi:cards-heart
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 43%
+            left: 72.8%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: binary_sensor.thecloud_drive_4_exceeded_max_bad_sectors
+          name: Bad Sector
+          icon: mdi:hexagon-slice-5
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 54%
+            left: 72.8%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: sensor.thecloud_drive_4_status_smart
+          name: Bad Sector
+          icon: mdi:checkbox-marked-circle-outline
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 65%
+            left: 72.8%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+      - type: horizontal-stack
+        cards:
+        - type: custom:button-card
+          entity: switch.usw_flex_mini_vaerksted_synology_thecloud
+          name: LAN 1
+          icon: mdi:ethernet
+          show_name: true
+          show_state: false
+          show_icon: true
+          style:
+            top: 54.5%
+            left: 88%
+            width: 9%
+            height: 19%
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: ==
+            value: 'off'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          - operator: ==
+            value: 'on'
+            styles:
+              icon:
+              - color: lightgreen
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 5px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - border-radius: 6px
+            - height: 80px
+            icon:
+            - height: 30px
+            - width: 30px
+            - padding-top: 0px
+            - padding-bottom: 1px
+            - color: lightgreen
+            - filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+        - type: custom:button-card
+          entity: binary_sensor.thecloud_security_status
+          name: SECURITY
+          show_name: true
+          show_state: false
+          show_icon: true
+          style:
+            top: 54.5%
+            left: 88%
+            width: 9%
+            height: 19%
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: ==
+            value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          - operator: ==
+            value: 'off'
+            styles:
+              icon:
+              - color: lightgreen
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 5px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - border-radius: 6px
+            - height: 80px
+            icon:
+            - height: 30px
+            - width: 30px
+            - padding-top: 0px
+            - padding-bottom: 1px
+            - color: gray
+            - filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+        - type: custom:button-card
+          entity: update.thecloud_dsm_update
+          name: UPDATE
+          icon: mdi:update
+          show_name: true
+          show_state: false
+          show_icon: true
+          style:
+            top: 54.5%
+            left: 88%
+            width: 9%
+            height: 19%
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: ==
+            value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          - operator: ==
+            value: 'off'
+            styles:
+              icon:
+              - color: lightgreen
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 5px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - border-radius: 6px
+            - height: 80px
+            icon:
+            - height: 30px
+            - width: 30px
+            - padding-top: 0px
+            - padding-bottom: 1px
+            - color: gray
+            - filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+        - type: custom:button-card
+          entity: button.thecloud_reboot
+          name: RESTART
+          icon: mdi:restart
+          show_name: true
+          show_state: false
+          show_icon: true
+          lock:
+            enabled: enabled
+            duration: 20
+            unlock: double_tap
+          style:
+            top: 54.5%
+            left: 88%
+            width: 9%
+            height: 19%
+          tap_action:
+            action: call-service
+            service: button.thecloud_reboot
+          hold_action:
+            action: more-info
+          state:
+          - operator: ==
+            value: 'off'
+            styles:
+              icon:
+              - color: gray
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          - operator: ==
+            value: 'on'
+            styles:
+              icon:
+              - color: yellow
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            lock:
+            - justify-content: flex-start
+            - align-items: flex-start
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 5px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - border-radius: 6px
+            - height: 80px
+            icon:
+            - height: 30px
+            - width: 30px
+            - padding-top: 0px
+            - padding-bottom: 1px
+            - color: gray
+            - filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+        - type: custom:button-card
+          entity: button.thecloud_shutdown
+          name: POWER
+          icon: mdi:power
+          show_name: true
+          show_state: false
+          show_icon: true
+          style:
+            top: 54.5%
+            left: 88%
+            width: 9%
+            height: 19%
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: ==
+            value: 'off'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          - operator: ==
+            value: 'on'
+            styles:
+              icon:
+              - color: lightgreen
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 5px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - border-radius: 6px
+            - height: 80px
+            icon:
+            - height: 30px
+            - width: 30px
+            - padding-top: 0px
+            - padding-bottom: 1px
+            - color: gray
+            - filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+      - type: entities
+        show_header_toggle: 'off'
+        style: ".card-header {\n  padding: 0px 0px 0px 0px !important;\n}\n"
+        entities:
+        - type: section
+          style: ".label {\n  text-align: center !important;\n  margin-left: 0px !important;\n\
+            \  font-size: 17px !important;\n}\n"
+          label: APC Back-UPS BX1600MI
+        - type: custom:hui-element
+          card_type: vertical-stack
+          cards:
+          - type: horizontal-stack
+            cards:
+            - type: picture
+              style: "ha-card { \n    --paper-card-background-color: 'rgba(0, 0, 0,\
+                \ 0.0)';\n    --ha-card-background: \"rgba(0, 0, 0, 0.0)\";\n    --ha-card-box-shadow:\
+                \ 'none';\n}\n"
+              image: /local/images/lovelace/apc_ups.png
+            - type: custom:button-card
+              layout: icon_name_state2nd
+              show_icon: true
+              show_state: true
+              styles:
+                grid: null
+                card:
+                - --ha-card-background: rgba(0, 0, 0, 0.0)
+                - --ha-card-box-shadow: none
+                icon:
+                - padding: 10px 0px 0px
+                - height: 40px
+                - width: 40px
+                state:
+                - padding: 10px 0px 0px
+                - justify-self: start
+                - font-family: Roboto, sans-serif
+                - font-size: 14px
+                name:
+                - padding: 20px 0px 0px
+                - justify-self: start
+              entity: sensor.apc_ups_time_remaining
+              name: 'Remaining:'
+              icon: mdi:battery-high
+          - type: horizontal-stack
+            cards:
+            - type: custom:bar-card
+              show_icon: true
+              align: split
+              columns: 1
+              max: 100
+              positions:
+                icon: inside
+                indicator: inside
+                name: inside
+                value: inside
+              unit_of_measurement: '%'
+              severity:
+              - value: 50
+                color: '#3498db'
+              - value: 75
+                color: '#f39c12'
+              - value: 100
+                color: '#e45e65'
+              style: "ha-card { \n  --paper-card-background-color: 'rgba(0, 0, 0,\
+                \ 0.0)';\n  --ha-card-background: \"rgba(0, 0, 0, 0.0)\";\n  --paper-item-icon-color:\
+                \ 'var(--text-primary-color)';\n  --ha-card-box-shadow: 'none';\n\
+                }\nbar-card-name {\n  margin-left: -10px;\n}\n"
+              entity: sensor.ups_battery_charge
+              name: Battery
+              icon: mdi:battery-high
+              entity_row: true
+            - type: custom:bar-card
+              show_icon: true
+              align: split
+              columns: 1
+              max: 100
+              positions:
+                icon: inside
+                indicator: inside
+                name: inside
+                value: inside
+              unit_of_measurement: '%'
+              severity:
+              - value: 50
+                color: '#3498db'
+              - value: 75
+                color: '#f39c12'
+              - value: 100
+                color: '#e45e65'
+              style: "ha-card { \n  --paper-card-background-color: 'rgba(0, 0, 0,\
+                \ 0.0)';\n  --ha-card-background: \"rgba(0, 0, 0, 0.0)\";\n  --paper-item-icon-color:\
+                \ 'var(--text-primary-color)';\n  --ha-card-box-shadow: 'none';\n\
+                }\nbar-card-name {\n  margin-left: -10px;\n}\n"
+              entity: sensor.ups_load
+              name: Load
+              entity_row: true
+          - type: entities
+            entities:
+            - entity: sensor.ups_input_voltage
+              name: Input Voltage
+              icon: mdi:power-plug
+            - entity: sensor.ups_battery_charge
+              name: Battery Voltage
+              icon: mdi:battery-charging-high
+            - entity: sensor.ups_status
+              name: Status
+              icon: mdi:battery-charging-high
+            - entity: sensor.ups_status_data
+              name: Status Data
+              icon: mdi:battery-charging-high
+            style: "ha-card { \n    --paper-card-background-color: 'rgba(0, 0, 0,\
+              \ 0.0)';\n    --ha-card-background: \"rgba(0, 0, 0, 0.0)\";\n    --paper-item-icon-color:\
+              \ 'var(--text-primary-color)';\n    --ha-card-box-shadow: 'none';\n\
+              }\n"
+      - type: custom:apexcharts-card
+        graph_span: 24h
+        show:
+          loading: false
+        apex_config:
+          chart:
+            height: 150px
+          grid:
+            show: true
+            borderColor: rgba(255,255,255,0.2)
+          legend:
+            show: true
+        header:
+          title: Network
+          show: true
+          show_states: true
+          colorize_states: true
+          standard_format: true
+        all_series_config:
+          stroke_width: 2
+        series:
+        - entity: sensor.thecloud_upload_throughput
+          type: area
+          opacity: 0.3
+          name: Upload
+          color: skyblue
+          show:
+            legend_value: false
+        - entity: sensor.thecloud_download_throughput
+          type: area
+          opacity: 0.3
+          name: Download
+          color: darkorange
+          show:
+            legend_value: false
+      - type: custom:apexcharts-card
+        graph_span: 24h
+        show:
+          loading: false
+        apex_config:
+          chart:
+            height: 150px
+          grid:
+            show: true
+            borderColor: rgba(255,255,255,0.2)
+          legend:
+            show: true
+        header:
+          title: Temperature
+          show: true
+          show_states: true
+          colorize_states: true
+          standard_format: true
+        all_series_config:
+          stroke_width: 2
+        series:
+        - entity: sensor.thecloud_temperature
+          type: area
+          opacity: 0.3
+          name: NAS
+          color: orange
+          show:
+            legend_value: false
+        - entity: sensor.thecloud_volume_1_average_disk_temp
+          type: area
+          opacity: 0.3
+          name: Volume AVG
+          color: skyblue
+          show:
+            legend_value: false
+      - type: custom:apexcharts-card
+        graph_span: 24h
+        show:
+          loading: false
+        apex_config:
+          chart:
+            height: 155px
+          grid:
+            show: true
+            borderColor: rgba(255,255,255,0.2)
+          legend:
+            show: false
+        header:
+          title: System Resources
+          show: true
+          show_states: true
+          colorize_states: true
+          standard_format: true
+        all_series_config:
+          stroke_width: 2
+        series:
+        - entity: sensor.thecloud_memory_usage_real
+          type: area
+          opacity: 0.3
+          name: Memory
+          color: skyblue
+          show:
+            legend_value: false
+        - entity: sensor.thecloud_cpu_utilization_total
+          type: area
+          opacity: 0.3
+          name: CPU
+          color: orange
+          show:
+            legend_value: false
+      - type: vertical-stack
+        cards:
+        - type: markdown
+          content: '## NAS TheCloud - Den lange'
+        - show_state: true
+          show_name: true
+          camera_view: auto
+          fit_mode: cover
+          type: picture-entity
+          entity: sensor.thecloud_last_boot
+          image: /local/images/lovelace/nas.png
+          name: Uptime
+        - type: custom:bar-card
+          align: split
+          show_icon: true
+          padding: 4px
+          columns: '1'
+          card_style:
+            border-radius: 5px
+          entities:
+          - entity: sensor.thecloud_volume_1_volume_used
+            title: Disk
+          - entity: sensor.thecloud_volume_1_used_space
+            title: RAM
+          - entity: sensor.thecloud_cpu_utilization_total
+          - entity: sensor.thecloud_memory_usage_real
+          - entity: sensor.thecloud_free_space
+        - type: entities
+          entities:
+          - entity: sensor.thecloud_volume_1_status
+          - entity: sensor.thecloud_temperature
+          - entity: binary_sensor.thecloud_security_status
+          - entity: update.thecloud_dsm_update
+          - entity: binary_sensor.thecloud_drive_1_exceeded_max_bad_sectors
+          - entity: binary_sensor.thecloud_drive_2_exceeded_max_bad_sectors
+          - entity: binary_sensor.thecloud_drive_3_exceeded_max_bad_sectors
+          - entity: binary_sensor.thecloud_drive_4_exceeded_max_bad_sectors
+          - entity: sensor.thecloud_upload_throughput
+          - entity: sensor.thecloud_download_throughput
+          - entity: sensor.thecloud_volume_1_used_space
+          - entity: sensor.thecloud_volume_1_volume_used
+          - entity: sensor.thecloud_drive_1_status
+          - entity: sensor.thecloud_drive_2_status
+          - entity: sensor.thecloud_drive_3_status
+          - entity: sensor.thecloud_drive_4_status
+      - type: vertical-stack
+        cards:
+        - type: gauge
+          name: Volume 1 (Used)
+          entity: sensor.thecloud_used_percent
+          needle: true
+          min: 0
+          max: 100
+          severity:
+            green: 0
+            yellow: 75
+            red: 90
+        - type: entities
+          title: Volume 1
+          show_header_toggle: false
+          entities:
+          - entity: sensor.thecloud_free_space
+            name: Free Space (TB)
+          - entity: sensor.thecloud_volume_1_used_space
+            name: Used Space (TB)
+          - entity: sensor.thecloud_volume_1_total_size
+            name: Total Space (TB)
+      type: masonry
+      icon: phu:synology-dsm
+    - theme: Backend-selected
+      title: '410'
+      path: ds410
+      badges: []
+      cards:
+      - type: picture-elements
+        image: local/images/lovelace/diskstation_918v2.png
+        title: Diskstation
+        elements:
+        - type: custom:button-card
+          entity: sensor.diskstation_uptime
+          name: Synology 410
+          show_name: true
+          show_state: true
+          show_icon: false
+          style:
+            top: 56.5%
+            left: 25%
+            width: 25%
+            height: 100%
+          tap_action:
+            action: none
+          hold_action:
+            action: none
+          styles:
+            name:
+            - color: rgba(255,255,255,0.5)
+            - padding-left: 14px
+            - font-weight: bold
+            - justify-self: start
+            card:
+            - font-size: 12px
+            - height: 10%
+            - border-radius: 0px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(65,65,65,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: sensor.diskstation_volume_1_status
+          name: STATUS
+          show_name: true
+          show_state: false
+          show_icon: false
+          style:
+            top: 27%
+            left: 8.5%
+            width: 17%
+          tap_action:
+            action: none
+          hold_action:
+            action: none
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-left: 14px
+            - font-weight: normal
+            - justify-self: end
+            card:
+            - font-size: 10px
+            - height: 10%
+            - border-radius: 0px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(65,65,65,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: sensor.diskstation_volume_1_status
+          name: TEMP
+          show_name: true
+          show_state: false
+          show_icon: false
+          style:
+            top: 38.5%
+            left: 8.5%
+            width: 17%
+          tap_action:
+            action: none
+          hold_action:
+            action: none
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-left: 14px
+            - font-weight: normal
+            - justify-self: end
+            card:
+            - font-size: 10px
+            - height: 10%
+            - border-radius: 0px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(65,65,65,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: sensor.diskstation_volume_1_status
+          name: LIFE
+          show_name: true
+          show_state: false
+          show_icon: false
+          style:
+            top: 48%
+            left: 8.5%
+            width: 17%
+          tap_action:
+            action: none
+          hold_action:
+            action: none
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-left: 14px
+            - font-weight: normal
+            - justify-self: end
+            card:
+            - font-size: 10px
+            - height: 10%
+            - border-radius: 0px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(65,65,65,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: sensor.diskstation_volume_1_status
+          name: BAD SECTORS
+          show_name: true
+          show_state: false
+          show_icon: false
+          style:
+            top: 59.5%
+            left: 8.5%
+            width: 18%
+          tap_action:
+            action: none
+          hold_action:
+            action: none
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-left: 14px
+            - font-weight: normal
+            - justify-self: end
+            card:
+            - font-size: 10px
+            - height: 10%
+            - border-radius: 0px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(65,65,65,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: sensor.diskstation_volume_1_status
+          name: SMART
+          show_name: true
+          show_state: false
+          show_icon: false
+          style:
+            top: 70.5%
+            left: 8.5%
+            width: 17%
+          tap_action:
+            action: none
+          hold_action:
+            action: none
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-left: 14px
+            - font-weight: normal
+            - justify-self: end
+            card:
+            - font-size: 11px
+            - height: 10%
+            - border-radius: 0px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(65,65,65,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: switch.thecloud
+          name: POWER
+          icon: mdi:power
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 11.5%
+            left: 80.8%
+            width: 6%
+            height: 8%
+          tap_action:
+            action: none
+          hold_action:
+            action: more-info
+          state:
+          - operator: ==
+            value: 'off'
+            styles:
+              icon:
+              - color: black
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,0)
+          - operator: ==
+            value: 'on'
+            styles:
+              icon:
+              - color: lightgreen
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,0)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 5px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - border-radius: 6px
+            - height: 100%
+            - width: 50px
+            - border: 2px solid rgba(255,255,255,0.1)
+            - background-color: rgba(32,32,32,0.2)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 0px
+            - padding-bottom: 1px
+            - color: gray
+            - border-radius: 4px
+            - border: 0px solid rgba(60,60,60,0)
+            - background-color: rgba(0,0,0,0)
+            - filter: drop-shadow(0px 0px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: sensor.diskstation_disk_1_status
+          name: DISK 1
+          icon: mdi:harddisk
+          show_name: true
+          show_state: false
+          show_icon: true
+          style:
+            top: 74.0%
+            left: 28.45%
+            width: 12.1%
+            height: 106%
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: '!='
+            value: normal
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 4px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - height: 63.2%
+            - border-radius: 4px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(32,32,32,1)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - top: 2px
+            - height: 25px
+            - width: 25px
+            - padding-top: 0px
+            - padding-bottom: 5px
+            - color: lightgreen
+            - transform: rotate(0deg)
+        - type: custom:button-card
+          entity: sensor.diskstation_disk_1_temperature
+          name: Temperature
+          show_name: false
+          show_state: true
+          show_icon: false
+          style:
+            top: 33%
+            left: 28.5%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: '>'
+            value: 60
+            styles:
+              state:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            state:
+            - padding-top: 4px
+            - padding-bottom: 4px
+            - font-size: 12px
+            - color: lightgreen
+            card:
+            - font-size: 13px
+            - height: 30px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: binary_sensor.diskstation_disk_1_below_min_remaining_life
+          name: Life
+          icon: mdi:cards-heart
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 43%
+            left: 28.5%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: binary_sensor.diskstation_disk_1_exceeded_max_bad_sectors
+          name: Bad Sector
+          icon: mdi:hexagon-slice-5
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 54%
+            left: 28.5%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: sensor.diskstation_disk_1_status_smart
+          name: Bad Sector
+          icon: mdi:checkbox-marked-circle-outline
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 65%
+            left: 28.5%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: sensor.diskstation_disk_2_status
+          name: DISK 2
+          icon: mdi:harddisk
+          show_name: true
+          show_state: false
+          show_icon: true
+          style:
+            top: 74%
+            left: 42.6%
+            width: 12.1%
+            height: 106%
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: '!='
+            value: normal
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 4px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - height: 63.2%
+            - border-radius: 4px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(32,32,32,1)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - top: 2px
+            - height: 25px
+            - width: 25px
+            - padding-top: 0px
+            - padding-bottom: 5px
+            - color: lightgreen
+            - transform: rotate(0deg)
+        - type: custom:button-card
+          entity: sensor.diskstation_disk_2_temperature
+          name: Temperature
+          show_name: false
+          show_state: true
+          show_icon: false
+          style:
+            top: 33%
+            left: 42.5%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: '>'
+            value: 60
+            styles:
+              state:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            state:
+            - padding-top: 4px
+            - padding-bottom: 4px
+            - font-size: 12px
+            - color: lightgreen
+            card:
+            - font-size: 13px
+            - height: 30px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: binary_sensor.diskstation_disk_2_below_min_remaining_life
+          name: Life
+          icon: mdi:cards-heart
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 43%
+            left: 42.5%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: binary_sensor.diskstation_disk_2_exceeded_max_bad_sectors
+          name: Bad Sector
+          icon: mdi:hexagon-slice-5
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 54%
+            left: 42.5%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: sensor.diskstation_disk_2_status_smart
+          name: Bad Sector
+          icon: mdi:checkbox-marked-circle-outline
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 65%
+            left: 42.5%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: sensor.diskstation_disk_3_status
+          name: DISK 3
+          icon: mdi:harddisk
+          show_name: true
+          show_state: false
+          show_icon: true
+          style:
+            top: 74%
+            left: 56.8%
+            width: 12.1%
+            height: 106%
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: '!='
+            value: normal
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 4px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - height: 63.2%
+            - border-radius: 4px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(32,32,32,1)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - top: 2px
+            - height: 25px
+            - width: 25px
+            - padding-top: 0px
+            - padding-bottom: 5px
+            - color: lightgreen
+            - transform: rotate(0deg)
+        - type: custom:button-card
+          entity: sensor.diskstation_disk_3_temperature
+          name: Temperature
+          show_name: false
+          show_state: true
+          show_icon: false
+          style:
+            top: 33%
+            left: 56.8%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: '>'
+            value: 60
+            styles:
+              state:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            state:
+            - padding-top: 4px
+            - padding-bottom: 4px
+            - font-size: 12px
+            - color: lightgreen
+            card:
+            - font-size: 13px
+            - height: 30px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: binary_sensor.diskstation_disk_3_below_min_remaining_life
+          name: Life
+          icon: mdi:cards-heart
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 43%
+            left: 56.8%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: binary_sensor.diskstation_disk_3_exceeded_max_bad_sectors
+          name: Bad Sector
+          icon: mdi:hexagon-slice-5
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 54%
+            left: 56.8%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: sensor.diskstation_disk_3_status_smart
+          name: Bad Sector
+          icon: mdi:checkbox-marked-circle-outline
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 65%
+            left: 56.8%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: sensor.diskstation_disk_4_status
+          name: DISK 4
+          icon: mdi:harddisk
+          show_name: true
+          show_state: false
+          show_icon: true
+          style:
+            top: 74%
+            left: 72%
+            width: 12.1%
+            height: 106%
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: '!='
+            value: normal
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 4px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - height: 63.2%
+            - border-radius: 4px
+            - border: 0px solid rgba(100,100,100,0)
+            - background-color: rgba(32,32,32,1)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - top: 2px
+            - height: 25px
+            - width: 25px
+            - padding-top: 0px
+            - padding-bottom: 5px
+            - color: lightgreen
+            - transform: rotate(0deg)
+        - type: custom:button-card
+          entity: sensor.diskstation_disk_4_temperature
+          name: Temperature
+          show_name: false
+          show_state: true
+          show_icon: false
+          style:
+            top: 33%
+            left: 72.8%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: '>'
+            value: 60
+            styles:
+              state:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            state:
+            - padding-top: 4px
+            - padding-bottom: 4px
+            - font-size: 12px
+            - color: lightgreen
+            card:
+            - font-size: 13px
+            - height: 30px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+        - type: custom:button-card
+          entity: binary_sensor.diskstation_disk_4_below_min_remaining_life
+          name: Life
+          icon: mdi:cards-heart
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 43%
+            left: 72.8%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: binary_sensor.diskstation_disk_4_exceeded_max_bad_sectors
+          name: Bad Sector
+          icon: mdi:hexagon-slice-5
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 54%
+            left: 72.8%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+        - type: custom:button-card
+          entity: sensor.diskstation_disk_4_status_smart
+          name: Bad Sector
+          icon: mdi:checkbox-marked-circle-outline
+          show_name: false
+          show_state: false
+          show_icon: true
+          style:
+            top: 65%
+            left: 72.8%
+            width: 47px
+            height: 0px
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            card:
+            - font-size: 13px
+            - height: 40px
+            - border-radius: 5px
+            - border: 1px solid rgba(0,0,0,0.0)
+            - background-color: rgba(0,0,0,0)
+            - box-shadow: 0px 0px 2px 2px rgba(0,0,0,0)
+            icon:
+            - height: 20px
+            - width: 20px
+            - padding-top: 4px
+            - padding-bottom: 5px
+            - color: lightgreen
+      - type: horizontal-stack
+        cards:
+        - type: custom:button-card
+          entity: switch.deskstation
+          name: LAN 1
+          icon: mdi:ethernet
+          show_name: true
+          show_state: false
+          show_icon: true
+          style:
+            top: 54.5%
+            left: 88%
+            width: 9%
+            height: 19%
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: ==
+            value: 'off'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          - operator: ==
+            value: 'on'
+            styles:
+              icon:
+              - color: lightgreen
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 5px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - border-radius: 6px
+            - height: 80px
+            icon:
+            - height: 30px
+            - width: 30px
+            - padding-top: 0px
+            - padding-bottom: 1px
+            - color: lightgreen
+            - filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+        - type: custom:button-card
+          entity: binary_sensor.diskstation_security_status
+          name: SECURITY
+          show_name: true
+          show_state: false
+          show_icon: true
+          style:
+            top: 54.5%
+            left: 88%
+            width: 9%
+            height: 19%
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: ==
+            value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          - operator: ==
+            value: 'off'
+            styles:
+              icon:
+              - color: lightgreen
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 5px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - border-radius: 6px
+            - height: 80px
+            icon:
+            - height: 30px
+            - width: 30px
+            - padding-top: 0px
+            - padding-bottom: 1px
+            - color: gray
+            - filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+        - type: custom:button-card
+          entity: update.diskstation_dsm_update
+          name: UPDATE
+          icon: mdi:update
+          show_name: true
+          show_state: false
+          show_icon: true
+          style:
+            top: 54.5%
+            left: 88%
+            width: 9%
+            height: 19%
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: ==
+            value: 'on'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          - operator: ==
+            value: 'off'
+            styles:
+              icon:
+              - color: lightgreen
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 5px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - border-radius: 6px
+            - height: 80px
+            icon:
+            - height: 30px
+            - width: 30px
+            - padding-top: 0px
+            - padding-bottom: 1px
+            - color: gray
+            - filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+        - type: custom:button-card
+          entity: button.deskstation_reboot
+          name: RESTART
+          icon: mdi:restart
+          show_name: true
+          show_state: false
+          show_icon: true
+          lock:
+            enabled: enabled
+            duration: 20
+            unlock: double_tap
+          style:
+            top: 54.5%
+            left: 88%
+            width: 9%
+            height: 19%
+          tap_action:
+            action: call-service
+            service: button.thecloud_reboot
+          hold_action:
+            action: more-info
+          state:
+          - operator: ==
+            value: 'off'
+            styles:
+              icon:
+              - color: gray
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          - operator: ==
+            value: 'on'
+            styles:
+              icon:
+              - color: yellow
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            lock:
+            - justify-content: flex-start
+            - align-items: flex-start
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 5px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - border-radius: 6px
+            - height: 80px
+            icon:
+            - height: 30px
+            - width: 30px
+            - padding-top: 0px
+            - padding-bottom: 1px
+            - color: gray
+            - filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+        - type: custom:button-card
+          entity: button.deskstation_shutdown
+          name: POWER
+          icon: mdi:power
+          show_name: true
+          show_state: false
+          show_icon: true
+          style:
+            top: 54.5%
+            left: 88%
+            width: 9%
+            height: 19%
+          tap_action:
+            action: more-info
+          hold_action:
+            action: more-info
+          state:
+          - operator: ==
+            value: 'off'
+            styles:
+              icon:
+              - color: rgba(253,89,89,1)
+                animation: blink 1s ease infinite
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          - operator: ==
+            value: 'on'
+            styles:
+              icon:
+              - color: lightgreen
+                filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+          styles:
+            name:
+            - color: rgba(255,255,255,1)
+            - padding-bottom: 5px
+            - font-weight: normal
+            card:
+            - font-size: 10px
+            - border-radius: 6px
+            - height: 80px
+            icon:
+            - height: 30px
+            - width: 30px
+            - padding-top: 0px
+            - padding-bottom: 1px
+            - color: gray
+            - filter: drop-shadow(0px 0px 2px rgba(0,0,0,1)
+      - type: vertical-stack
+        cards:
+        - type: gauge
+          name: "DiskStation \u2013 Volume 1 (Used)"
+          entity: sensor.diskstation_used_percent
+          needle: true
+          min: 0
+          max: 100
+          severity:
+            green: 0
+            yellow: 75
+            red: 90
+        - type: entities
+          title: "DiskStation \u2013 Volume 1"
+          show_header_toggle: false
+          entities:
+          - entity: sensor.diskstation_free_space
+            name: Free Space (TB)
+            icon: mdi:harddisk
+          - entity: sensor.diskstation_volume_1_used_space
+            name: Used Space (TB)
+          - entity: sensor.diskstation_volume_1_total_size
+            name: Total Space (TB)
+      - type: custom:apexcharts-card
+        graph_span: 24h
+        show:
+          loading: false
+        apex_config:
+          chart:
+            height: 150px
+          grid:
+            show: true
+            borderColor: rgba(255,255,255,0.2)
+          legend:
+            show: true
+        header:
+          title: Network
+          show: true
+          show_states: true
+          colorize_states: true
+          standard_format: true
+        all_series_config:
+          stroke_width: 2
+        series:
+        - entity: sensor.diskstation_network_up
+          type: area
+          opacity: 0.3
+          name: Upload
+          color: skyblue
+          show:
+            legend_value: false
+        - entity: sensor.diskstation_network_down
+          type: area
+          opacity: 0.3
+          name: Download
+          color: darkorange
+          show:
+            legend_value: false
+      - type: custom:apexcharts-card
+        graph_span: 24h
+        show:
+          loading: false
+        apex_config:
+          chart:
+            height: 155px
+          grid:
+            show: true
+            borderColor: rgba(255,255,255,0.2)
+          legend:
+            show: false
+        header:
+          title: System Resources
+          show: true
+          show_states: true
+          colorize_states: true
+          standard_format: true
+        all_series_config:
+          stroke_width: 2
+        series:
+        - entity: sensor.diskstation_memory_usage_real
+          type: area
+          opacity: 0.3
+          name: Memory
+          color: skyblue
+          show:
+            legend_value: false
+        - entity: sensor.diskstation_cpu_utilization_total
+          type: area
+          opacity: 0.3
+          name: CPU
+          color: orange
+          show:
+            legend_value: false
+      - type: custom:apexcharts-card
+        graph_span: 24h
+        show:
+          loading: false
+        apex_config:
+          chart:
+            height: 150px
+          grid:
+            show: true
+            borderColor: rgba(255,255,255,0.2)
+          legend:
+            show: true
+        header:
+          title: Temperature
+          show: true
+          show_states: true
+          colorize_states: true
+          standard_format: true
+        all_series_config:
+          stroke_width: 2
+        series:
+        - entity: sensor.diskstation_temperature
+          type: area
+          opacity: 0.3
+          name: NAS
+          color: orange
+          show:
+            legend_value: false
+        - entity: sensor.diskstation_volume_1_average_disk_temp
+          type: area
+          opacity: 0.3
+          name: Volume AVG
+          color: skyblue
+          show:
+            legend_value: false
+      - type: vertical-stack
+        cards:
+        - type: markdown
+          content: '## NAS 410 Backup - Den lange'
+        - type: picture-entity
+          entity: sensor.diskstation_uptime
+          image: /local/images/lovelace/nas.png
+        - type: custom:bar-card
+          align: split
+          show_icon: true
+          padding: 4px
+          columns: '1'
+          card_style:
+            border-radius: 5px
+          entities:
+          - entity: sensor.diskstation_volume_1_volume_used
+            title: Disk
+          - entity: sensor.diskstation_volume_1_used_space
+            title: RAM
+          - entity: sensor.diskstation_cpu_utilization_total
+          - entity: sensor.diskstation_memory_usage_real
+          - entity: sensor.diskstation_volume_1_volume_used
+        - type: entities
+          entities:
+          - entity: sensor.diskstation_disk_1_status
+          - entity: sensor.diskstation_temperature
+          - entity: binary_sensor.diskstation_security_status
+          - entity: binary_sensor.diskstation_update_available
+          - entity: binary_sensor.diskstation_disk_4_exceeded_max_bad_sectors
+          - entity: binary_sensor.diskstation_disk_3_exceeded_max_bad_sectors
+          - entity: binary_sensor.diskstation_disk_2_exceeded_max_bad_sectors
+          - entity: binary_sensor.diskstation_disk_1_exceeded_max_bad_sectors
+          - entity: sensor.diskstation_network_up
+          - entity: sensor.diskstation_network_down
+          - entity: sensor.diskstation_volume_1_used_space
+          - entity: sensor.diskstation_disk_4_status
+          - entity: sensor.diskstation_disk_3_status
+          - entity: sensor.diskstation_disk_2_status
+    - type: sections
+      max_columns: 4
+      title: Proxmox
+      path: proxmox
+      icon: phu:proxmox
+      sections:
+      - type: grid
+        cards:
+        - type: heading
+          heading_style: title
+        - type: vertical-stack
+          cards:
+          - type: horizontal-stack
+            cards:
+            - type: markdown
+              content: '### CPU'
+              card_mod:
+                style: "ha-card {\n  background: rgba(0,0,0,0);\n  text-align: center;\n\
+                  \  margin: -20px -0px -20px 0px;\n}\n"
+            - type: markdown
+              content: '### DISK'
+              card_mod:
+                style: "ha-card {\n  background: rgba(0,0,0,0);\n  text-align: center;\n\
+                  \  margin: -20px -0px -20px 0px;\n}\n"
+            - type: markdown
+              content: '### RAM'
+              card_mod:
+                style: "ha-card {\n  background: rgba(0,0,0,0);\n  text-align: center;\n\
+                  \  margin: -20px -0px -20px 0px;\n}\n"
+            - type: markdown
+              content: '### SWAP'
+              card_mod:
+                style: "ha-card {\n  background: rgba(0,0,0,0);\n  text-align: center;\n\
+                  \  margin: -20px -0px -20px 0px;\n}\n"
+            card_mod:
+              style: "ha-card {\n  box-shadow: none;\n  background: rgba(0,0,0,0);\n\
+                \  text-align: center;\n  margin: -40px -0px -20px 0px;\n}\n"
+          - type: custom:stack-in-card
+            mode: vertical
+            cards:
+            - type: vertical-stack
+              cards:
+              - type: conditional
+                conditions:
+                - condition: state
+                  entity: binary_sensor.node_pve_status
+                  state: 'on'
+                card:
+                  type: vertical-stack
+                  cards:
+                  - type: horizontal-stack
+                    cards:
+                    - type: gauge
+                      entity: sensor.node_pve_cpu_used
+                      min: 0
+                      max: 100
+                      severity:
+                        green: 0
+                        yellow: 40
+                        red: 75
+                      needle: false
+                      name: ' '
+                    - type: gauge
+                      entity: sensor.node_pve_disk_used_percentage
+                      min: 0
+                      max: 100
+                      severity:
+                        green: 0
+                        yellow: 75
+                        red: 90
+                      needle: false
+                      name: ' '
+                    - type: gauge
+                      entity: sensor.node_pve_memory_used_percentage
+                      min: 0
+                      max: 100
+                      severity:
+                        green: 0
+                        yellow: 90
+                        red: 95
+                      needle: false
+                      name: ' '
+                    - type: gauge
+                      entity: sensor.node_pve_swap_used_percentage
+                      min: 0
+                      max: 100
+                      severity:
+                        green: 0
+                        yellow: 90
+                        red: 95
+                      needle: false
+                      name: ' '
+                  - type: entities
+                    entities:
+                    - entity: binary_sensor.node_pve_status
+                      type: custom:multiple-entity-row
+                      name: Proxmox
+                      entities:
+                      - icon: mdi:restart
+                        state_color: false
+                        tap_action:
+                          action: call-service
+                          service: button.press
+                          service_data:
+                            entity_id: button.node_pve_reboot
+                          confirmation:
+                            text: RESTART. Are you sure?
+                      - icon: mdi:stop
+                        state_color: false
+                        tap_action:
+                          action: call-service
+                          service: button.press
+                          service_data:
+                            entity_id: button.node_pve_shutdown
+                          confirmation:
+                            text: SHUTDOWN. Are you sure?
+                    state_color: true
+                    card_mod:
+                      style: "ha-card {\n  box-shadow: none;\n  text-align: left;\n\
+                        \  margin: -0px -0px -20px 0px;\n}\n"
+        - type: vertical-stack
+          cards:
+          - type: custom:auto-entities
+            card:
+              type: entities
+              title: Proxmox oversigt
+              show_header_toggle: false
+              header: null
+            filter:
+              include:
+              - options: {}
+                entity_id: '*pve*'
+            sort:
+              method: attribute
+              numeric: true
+              attribute: days
+        - type: vertical-stack
+          cards:
+          - type: horizontal-stack
+            cards:
+            - type: markdown
+              content: '### CPU'
+              card_mod:
+                style: "ha-card {\n  background: rgba(0,0,0,0);\n  text-align: center;\n\
+                  \  margin: -20px -0px -20px 0px;\n}\n"
+            - type: markdown
+              content: '### DISK'
+              card_mod:
+                style: "ha-card {\n  background: rgba(0,0,0,0);\n  text-align: center;\n\
+                  \  margin: -20px -0px -20px 0px;\n}\n"
+            - type: markdown
+              content: '### RAM'
+              card_mod:
+                style: "ha-card {\n  background: rgba(0,0,0,0);\n  text-align: center;\n\
+                  \  margin: -20px -0px -20px 0px;\n}\n"
+            - type: markdown
+              content: '### ????'
+              card_mod:
+                style: "ha-card {\n  background: rgba(0,0,0,0);\n  text-align: center;\n\
+                  \  margin: -20px -0px -20px 0px;\n}\n"
+            card_mod:
+              style: "ha-card {\n  box-shadow: none;\n  background: rgba(0,0,0,0);\n\
+                \  text-align: center;\n  margin: -40px -0px -20px 0px;\n}\n"
+          - type: custom:stack-in-card
+            mode: vertical
+            cards:
+            - type: vertical-stack
+              cards:
+              - type: conditional
+                conditions:
+                - condition: state
+                  entity: binary_sensor.qemu_home_assistant_101_status
+                  state: 'on'
+                card:
+                  type: vertical-stack
+                  cards:
+                  - type: horizontal-stack
+                    cards:
+                    - type: gauge
+                      entity: sensor.qemu_home_assistant_101_cpu_used
+                      min: 0
+                      max: 100
+                      severity:
+                        green: 0
+                        yellow: 40
+                        red: 75
+                      needle: false
+                      name: ' '
+                    - type: gauge
+                      entity: sensor.qemu_home_assistant_101_disk_used_percentage
+                      min: 0
+                      max: 100
+                      severity:
+                        green: 0
+                        yellow: 75
+                        red: 90
+                      needle: false
+                      name: ' '
+                    - type: gauge
+                      entity: sensor.qemu_home_assistant_101_memory_used_percentage
+                      min: 0
+                      max: 100
+                      severity:
+                        green: 0
+                        yellow: 90
+                        red: 95
+                      needle: false
+                      name: ' '
+                    - type: gauge
+                      entity: sensor.qemu_home_assistant_101_disk_used_percentage
+                      min: 0
+                      max: 100
+                      severity:
+                        green: 0
+                        yellow: 90
+                        red: 95
+                      needle: false
+                      name: ' '
+                  - type: entities
+                    entities:
+                    - entity: binary_sensor.node_pve_status
+                      type: custom:multiple-entity-row
+                      name: Proxmox
+                      entities:
+                      - icon: mdi:restart
+                        state_color: false
+                        tap_action:
+                          action: call-service
+                          service: button.press
+                          service_data:
+                            entity_id: button.node_pve_reboot
+                          confirmation:
+                            text: RESTART. Are you sure?
+                      - icon: mdi:stop
+                        state_color: false
+                        tap_action:
+                          action: call-service
+                          service: button.press
+                          service_data:
+                            entity_id: button.node_pve_shutdown
+                          confirmation:
+                            text: SHUTDOWN. Are you sure?
+                    state_color: true
+                    card_mod:
+                      style: "ha-card {\n  box-shadow: none;\n  text-align: left;\n\
+                        \  margin: -0px -0px -20px 0px;\n}\n"
+        - type: markdown
+          content: https://www.reddit.com/r/homeassistant/comments/1f64s34/proxmox_dashboard/
+            for kort
+      - type: grid
+        cards:
+        - type: heading
+          heading: New section
+        - type: custom:auto-entities
+          card:
+            type: entities
+            title: Proxmox oversigt
+            show_header_toggle: false
+            header: null
+          filter:
+            include:
+            - options: {}
+              entity_id: '*pve*'
+          sort:
+            method: attribute
+            numeric: true
+            attribute: days
+        - type: custom:auto-entities
+          card:
+            type: entities
+            title: Proxmox oversigt
+            show_header_toggle: false
+            header: null
+          filter:
+            include:
+            - options: {}
+              entity_id: '*qemu*'
+          sort:
+            method: attribute
+            numeric: true
+            attribute: days
+      header:
+        card:
+          type: markdown
+          text_only: true
+          content: "# Hello {{ user }}\nAdd your text here, template variables are\
+            \ supported \u2728"
+      cards: []
+    - type: sections
+      max_columns: 4
+      title: test med Sections view
+      path: test-med-sections-view
+      sections:
+      - type: grid
+        cards:
+        - type: heading
+          heading: New section
+        - type: grid
+          title: Hurtige handlinger
+          cards:
+          - type: tile
+            entity: light.alt_lys_i_stuen
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: sensor.weather_stuen_humidity
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: lock.hoveddor
+          - type: grid
+            title: Temperatur
+            cards: null
+          - type: tile
+            entity: sensor.weather_stuen_temperature
+          - type: tile
+            entity: sensor.weather_sovevaerelse_temperature
+          - type: grid
+            title: Sikkerhed
+            cards: null
+          - type: tile
+            entity: binary_sensor.hoveddor_contact
+          - type: tile
+            entity: binary_sensor.terrasse_dor_contact
+      header:
+        card:
+          type: markdown
+          content: "# Hello {{ user }}\nAdd your text here, template variables are\
+            \ supported \u2728"
+          text_only: true
+kind: dashboard_settings

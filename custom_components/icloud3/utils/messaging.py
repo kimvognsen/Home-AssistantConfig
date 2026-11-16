@@ -16,12 +16,12 @@ set reject_attr = [ 'integration', 'icon', 'sensor_updated', 'friendly_name' ] %
 
 
 from ..global_variables import GlobalVariables as Gb
-from ..const            import (VERSION, VERSION_BETA, ICLOUD3, ICLOUD3_VERSION, DOMAIN, ICLOUD3_VERSION_MSG,
+from ..const            import (ICLOUD3, DOMAIN,
                                 ICLOUD3_ERROR_MSG, EVLOG_DEBUG, EVLOG_ERROR, EVLOG_ATTENTION, EVLOG_MONITOR,
-                                EVLOG_TIME_RECD, EVLOG_UPDATE_HDR, EVLOG_UPDATE_START, EVLOG_UPDATE_END,
+                                EVLOG_UPDATE_HDR, EVLOG_UPDATE_START, EVLOG_UPDATE_END,
                                 EVLOG_ALERT, EVLOG_WARNING, EVLOG_HIGHLIGHT, EVLOG_IC3_STAGE_HDR,
                                 ALERT_CRITICAL, ALERT_OTHER,
-                                IC3LOG_FILENAME, EVLOG_TIME_RECD, EVLOG_TRACE,
+                                IC3LOG_FILENAME, EVLOG_TRACE,
                                 CRLF, CRLF_DOT, CRLF_HDOT,
                                 NL, NL3, NL4, NLSP4, NL3U, NL3D, NL3_DATA, NL4_DATA,
                                 NBSP, NBSP2, NBSP3, NBSP4, NBSP5, NBSP6,
@@ -46,13 +46,18 @@ from ..const            import (VERSION, VERSION_BETA, ICLOUD3, ICLOUD3_VERSION,
                                 BADGE,
                                 )
 from ..const_more_info      import more_info_text
-from .utils                 import (obscure_field, instr, is_empty, isnot_empty, list_add, list_del, )
+from .utils                 import (obscure_field, instr, is_empty, isnot_empty, username_id, )
 
 
 import homeassistant.util.dt   as dt_util
 from homeassistant.components  import persistent_notification
+from homeassistant.helpers     import issue_registry as ir
+from homeassistant.util        import slugify
 
 import os
+import re
+import threading
+from functools import partial
 import time
 import inspect
 import traceback
@@ -65,7 +70,7 @@ FILTER_DATA_DICTS = ['items', 'userInfo', 'dsid', 'dsInfo', 'webservices', 'loca
 FILTER_DATA_LISTS = ['devices', 'content', 'followers', 'following', 'contactDetails', 'protocols', 'trustTokens',
                     'keyNames', 'trustedPhoneNumbers', ]
 FILTER_FIELDS = [
-        ICLOUD3_VERSION, AUTHENTICATED,
+        AUTHENTICATED,
         LATITUDE,  LONGITUDE, LOCATION_SOURCE,
         ZONE, ZONE_DATETIME, INTO_ZONE_DATETIME, LAST_ZONE,
         TIMESTAMP, TIMESTAMP_SECS, TIMESTAMP_TIME, LOCATION_TIME, DATETIME, AGE,
@@ -82,12 +87,16 @@ FILTER_FIELDS = [
         'appleId', 'emails', 'phones', 'locked',
         'deviceStatus', 'batteryStatus', 'batteryLevel', 'membersInfo',
         'deviceModel', 'rawDeviceModel', 'deviceDisplayName', 'modelDisplayName', 'deviceClass',
+        # Retired/replaced device indicators. An unpaired watch or an iPhone erased
+        # for trade-in drops Activation Lock, and a removed device is pendingRemove.
+        'activationLocked', 'wipedTimestamp', 'wipeInProgress',
+        'pendingRemove', 'pendingRemoveUntilTS', 'fmlyShare', 'deviceDiscoveryId',
         'isOld', 'isInaccurate', 'timeStamp', 'altitude', 'location', 'latitude', 'longitude',
         'horizontalAccuracy', 'verticalAccuracy', 'positionType',
         'hsaVersion', 'hsaEnabled', 'hsaTrustedBrowser', 'hsaChallengeRequired',
         'locale', 'appleIdEntries', 'statusCode',
         'familyEligible', 'findme', 'requestInfo',
-        'XXX-termsUpdateNeeded', 'iCloudTerms', 'version',
+        'termsUpdateNeeded', 'iCloudTerms', 'version',
         'invitationSentToEmail', 'invitationAcceptedByEmail', 'invitationFromHandles',
         'invitationFromEmail', 'invitationAcceptedHandles',
         'items', 'userInfo', 'prsId', 'dsid', 'dsInfo', 'webservices', 'locations', 'dslang',
@@ -96,10 +105,21 @@ FILTER_FIELDS = [
         'data', 'json', 'headers', 'params', 'url', 'retry_cnt', 'retried', 'retry', '#',
         'code', 'ok', 'method', 'fmly', 'shouldLocate', 'selectedDevice', 'membersInfo',
         'X-Apple-OAuth-State', 'X-Apple-ID-Session-Id', 'Accept', 'Authorization',
+        # scnt pairs with X-Apple-ID-Session-Id to identify the idmsa signin
+        # session. Logged so a rejected /appleauth/auth request can be checked
+        # for whether the session headers were actually attached to it.
+        'scnt', 'Content-Type', 'X-Apple-Widget-Key',
         'identifiers', 'labels', 'model', 'name_by_user', 'area_id', 'manufacturer', 'sw_version',
         'keyNames', 'securityCode', 'trustedPhoneNumbers', 'trustedPhoneNumber',
         'deviceType', 'areaCode', 'phoneNumber', 'deviceId',
         'authenticationType', 'pushSupported',
+        # Apple's 2fa error/status fields. Without these, a rejected auth code
+        # request (verify/phone 423) logs only the trusted phone numbers and the
+        # reason Apple gives for the rejection is filtered out of the log.
+        'service_errors', 'serviceErrors', 'hasError', 'message', 'title',
+        'restrictedAccount', 'authType', 'mode', 'pushMode',
+        'tooManyCodesSent', 'tooManyCodesValidated',
+        'securityCodeLocked', 'securityCodeCooldown',
         'username', 'password', 'accountName', 'salt', 'protocols', 'protocol', 'iteration',
         'a', 'A', 'b', 'B', 'c', 'm1', 'M1', 'm2', 'M2', 'g', 'K', 'N', 'u', 'v',
         ]
@@ -184,8 +204,7 @@ def post_event(devicename_or_Device, event_msg='+'):
     devicename, event_msg = _resolve_devicename_log_msg(devicename_or_Device, event_msg)
 
     try:
-        if event_msg.endswith(', '):
-            event_msg = event_msg[:-2]
+        if event_msg.endswith(', '): event_msg = event_msg[:-2]
         event_msg = event_msg.replace(', , ', ', ')
     except:
         # Gb.HALogger.info(event_msg)
@@ -215,10 +234,9 @@ def post_event(devicename_or_Device, event_msg='+'):
         event_msg = (f"{devicename}{str(event_msg)}")
         log_info_msg(event_msg)
 
-    elif event_msg.startswith(EVLOG_TIME_RECD) is False:
-        event_msg = (f"{devicename}{str(event_msg)}")
-        log_debug_msg(event_msg)
-
+#--------------------------------------------------------------------
+def post_dotted_line():
+    post_event(f"{'⠒ '*28}")
 #--------------------------------------------------------------------
 def post_alert(devicename_or_Device, event_msg="+"):
     '''
@@ -288,8 +306,8 @@ def post_greenbar_msg(Device_or_greenbar_msg, greenbar_msg='+'):
 
     # Device was specified, check to see if this is the screen displayed
     if Device:
-        fname = Device.fname if Device.is_tracked else f"{Device.fname} 🅜"
-        if Gb.EvLog.evlog_attrs["fname"] != fname:
+        fname_text = Gb.EvLog.format_evlog_device_fname(Device)
+        if Gb.EvLog.evlog_attrs['selected_fname'] != fname_text:
             return
 
     # if greenbar_msg.startswith('Internet Error') is False:
@@ -308,63 +326,61 @@ def clear_greenbar_msg():
     Gb.EvLog.display_user_message(Gb.EvLog.user_message)
 
 #-------------------------------------------------------------------------------------------
-def update_alert_sensor(type_or_key=None, alert_msg=None, update_sensor=False, replace_alert_msg=False):
+def update_alert_sensor(alert_key=None, alert_msg=None, update_sensor=False):
     '''
     Update the Gb.alerts_sensor_attrs dictionary
     Critical alerts (ALERT_CRITICAL) will replace any previous critical alerts instead of appending it
 
-    Type: Attribute to add or update
+    alert_key:
+        - ALERT_CRITICAL - Critical alerts not associated with Apple acct or device
+        - Apple acct username_id
+        - Device's devicename
+        - Other value
     '''
-    if type_or_key is None and alert_msg is None:
+    if alert_key is None and alert_msg is None:
         Gb.AlertsSensor.async_update_sensor()
         return
 
-    if type_or_key is None:
-        type_or_key = ALERT_OTHER
+    if alert_key is None:
+        alert_key = ALERT_OTHER
 
     update_sensor = False
 
     # Clear this message
     if alert_msg == '':
-        Gb.alerts_sensor_attrs.pop(type_or_key, None)
+        Gb.alerts_sensor_attrs.pop(alert_key, None)
         update_sensor = True
-
-    # Not critical alert - Only keep first alert for acct or device
-    elif (type_or_key != ALERT_CRITICAL
-            and type_or_key in Gb.alerts_sensor_attrs
-            and replace_alert_msg is False):
-        return
 
     # Add the alert
     else:
-        Gb.alerts_sensor_attrs[type_or_key] = alert_msg
+        Gb.alerts_sensor_attrs[alert_key] = alert_msg
 
         if Gb.is_icloud3_startup_inprocess is False or update_sensor:
             update_sensor = True
 
-    # Rebuild list so importing alerts are at the top
+    # Rebuild list so critical alerts are at the top
     if len(Gb.alerts_sensor_attrs) > 1:
         new_alerts_sensor_attrs = {}
         # Critical alerts
         new_alerts_sensor_attrs.update(
-            {_source: _msg  for _source, _msg in Gb.alerts_sensor_attrs.items()
-                            if _source == ALERT_CRITICAL})
+            {_alert_key: _msg  for _alert_key, _msg in Gb.alerts_sensor_attrs.items()
+                            if _alert_key == ALERT_CRITICAL})
 
         # Apple Acct alerts (-source will be the filter value, change it back to the real value)
         new_alerts_sensor_attrs.update(
-            {_source: _msg
-                            for _source, _msg in Gb.alerts_sensor_attrs.items()
-                            if instr(_source, '@')})
+            {_alert_key: _msg
+                            for _alert_key, _msg in Gb.alerts_sensor_attrs.items()
+                            if instr(_alert_key, '@')})
 
         # Device alerts
         new_alerts_sensor_attrs.update(
-            {_source: _msg  for _source, _msg in Gb.alerts_sensor_attrs.items()
-                            if _source in Gb.Devices_by_devicename})
+            {_alert_key: _msg  for _alert_key, _msg in Gb.alerts_sensor_attrs.items()
+                            if _alert_key in Gb.Devices_by_devicename})
 
         # Other alerts
         new_alerts_sensor_attrs.update(
-            {_source: _msg  for _source, _msg in Gb.alerts_sensor_attrs.items()
-                            if _source not in new_alerts_sensor_attrs})
+            {_alert_key: _msg  for _alert_key, _msg in Gb.alerts_sensor_attrs.items()
+                            if _alert_key not in new_alerts_sensor_attrs})
         Gb.alerts_sensor_attrs = new_alerts_sensor_attrs
 
     if update_sensor:
@@ -385,6 +401,207 @@ def ha_notification(msg_line1, msg_line2=None) -> None:
         title=f"iCloud3 Notification",
         notification_id="icloud3",
     )
+
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+#
+#   HA REPAIRS ISSUE ROUTINES
+#
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# iCloud3 issues use these translation keys. The title and message are passed as
+# placeholders ('issues' in strings.json & translations/en.json).
+#   icloud3_alert  - Issue with a change that is made when Submit is selected
+#   icloud3_notice - Notice (fix_action='acknowledge'), Submit only removes it
+REPAIR_ISSUE_TRANSLATION_KEY        = 'icloud3_alert'
+REPAIR_NOTICE_TRANSLATION_KEY       = 'icloud3_notice'
+
+# Fix handlers run by repairs.py when Submit is selected on a fixable issue.
+#   {fix_action: handler(fix_data) -> bool}, see register_repair_fix_handler
+repair_fix_handlers = {}
+
+# Added to the device's sensor.icloud3_alerts entry (keyed by the device's fname) when
+# a Repairs issue is posted. An entry with this text is removed after Submit.
+REPAIR_ISSUED_ALERT_MSG = 'HA Repair issue created'
+
+#--------------------------------------------------------------------
+def post_repair_issue(  issue_id, alert_key, title, alert_msg,
+                        fix_action=None, fix_data=None, severity='warning'):
+    '''
+    Add an iCloud3 notification to HA Settings > Repairs. It is also added to the
+    sensor.icloud3_alerts attribute for the alert_key (Event Log greenbar).
+
+    issue_id:
+        Stable id of the condition, e.g. f"device_replaced_{devicename}_{device_id8}".
+        Posting the same id again updates the issue instead of adding another one.
+        HA keeps the issue's 'Ignore' state by id, so an ignored issue stays ignored
+        when it is posted again on the next restart. A notice (fix_action='acknowledge')
+        is deleted and created again so it is always displayed.
+    alert_key:
+        What the issue is for, used as the sensor.icloud3_alerts key:
+            - devicename - The Device's fname is used
+            - Apple acct username - The AppleAcct's username_id is used
+            - Other text - Used as is
+        The issue data has the alert_key and the devicename ('' if it is not a
+        device) for the fix handler.
+    title, alert_msg:
+        Repairs title and message. Event Log formatting (CRLF, CRLF_DOT) is converted
+        to markdown for the Repairs dialog.
+    fix_action:
+        Name of a handler registered with register_repair_fix_handler. The issue
+        is fixable and the handler runs when Submit is selected in Repairs.
+        None - Informational issue, it can only be ignored
+    fix_data:
+        dict of str/int/float/None values passed to the fix handler
+    severity:
+        'warning', 'error' or 'critical'
+
+    Return:
+        issue_id used for the Repairs issue (slugified)
+    '''
+    try:
+        issue_id = slugify(issue_id)
+        devicename = ''
+        if Device := Gb.Devices_by_devicename.get(alert_key):
+            devicename = alert_key
+            alert_key  = Device.fname
+        elif AppleAcct := Gb.AppleAcct_by_username.get(alert_key):
+            alert_key  = AppleAcct.username_id
+
+        if fix_action is None:
+            fix_action = 'acknowledge'
+
+        data = {'devicename': devicename,
+                'alert_key': alert_key,
+                'fix_action': fix_action}
+        data.update(fix_data or {})
+
+        # A notice reports a new event. Delete the one from an earlier post first so
+        # it is displayed even if it was ignored ('Ignore' is kept by issue_id).
+        if fix_action == 'acknowledge':
+            _run_in_event_loop(ir.async_delete_issue, Gb.hass, DOMAIN, issue_id)
+
+        _run_in_event_loop(ir.async_create_issue,
+                                Gb.hass, DOMAIN, issue_id,
+                                is_fixable     = fix_action is not None,
+                                is_persistent  = False,
+                                severity       = ir.IssueSeverity(severity),
+                                translation_key= REPAIR_NOTICE_TRANSLATION_KEY
+                                                    if fix_action == 'acknowledge'
+                                                    else REPAIR_ISSUE_TRANSLATION_KEY,
+                                translation_placeholders = {
+                                        'title': _evlog_msg_to_markdown(title),
+                                        'message': _evlog_msg_to_markdown(alert_msg)},
+                                data          = data)
+
+        update_alert_sensor(alert_key, f"{title}, {REPAIR_ISSUED_ALERT_MSG}")
+
+    except Exception as err:
+        log_exception(err)
+
+    return issue_id
+
+#--------------------------------------------------------------------
+def clear_repair_issue(issue_id, devicename_or_Device=None):
+    '''
+    Remove the Repairs issue and its sensor.icloud3_alerts message. Only call this
+    when the condition no longer exists. Deleting the issue also deletes its
+    'Ignore' state, so it is displayed again if it is posted later.
+    '''
+    devicename, _ = _resolve_devicename_log_msg(devicename_or_Device, '')
+    issue_id = slugify(issue_id)
+
+    try:
+        _run_in_event_loop(ir.async_delete_issue, Gb.hass, DOMAIN, issue_id)
+    except Exception as err:
+        log_exception(err)
+
+    if Device := Gb.Devices_by_devicename.get(devicename):
+        clear_repair_issue_alert_msg(Device.fname)
+
+#--------------------------------------------------------------------
+def clear_repair_issues(issue_id_prefix, keep_issue_ids=None):
+    '''
+    Remove the Repairs issues with an id starting with issue_id_prefix except the
+    ones in keep_issue_ids. Used to remove issues whose condition no longer exists
+    while keeping the ones that were posted again (and their 'Ignore' state).
+
+    issue_id_prefix:
+        Leading words of the issue_id, 'device_replaced_gary_iphone' removes
+        'device_replaced_gary_iphone_...' but not 'device_replaced_gary_iphone2_...'
+
+    The device's sensor.icloud3_alerts entry is not cleared. It is shared by all of
+    the device's issues (keyed by fname) and this runs right after a new issue for
+    the device may have been posted. The alerts sensor is reset when iCloud3 starts.
+    '''
+    issue_id_prefix = f"{slugify(issue_id_prefix)}_"
+    keep_issue_ids  = [slugify(issue_id) for issue_id in (keep_issue_ids or []) if issue_id]
+
+    def _async_delete_issues():
+        issue_registry = ir.async_get(Gb.hass)
+        for domain, issue_id in list(issue_registry.issues):
+            if (domain == DOMAIN
+                    and issue_id.startswith(issue_id_prefix)
+                    and issue_id not in keep_issue_ids):
+                ir.async_delete_issue(Gb.hass, DOMAIN, issue_id)
+
+    try:
+        _run_in_event_loop(_async_delete_issues)
+    except Exception as err:
+        log_exception(err)
+
+#--------------------------------------------------------------------
+def clear_repair_issue_alert_msg(alert_key):
+    '''
+    Remove the sensor.icloud3_alerts entry for the alert_key (from the issue's data,
+    a device's fname, Apple acct username_id or other text) if it is a Repairs issue
+    notification (has REPAIR_ISSUED_ALERT_MSG). Another alert that replaced it is
+    left. Called by repairs.py after Submit.
+    '''
+    if REPAIR_ISSUED_ALERT_MSG in Gb.alerts_sensor_attrs.get(alert_key, ''):
+        update_alert_sensor(alert_key, '')
+
+#--------------------------------------------------------------------
+def register_repair_fix_handler(fix_action, handler):
+    '''
+    Register the function run when Submit is selected on a fixable Repairs issue.
+
+    handler(fix_data) -> bool:
+        fix_data - the issue's data (devicename, fix_action and the fix_data values)
+        Return True if fixed (the issue is removed), False if it failed (the issue
+        stays in Repairs). It runs in an executor thread so it can use the iCloud3
+        routines and write the configuration file.
+    '''
+    repair_fix_handlers[fix_action] = handler
+
+# 'acknowledge' - The issue is a notice. Submit removes it and its alerts sensor message.
+register_repair_fix_handler('acknowledge', lambda fix_data: True)
+
+#--------------------------------------------------------------------
+def _run_in_event_loop(func, *args, **kwargs):
+    '''
+    Run an HA @callback function in the event loop. iCloud3 startup and tracking
+    run in executor threads, so the call is scheduled without waiting for it
+    (waiting from the event loop thread would deadlock).
+    '''
+    if Gb.hass is None:
+        return
+
+    if threading.get_ident() == Gb.hass.loop_thread_id:
+        func(*args, **kwargs)
+    else:
+        Gb.hass.loop.call_soon_threadsafe(partial(func, *args, **kwargs))
+
+#--------------------------------------------------------------------
+def _evlog_msg_to_markdown(msg):
+    '''
+    Convert Event Log formatting to markdown for the Repairs dialog
+    '''
+    msg = re.sub(r'\^\w\^', '', str(msg))
+    msg = msg.replace(CRLF_DOT, '\n- ')
+    msg = msg.replace(CRLF, '  \n')
+    for nbsp in (NBSP6, NBSP5, NBSP4, NBSP3, NBSP2, NBSP):
+        msg = msg.replace(nbsp, ' ')
+
+    return msg.strip()
 
 #--------------------------------------------------------------------
 def format_filename(path):
@@ -449,7 +666,7 @@ def open_ic3log_file(new_log_file=False):
             Gb.iC3Logger.propagate = (Gb.conf_general[CONF_LOG_LEVEL] == 'debug-ha')
 
         if is_empty(Gb.conf_general):
-            write_ic3log_recd(f"Loading {ICLOUD3_VERSION_MSG}")
+            write_ic3log_recd(f"Loading {Gb.icloud3_version_msg}")
 
         write_ic3log_recd(f"Open iCloud3 Log File ({IC3LOG_FILENAME})")
 
@@ -568,7 +785,7 @@ def write_config_file_to_ic3log():
 
     Gb.trace_prefix = '_INIT_'
     indent = SP(37) if Gb.is_log_level_debug else SP(18)
-    log_msg = ( f"iCloud3 Configuration File, {ICLOUD3_VERSION_MSG}")
+    log_msg = ( f"iCloud3 Configuration File, {Gb.icloud3_version_msg}")
     log_msg = ( f"{NL4}⛔{DASH_50}{DASH_50}"
                 f"{NL4}⛔    {log_msg}"
                 f"{NL4}⛔{DASH_50}{DASH_50}")
@@ -648,14 +865,14 @@ def log_error_msg(module_name, log_msg='+'):
 def log_exception(err):
 
     try:
-        write_ic3log_recd(f"{ICLOUD3_VERSION_MSG}\n{traceback.format_exc()}")
+        write_ic3log_recd(f"{Gb.icloud3_version_msg}\n{traceback.format_exc()}")
     except:
         write_ic3log_recd(err)
 
     Gb.HALogger.exception(err)
 
 #--------------------------------------------------------------------
-def log_debug_msg(devicename_or_Device, log_msg='+', msg_prefix=None):
+def log_debug_msg(devicename_or_Device, log_msg='+', msg_prefix=None, log_stack_pgm=None):
 
     if Gb.is_log_level_debug is False or Gb.iC3Logger is None:
         return
@@ -666,7 +883,7 @@ def log_debug_msg(devicename_or_Device, log_msg='+', msg_prefix=None):
 
     if devicename: devicename = f"{devicename} > "
     log_msg = f"{devicename}{str(log_msg)}"
-    log_msg = format_msg_line(log_msg)
+    log_msg = format_msg_line(log_msg, log_stack_pgm=log_stack_pgm)
 
     write_ic3log_recd(log_msg)
 
@@ -722,13 +939,14 @@ def log_stack(hdr_msg=None, return_function=False, return_cnt=0):
         filename = filename.replace('/config/custom_components/icloud3', 'ic3')
 
         log_msg += (f"{NL4}{SP(5)}{DOT}{filename}, {frame_recd.lineno}, {frame_recd.function}, ")
+        current_frame = f"{filename[4:]}, {frame_recd.lineno}, {frame_recd.function}"
 
         if return_cnt == 0:
             if cnt > 0:
                 code = frame_recd.code_context[0].replace('\n', '').strip()
                 log_msg += f"{NL4}{SP(9)}{[code]}"
         elif return_cnt == cnt:
-            return log_msg
+            return current_frame
 
     log_msg = f"{NL4}🟩 LOG STACK: {hdr_msg}{log_msg}"
     log_info_msg(log_msg)
@@ -740,23 +958,25 @@ def log_stack(hdr_msg=None, return_function=False, return_cnt=0):
 #   LOG MESSAGE SUPPORT ROUTINES
 #
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def format_msg_line(log_msg):
+def format_msg_line(log_msg, log_stack_pgm=None):
     try:
         if type(log_msg) is str is False:
             return log_msg
 
-        msg_prefix= ' ' if log_msg.startswith('⡇') else \
+        msg_prefix= '' if log_msg.startswith('⡇') else \
                     ''  if log_msg.startswith(NL) else \
                     NL3U if instr(log_msg, 'REQUEST') else \
                     NL3D if instr(log_msg, 'RESPONSE') else \
                     NL3D if instr(log_msg, 'HDR') else \
                     NL3_DATA if instr(log_msg, 'DATA') else \
-                    ' ⡇ ' if Gb.trace_group else \
-                    ' '
+                    '⡇ ' if Gb.trace_group else \
+                    ''
 
         program_area = ''
 
-        if instr(msg_prefix, '\n'):
+        if log_stack_pgm is not None:
+            source = log_stack_pgm
+        elif instr(msg_prefix, '\n'):
             source = f"{_called_from_history()}"
         else:
             source  = f"{_called_from()}{program_area}"
@@ -794,7 +1014,6 @@ def filter_special_chars(log_msg, evlog_export=False):
 
     if log_msg.find('^') == -1: return log_msg.strip()
 
-    log_msg = log_msg.replace(EVLOG_TIME_RECD , '')
     log_msg = log_msg.replace(EVLOG_UPDATE_HDR, '')
     log_msg = log_msg.replace(EVLOG_UPDATE_START, '')
     log_msg = log_msg.replace(EVLOG_UPDATE_END  , '')
@@ -837,7 +1056,7 @@ def format_header_box(log_msg, indent=None, start_finish=None, evlog_export=Fals
     start_pos = log_msg.find('^')
     if start_pos == -1: start_pos = 0
 
-    indent = indent if indent is not None else 36 if Gb.is_log_level_debug else 16
+    indent = indent if indent is not None else 37 if Gb.is_log_level_debug else 15
 
     top_char = bot_char = DASH_50
     if start_finish == 'start':
@@ -921,7 +1140,7 @@ def log_data_unfiltered(_hdr, rawdata, data_source=None, filter_id=None):
 #--------------------------------------------------------------------
 def log_request_data(request_response_text, method, url, kwargs, AppleAcct=None, response=None):
 
-        is_log_level_rawdata = False if response is None else response.status_code != 200
+        is_log_level_rawdata = False if response is None else (response.status_code != 200)
 
         is_log_level_rawdata = is_log_level_rawdata or (url.endswith('refreshClient') is False)
         if Gb.is_log_level_rawdata or is_log_level_rawdata or Gb.is_icloud3_initial_startup:
@@ -1032,6 +1251,12 @@ def _create_log_msg_from_data(rawdata, data=None):
     except Exception as err:
         log_exception(err)
 
+    if Gb.log_level_devices == 'all':
+        filtered_names = []
+    else:
+        filtered_names = [name  for name, devicename in Gb.devicenames_by_aadev_dname.items()
+                                if devicename in Gb.log_level_devices]
+
     for k, v in filtered_rawdata.copy().items():
         if type(v) is list:
             if is_empty(v): continue
@@ -1039,14 +1264,19 @@ def _create_log_msg_from_data(rawdata, data=None):
             # The list contains a dict item Format it as a sub dict
             if type(v[0]) is dict:
                 idx = -1
+                filtered = []
                 for vsd in v:
                     idx += 1
                     if k == 'content':
-                        ksd = v[idx].get('name', idx)
-                        log_items_data[f"{k}.{ksd}"] = _filter_rawdata_items(vsd)
+                        ksd = vsd.get('name', idx)
+                        if ksd in filtered_names or Gb.is_icloud3_startup_inprocess:
+                            log_items_data[f"{k}.{ksd}"] = _filter_rawdata_items(vsd)
+                        else:
+                            filtered.append(ksd)
                     else:
                         log_items_data[f"{k}.{idx}"] = _filter_rawdata_items(vsd, shrink_only=True)
-
+                if isnot_empty(filtered):
+                    log_items_data[f"{k}.Filtered"] = f'{filtered}'
             else:
                 log_items_data[f"{k}"] = _filter_rawdata_items(v)
             filtered_rawdata.pop(k)
@@ -1080,6 +1310,11 @@ def _create_log_msg_from_data(rawdata, data=None):
             log_msg += f"{NL3_DATA}{data_text}{k}={v}"
 
     return log_msg
+
+#..........................................................................................
+def _is_device_filtered(aadev_name):
+    devicename = Gb.devicenames_by_aadev_dname.get(aadev_name, '')
+    return not (devicename in Gb.log_level_devices or 'all' in Gb.log_level_devices)
 
 #..........................................................................................
 def _filter_rawdata_items(item_value_dict, shrink_only=None):
@@ -1140,7 +1375,7 @@ def internal_error_msg(err_text, msg_text=''):
 
     stack    = inspect.stack()
     caller   = inspect.getframeinfo(stack()[1][0])
-    filename = os.path.basename(caller.filename).split('.')[0][:12]
+    filename = os.path.basename(caller.filename).split('.')[0][:14]
     try:
         parent = inspect.getframeinfo(stack()[2][0])
         parent_lineno = parent.lineno
@@ -1237,24 +1472,26 @@ def dummy_log():
     _log(None, None)
 
 #--------------------------------------------------------------------
-def _evlog(items=None):
+def _evlog(devicename_or_Device, event_msg='+'):
     '''
     Display a message or variable in the Event Log
     '''
-    if items is None:
+    devicename, event_msg = _resolve_devicename_log_msg(devicename_or_Device, event_msg)
+
+    if event_msg is None:
         return
 
-    if (type(items) is str) is False:
-        items = f"{items}"
+    if (type(event_msg) is str) is False:
+        event_msg = f"{event_msg}"
 
-    items       = items.replace('<', '&lt;')
+    event_msg   = event_msg.replace('<', '&lt;')
     called_from = _called_from(trace=True)
     function    = log_stack(return_function=True)
 
     if Gb.EvLog:
-        Gb.EvLog.post_event(f"{EVLOG_TRACE}{called_from} {items}")
+        Gb.EvLog.post_event(devicename, f"{EVLOG_TRACE}{called_from} {event_msg}")
 
-    _log(items)
+    _log(event_msg)
 
 #--------------------------------------------------------------------
 def _log(items, v1='+++', v2='', v3='', v4='', v5=''):
@@ -1306,7 +1543,7 @@ def _called_from(show_fct_name=False, trace=False):
     py_filename = f"{py_filename}……………………"
     caller_lineno = caller.lineno
 
-    return f"[{py_filename[:12]}:{caller_lineno:04}] "
+    return f"[{py_filename[:14]}:{caller_lineno:04}] "
 
 #--------------------------------------------------------------------
 def _called_from_history(trace=False):
@@ -1377,7 +1614,7 @@ def _extract_py_filename(caller):
 #   LOG FILE PASSWORD FILTER
 #
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def add_log_file_filter(item, replacement_text=None):
+def add_log_file_filter(filtered_item, filtered_text=None):
     '''
     Set up  log file filter to replace the items value with *'s or prevent it
     from displaying in the log file. If item contains an '@' and it is being hidden,
@@ -1386,36 +1623,40 @@ def add_log_file_filter(item, replacement_text=None):
     parameters:
         hide_text:  True = Do not display it instead of replacing with *'s
 
-    Note
     '''
-    if (item is None
-            or item.strip() == ''
-            or len(item) < 6):
+
+    if (filtered_item is None
+            or filtered_item.strip() == ''
+            or len(filtered_item) < 6):
         return
     elif Gb.disable_upw_filter:
-        return item
+        return
 
-    # username/email address - reformat useremailname@gmail.com --> use**#**me@ or use**1**@ (set in config_file)
-    if instr(item, '@'):
-        email_parts = item.split('@')
-        Gb.upw_filter_items[email_parts[1]] = ''
+    if instr(filtered_item, '@') is False:
+        if filtered_text is None:
+            filtered_text = '*'*8
+        Gb.upw_filter_items[filtered_item] = filtered_text
+        return
 
-        email_id = email_parts[0]
-        if replacement_text is None:
-            replacement_text = f"{email_id[:3]}****{email_id[-2:]}@"
-        else:
-            replacement_text = f"{email_id[:3]}{replacement_text}{email_id[-2:]}@"
+    # email address = geekstergary@domain - reformat to xx**#**xx@
+    email_id = username_id(filtered_item)        # Will be geekstergary@
+    if len(email_id) < 4: email_id = '***'
 
-        Gb.upw_filter_items[f"{email_id}@"] = Gb.upw_filter_items[email_id] = replacement_text
-        Gb.upw_unfilter_items[replacement_text] = f"{email_id}@"
-        item = item.upper()
-        Gb.upw_filter_items[f"{email_id}@"] = Gb.upw_filter_items[email_id] = replacement_text
-
-    elif replacement_text is not None:
-        Gb.upw_filter_items[item] = replacement_text
-
+    if filtered_text is None:
+        filtered_text = f"{email_id[:3]}****{email_id[-3:]}"
     else:
-        Gb.upw_filter_items[item] = '*'*8
+        filtered_text = f"{email_id[:3]}{filtered_text}{email_id[-3:]}"       # ge**2**ry@
+
+    Gb.upw_filter_items[filtered_item] = Gb.upw_filter_items[email_id] = filtered_text
+    Gb.upw_unfilter_items[filtered_text] = email_id
+
+    filtered_item = filtered_item.upper()
+    email_id      = email_id.upper()
+    filtered_text = filtered_text.upper()
+    Gb.upw_filter_items[filtered_item] = Gb.upw_filter_items[email_id] = filtered_text
+    Gb.upw_unfilter_items[filtered_text] = email_id
+
+
 
 #--------------------------------------------------------------------
 class LoggerFilter(logging.Filter):
@@ -1428,9 +1669,9 @@ class LoggerFilter(logging.Filter):
             return True
 
         message = record.msg
-        for filtered_item, replacement_text in Gb.upw_filter_items.items():
+        for filtered_item, filtered_text in Gb.upw_filter_items.items():
             if instr(message, filtered_item):
-                message = message.replace(filtered_item, replacement_text)
+                message = message.replace(filtered_item, filtered_text)
 
         record.msg  = message
         record.args = []

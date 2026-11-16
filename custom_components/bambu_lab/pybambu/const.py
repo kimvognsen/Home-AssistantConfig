@@ -12,10 +12,12 @@ LOGGER = logging.getLogger(__package__)
 class Printers(StrEnum):
     A1 = "A1"
     A1MINI = "A1MINI"
+    A2L = "A2L"
     P1P = "P1P"
     P1S = "P1S"
     P2S = "P2S"
     H2C = "H2C"
+    H3C = "H3C"
     H2D = "H2D"
     H2DPRO = "H2DPRO"
     H2S = "H2S"
@@ -161,6 +163,7 @@ CURRENT_STAGE_IDS = {
     75: "heatbed_underside_foreign_object_detection",
     76: "pre_extrusion_before_printing",
     77: "preparing_ams",
+    82: "heatbed_stabilizing",  # H3C: confirmed on-device as heatbed stabilization
     # X1 returns -1 for idle
     -1: "idle",  # DUPLICATED
     # P1 returns 255 for idle
@@ -168,6 +171,39 @@ CURRENT_STAGE_IDS = {
 }
 
 CURRENT_STAGE_OPTIONS = list(set(CURRENT_STAGE_IDS.values())) # Conversion to set first removes the duplicates
+
+# print.ams_status: high byte is the main AMS state, low byte the sub-step.
+# Values mirror BambuStudio's AmsStatusMain (DeviceCore/DevDefs.h).
+AMS_STATUS_MAIN_IDLE = 0x00
+AMS_STATUS_MAIN_FILAMENT_CHANGE = 0x01
+# AMS_STATUS_MAIN_ASSIST: reported whenever an AMS filament is loaded in the extruder, printing or not
+AMS_STATUS_MAIN_ASSIST = 0x03
+
+AMS_STATUS_MAIN = {
+    AMS_STATUS_MAIN_IDLE: "idle",
+    AMS_STATUS_MAIN_FILAMENT_CHANGE: "changing_filament",
+    0x02: "rfid_identifying",
+    AMS_STATUS_MAIN_ASSIST: "filament_loaded",
+    0x04: "calibration",
+    0x07: "cold_pull",
+    0x10: "self_check",
+    0x20: "debug",
+}
+
+# Filament change sub-steps, as interpreted by BambuStudio's StatusPanel for an AMS load/unload.
+# 0x09 is a "just wait" step and unknown sub-steps fall back to the generic "changing_filament".
+AMS_FILAMENT_CHANGE_STEPS = {
+    0x02: "heating_nozzle",
+    0x03: "cutting_filament",
+    0x04: "pulling_back_filament",
+    0x05: "pushing_new_filament",
+    0x06: "pushing_new_filament",
+    0x07: "purging_old_filament",
+    0x08: "checking_position",
+    0x0B: "checking_position",
+}
+
+AMS_STATUS_OPTIONS = sorted(set(AMS_STATUS_MAIN.values()) | set(AMS_FILAMENT_CHANGE_STEPS.values()) | {"unknown"})
 
 GCODE_STATE_OPTIONS = [
     "failed",
@@ -185,7 +221,8 @@ GCODE_STATE_OPTIONS = [
 SDCARD_STATUS = [
     "missing",
     "normal",
-    "abnormal"
+    "abnormal",
+    "not_applicable",
 ]
 
 SPEED_PROFILE = {
@@ -199,6 +236,15 @@ AIRDUCT_MODES = {
     0: "cooling",
     1: "heating",
     2: "laser",
+}
+
+NOZZLE_SIDES = {
+    0: "right",
+    1: "left",
+}
+
+AMS_CONNECTED_NOZZLES = NOZZLE_SIDES | {
+    0xE: "track_switch",
 }
 
 PRINT_TYPE_OPTIONS = {
@@ -283,6 +329,12 @@ class Print_Fun_Values(IntEnum):
     # {"print":{"fun":"3EC18FFF9CFF"}} <- dev mode enabled
     MQTT_SIGNATURE_REQUIRED             = 0x20000000
 
+class Print_Flag3_Values(IntEnum):
+    # Set in full push_status/pushall frames by firmware that uses the newer
+    # authorization control system (MQTT commands must be signed).
+    AUTHORIZATION_CONTROL_ENABLED       = 0x00000010
+    AUTHORIZATION_CONTROL_SUPPORTED     = 0x00010000
+
 class Stat_Flag_Values(IntEnum):
     # Gap
     DOOR_OPEN                           = 0x00800000,
@@ -299,6 +351,11 @@ class BambuUrl(IntEnum):
     PROJECTS = 8,
     USERDETAIL = 9,
     PREFERENCE = 10,
+    CSRF = 11,
+    USER_PROFILE = 12,
+    MY_PROFILE = 13,
+    POINT_BILL = 14,
+    BOOST_RIGHT = 15,
 
 BAMBU_URL = {
     BambuUrl.LOGIN: 'https://api.bambulab.com/v1/user-service/user/login',
@@ -310,4 +367,26 @@ BAMBU_URL = {
     BambuUrl.TASKS: 'https://api.bambulab.com/v1/user-service/my/tasks',
     BambuUrl.PROJECTS: 'https://api.bambulab.com/v1/iot-service/api/user/project',
     BambuUrl.PREFERENCE: 'https://api.bambulab.com/v1/design-user-service/my/preference',
+    BambuUrl.CSRF: 'https://bambulab.com/api/csrf',
+    # The account's own MakerWorld profile - everything in one authenticated
+    # response, including the points balance and boosts received.
+    BambuUrl.MY_PROFILE: 'https://api.bambulab.com/v1/design-user-service/my/profile',
+    # Public creator profile, used as a fallback. Takes a trailing /<uid>.
+    BambuUrl.USER_PROFILE: 'https://api.bambulab.com/v1/user-service/user/profile',
+    # MakerWorld points ledger. The totals in the response header are what we want,
+    # so ask for the smallest possible page of transactions.
+    BambuUrl.POINT_BILL: 'https://api.bambulab.com/v1/point-service/point-bill/my?offset=0&limit=1&filter=all',
+    BambuUrl.BOOST_RIGHT: 'https://api.bambulab.com/v1/point-service/boost/boostingright',
 }
+
+# AMS tray `state` — see docs/merge-request-ams-tray-state.md
+UNKNOWN_TRAY_LABEL = "?"
+
+AMS_TRAY_STATE_LEGACY_MAX = 3
+
+class AMSTrayStateFlags(IntEnum):
+    SPOOL = 0x01,
+    METADATA = 0x02,
+    MOTION = 0x04,
+    STEADY = 0x08,
+    RFID = 0x10,

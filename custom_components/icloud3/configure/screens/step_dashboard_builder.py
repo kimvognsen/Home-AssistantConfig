@@ -38,6 +38,7 @@ class OptionsFlow_DashboardBuilder_Steps:
         if user_input is None:
             return self.async_show_form(step_id='dashboard_builder',
                                         data_schema=forms.form_dashboard_builder(self),
+                                        description_placeholders={'db_icons': self.dbf_dashboard_icons_msg},
                                         errors=self.errors)
 
         user_input = utils_cf.option_text_to_parm(user_input, 'selected_dashboard', self.dbf_dashboard_key_text)
@@ -48,9 +49,9 @@ class OptionsFlow_DashboardBuilder_Steps:
         if action_item == 'cancel_goto_menu':
             return await self.async_step_menu()
 
-        self.ui_selected_dbname = user_input.get('selected_dashboard', 'add')
-        if self.ui_selected_dbname == 'add':
-            action_item == 'create_dashboard'
+        self.ui_selected_dbname = user_input.get('selected_dashboard', ADD)
+        if self.ui_selected_dbname == ADD:
+            action_item = 'create_dashboard'
 
         self.ui_main_view_style  = user_input['main_view_style']
         self.ui_main_view_dnames = [devicename
@@ -63,12 +64,17 @@ class OptionsFlow_DashboardBuilder_Steps:
 
         user_input['action_item'] = action_item
 
-        await dbb.update_or_create_dashboard(self)
+        if self.ui_selected_dbname == ADD:
+            await dbb.create_dashboard(self)
+        else:
+            await dbb.update_dashboard(self)
+
         await dbb.build_existing_dashboards_selection_list(self)
         dbb.select_available_dashboard(self)
 
         return self.async_show_form(step_id= 'dashboard_builder',
                             data_schema=forms.form_dashboard_builder(self),
+                            description_placeholders={'db_icons': self.dbf_dashboard_icons_msg},
                             errors=self.errors)
 
 # #-------------------------------------------------------------------------------------------

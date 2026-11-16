@@ -1,0 +1,23 @@
+# ha_mcp_backup
+schema_version: 1
+domain: entity
+entity_id: input_number.h2d_sidst_afregnet_kwh
+captured: '2026-11-15T16:54:02.017205+00:00'
+tool: ha_set_entity
+config:
+  id: 6b30c0502eb80ff4f15df2c2781392f6
+  entity_id: input_number.h2d_sidst_afregnet_kwh
+  name: null
+  icon: null
+  area_id: null
+  device_class: null
+  aliases:
+  - null
+  labels:
+  - 3d_printer
+  categories: {}
+  hidden_by: null
+  disabled_by: null
+  options:
+    conversation:
+      should_expose: false

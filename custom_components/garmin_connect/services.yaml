@@ -65,7 +65,7 @@ add_body_composition:
       description: "Measurement time (ISO 8601, e.g. 2024-01-15T08:30:00). Defaults to now."
       example: "2024-01-15T08:30:00"
       selector:
-        text:
+        datetime:
     bmi:
       name: BMI
       selector:
@@ -167,8 +167,8 @@ add_blood_pressure:
       required: true
       selector:
         number:
-          min: 60
-          max: 250
+          min: 70
+          max: 260
           step: 1
           unit_of_measurement: mmHg
     diastolic:
@@ -182,11 +182,12 @@ add_blood_pressure:
           unit_of_measurement: mmHg
     pulse:
       name: Pulse (bpm)
-      required: true
+      description: Optional. Garmin Connect's own app accepts a reading without a heart rate.
+      required: false
       selector:
         number:
-          min: 30
-          max: 220
+          min: 20
+          max: 250
           step: 1
           unit_of_measurement: bpm
     timestamp:
@@ -194,7 +195,7 @@ add_blood_pressure:
       description: "Measurement time (ISO 8601). Defaults to now."
       example: "2024-01-15T08:30:00"
       selector:
-        text:
+        datetime:
     notes:
       name: Notes
       selector:
@@ -234,7 +235,7 @@ create_activity:
       description: "Start time (ISO 8601). Defaults to now."
       example: "2024-01-15T08:30:00"
       selector:
-        text:
+        datetime:
     duration_min:
       name: Duration (minutes)
       required: true
@@ -272,7 +273,7 @@ upload_activity:
           domain: sensor
     file_path:
       name: File path
-      description: Absolute path to the activity file on the HA host.
+      description: FIT, GPX or TCX file on the HA host, absolute or relative to the config directory. Paths outside the config directory must be in allowlist_external_dirs.
       required: true
       example: "/config/activities/run.fit"
       selector:
@@ -297,7 +298,7 @@ download_activity:
       selector:
         number:
           mode: box
-          min: 0
+          min: 1
           max: 999999999999
     file_format:
       name: File format
@@ -314,7 +315,7 @@ download_activity:
             - csv
     file_path:
       name: File path
-      description: Target file or directory. Must be in allowlist_external_dirs. Defaults to <config>/garmin_activities/activity_<id>.<format>.
+      description: Target file or directory, absolute or relative to the config directory. Paths outside the config directory must be in allowlist_external_dirs. Defaults to <config>/garmin_activities/activity_<id>.<format>.
       example: "/config/garmin_activities/run.fit"
       selector:
         text:
@@ -336,8 +337,8 @@ add_hydration:
       required: true
       selector:
         number:
-          min: -5000
-          max: 5000
+          min: -10000
+          max: 10000
           step: 1
           unit_of_measurement: mL
     timestamp:
@@ -345,7 +346,7 @@ add_hydration:
       description: "Measurement time (ISO 8601). Defaults to now."
       example: "2024-01-15T08:30:00"
       selector:
-        text:
+        datetime:
 
 add_gear_to_activity:
   name: Add gear to activity
@@ -429,4 +430,153 @@ add_nutrition_log:
       description: "Log time (ISO 8601). Defaults to now."
       example: "2024-01-15T12:30:00"
       selector:
-        text:
+        datetime:
+
+create_workout:
+  name: Create workout
+  description: Create a workout in the Garmin Connect library, optionally scheduling it on a date. Returns workout_id (and schedule_id).
+  fields:
+    entity_id:
+      name: Garmin Connect entity
+      description: Optional Garmin Connect entity whose account gets the workout.
+      selector:
+        entity:
+          integration: garmin_connect
+          domain: sensor
+    workout:
+      name: Workout
+      description: Garmin workout JSON (workoutName, sportType, workoutSegments), as an object or JSON string.
+      required: true
+      example: >-
+        {"workoutName": "Easy 30 min", "sportType": {"sportTypeId": 1, "sportTypeKey": "running"},
+        "workoutSegments": [{"segmentOrder": 1, "sportType": {"sportTypeId": 1, "sportTypeKey": "running"},
+        "workoutSteps": [{"type": "ExecutableStepDTO", "stepOrder": 1,
+        "stepType": {"stepTypeId": 3, "stepTypeKey": "interval"},
+        "endCondition": {"conditionTypeId": 2, "conditionTypeKey": "time"}, "endConditionValue": 1800,
+        "targetType": {"workoutTargetTypeId": 1, "workoutTargetTypeKey": "no.target"}}]}]}
+      selector:
+        object:
+    date:
+      name: Date
+      description: Optional date to put the workout on the training calendar.
+      example: "2026-10-16"
+      selector:
+        date:
+
+update_workout:
+  name: Update workout
+  description: Replace an existing workout in place. Its ID and calendar schedules are kept.
+  fields:
+    entity_id:
+      name: Garmin Connect entity
+      description: Optional Garmin Connect entity whose account owns the workout.
+      selector:
+        entity:
+          integration: garmin_connect
+          domain: sensor
+    workout_id:
+      name: Workout ID
+      description: ID of the workout to replace.
+      required: true
+      example: 1234567890
+      selector:
+        number:
+          mode: box
+          min: 1
+          max: 999999999999
+    workout:
+      name: Workout
+      description: Complete Garmin workout JSON, as an object or JSON string.
+      required: true
+      selector:
+        object:
+
+delete_workout:
+  name: Delete workout
+  description: Delete a workout from the Garmin Connect library, including its calendar entries.
+  fields:
+    entity_id:
+      name: Garmin Connect entity
+      description: Optional Garmin Connect entity whose account owns the workout.
+      selector:
+        entity:
+          integration: garmin_connect
+          domain: sensor
+    workout_id:
+      name: Workout ID
+      description: ID of the workout to delete.
+      required: true
+      example: 1234567890
+      selector:
+        number:
+          mode: box
+          min: 1
+          max: 999999999999
+
+schedule_workout:
+  name: Schedule workout
+  description: Put a library workout on the Garmin training calendar. Returns schedule_id.
+  fields:
+    entity_id:
+      name: Garmin Connect entity
+      description: Optional Garmin Connect entity whose account owns the workout.
+      selector:
+        entity:
+          integration: garmin_connect
+          domain: sensor
+    workout_id:
+      name: Workout ID
+      description: ID of the workout to schedule.
+      required: true
+      example: 1234567890
+      selector:
+        number:
+          mode: box
+          min: 1
+          max: 999999999999
+    date:
+      name: Date
+      description: Calendar date for the workout.
+      required: true
+      example: "2026-10-16"
+      selector:
+        date:
+
+unschedule_workout:
+  name: Unschedule workout
+  description: Remove a workout from the Garmin training calendar without deleting it.
+  fields:
+    entity_id:
+      name: Garmin Connect entity
+      description: Optional Garmin Connect entity whose account owns the schedule.
+      selector:
+        entity:
+          integration: garmin_connect
+          domain: sensor
+    schedule_id:
+      name: Schedule ID
+      description: Calendar entry ID (schedule_id from schedule_workout, or the id of a scheduled workout).
+      required: true
+      example: 987654321
+      selector:
+        number:
+          mode: box
+          min: 1
+          max: 999999999999
+get_day_summary:
+  name: Get day summary
+  description: Fetch the daily summary (steps, stress, Body Battery, resting heart rate, intensity minutes) for any date from Garmin Connect and return it.
+  fields:
+    date:
+      name: Date
+      description: The day to fetch.
+      required: true
+      selector:
+        date:
+    entity_id:
+      name: Entity
+      description: Optional Garmin Connect entity whose account to read.
+      selector:
+        entity:
+          integration: garmin_connect
+          domain: sensor

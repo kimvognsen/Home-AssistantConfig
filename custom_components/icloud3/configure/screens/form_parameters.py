@@ -1,7 +1,7 @@
 
 
 from ...global_variables    import GlobalVariables as Gb
-from ...const               import (IPHONE, IPAD, WATCH, AIRPODS, NO_MOBAPP, OTHER,
+from ...const               import (IPHONE, IPAD, IPAD_CELL, MAC, WATCH, WATCH_WIFI, AIRPODS, NO_MOBAPP, OTHER,
                                     PICTURE_WWW_STANDARD_DIRS, CONF_PICTURE_WWW_DIRS,
                                     CONF_EVLOG_CARD_DIRECTORY, CONF_EVLOG_BTNCONFIG_URL,
                                     CONF_TRACK_FROM_BASE_ZONE_USED, CONF_TRACK_FROM_BASE_ZONE, CONF_TRACK_FROM_HOME_ZONE,
@@ -19,6 +19,7 @@ from ...const               import (IPHONE, IPAD, WATCH, AIRPODS, NO_MOBAPP, OTH
                                     CONF_WAZE_HISTORY_TRACK_DIRECTION,
                                     CONF_STAT_ZONE_FNAME, CONF_STAT_ZONE_STILL_TIME, CONF_STAT_ZONE_INZONE_INTERVAL,
                                     CONF_DISPLAY_TEXT_AS,
+                                    CONF_DATA_SOURCE,
                                     CONF_AWAY_TIME_ZONE_1_OFFSET, CONF_AWAY_TIME_ZONE_1_DEVICES,
                                     CONF_AWAY_TIME_ZONE_2_OFFSET, CONF_AWAY_TIME_ZONE_2_DEVICES,
                                     CF_PROFILE,
@@ -58,7 +59,7 @@ import voluptuous as vol
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def form_away_time_zone(self):
     self.actions_list = []
-    self.actions_list.extend(ACTION_LIST_ITEMS_BASE)
+    self.actions_list.extend(ACTION_LIST_ITEMS_SAVE_MENU)
 
     return vol.Schema({
         vol.Required(CONF_AWAY_TIME_ZONE_1_DEVICES,
@@ -88,44 +89,48 @@ def form_away_time_zone(self):
 #            TRACKING PARAMETERS
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def form_tracking_parameters(self):
-    self.actions_list = ACTION_LIST_ITEMS_BASE.copy()
+    self.actions_list = ACTION_LIST_ITEMS_SAVE_MENU.copy()
 
     return vol.Schema({
-        vol.Required(CONF_DISTANCE_BETWEEN_DEVICES,
+        vol.Optional('data_source',
+                    default=utils_cf.option_parm_to_text(self, CONF_DATA_SOURCE, DATA_SOURCE_OPTIONS)):
+                    selector.SelectSelector(selector.SelectSelectorConfig(
+                        options=dict_value_to_list(DATA_SOURCE_OPTIONS), mode='dropdown')),
+        vol.Optional(CONF_DISTANCE_BETWEEN_DEVICES,
                     default=Gb.conf_general[CONF_DISTANCE_BETWEEN_DEVICES]):
                     selector.BooleanSelector(),
         vol.Optional(CONF_DISCARD_POOR_GPS_INZONE,
                     default=Gb.conf_general[CONF_DISCARD_POOR_GPS_INZONE]):
                     selector.BooleanSelector(),
-        vol.Required(CONF_GPS_ACCURACY_THRESHOLD,
+        vol.Optional(CONF_GPS_ACCURACY_THRESHOLD,
                     default=Gb.conf_general[CONF_GPS_ACCURACY_THRESHOLD]):
                     selector.NumberSelector(selector.NumberSelectorConfig(
                         min=5, max=300, step=5, unit_of_measurement='m')),
-        vol.Required(CONF_OLD_LOCATION_THRESHOLD,
+        vol.Optional(CONF_OLD_LOCATION_THRESHOLD,
                     default=Gb.conf_general[CONF_OLD_LOCATION_THRESHOLD]):
                     selector.NumberSelector(selector.NumberSelectorConfig(
                         min=1, max=60, step=1, unit_of_measurement='minutes')),
-        vol.Required(CONF_OLD_LOCATION_ADJUSTMENT,
+        vol.Optional(CONF_OLD_LOCATION_ADJUSTMENT,
                     default=Gb.conf_general[CONF_OLD_LOCATION_ADJUSTMENT]):
                     selector.NumberSelector(selector.NumberSelectorConfig(
                         min=0, max=60, step=1, unit_of_measurement='minutes')),
-        vol.Required(CONF_MAX_INTERVAL,
+        vol.Optional(CONF_MAX_INTERVAL,
                     default=Gb.conf_general[CONF_MAX_INTERVAL]):
                     selector.NumberSelector(selector.NumberSelectorConfig(
                         min=15, max=480, step=5, unit_of_measurement='minutes')),
-        vol.Required(CONF_EXIT_ZONE_INTERVAL,
+        vol.Optional(CONF_EXIT_ZONE_INTERVAL,
                     default=Gb.conf_general[CONF_EXIT_ZONE_INTERVAL]):
                     selector.NumberSelector(selector.NumberSelectorConfig(
                         min=.5, max=10, step=.5, unit_of_measurement='minutes')),
-        vol.Required(CONF_MOBAPP_ALIVE_INTERVAL,
+        vol.Optional(CONF_MOBAPP_ALIVE_INTERVAL,
                     default=Gb.conf_general[CONF_MOBAPP_ALIVE_INTERVAL]):
                     selector.NumberSelector(selector.NumberSelectorConfig(
                         min=15, max=240, step=5, unit_of_measurement='minutes')),
-        vol.Required(CONF_OFFLINE_INTERVAL,
+        vol.Optional(CONF_OFFLINE_INTERVAL,
                     default=Gb.conf_general[CONF_OFFLINE_INTERVAL]):
                     selector.NumberSelector(selector.NumberSelectorConfig(
                         min=5, max=240, step=5, unit_of_measurement='minutes')),
-        vol.Required(CONF_TFZ_TRACKING_MAX_DISTANCE,
+        vol.Optional(CONF_TFZ_TRACKING_MAX_DISTANCE,
                     default=Gb.conf_general[CONF_TFZ_TRACKING_MAX_DISTANCE]):
                     selector.NumberSelector(selector.NumberSelectorConfig(
                         min=1, max=100, unit_of_measurement='Km')),
@@ -134,7 +139,7 @@ def form_tracking_parameters(self):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=dict_value_to_list(TRAVEL_TIME_INTERVAL_MULTIPLIER_KEY_TEXT), mode='dropdown')),
 
-        vol.Required('action_items',
+        vol.Optional('action_items',
                     default=utils_cf.default_action_text('save')):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
@@ -145,7 +150,7 @@ def form_tracking_parameters(self):
 #              FORMAT SETTINGS & ICLOUD3 DIRECTORIES
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def form_format_settings(self):
-    self.actions_list = ACTION_LIST_ITEMS_BASE.copy()
+    self.actions_list = ACTION_LIST_ITEMS_SAVE_MENU.copy()
     display_zone_format_options = build_display_zone_format_options(self)
 
     self.picture_by_filename = {}
@@ -263,7 +268,7 @@ def form_display_text_as(self):
 
     self.actions_list = [next_page_text]
     self.actions_list.extend([ACTION_LIST_OPTIONS['select_text_as']])
-    self.actions_list.extend(ACTION_LIST_ITEMS_BASE)
+    self.actions_list.extend(ACTION_LIST_ITEMS_SAVE_MENU)
 
     return vol.Schema({
         vol.Required(CONF_DISPLAY_TEXT_AS,
@@ -282,7 +287,7 @@ def form_display_text_as(self):
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def form_display_text_as_update(self):
     self.actions_list = [ACTION_LIST_OPTIONS['clear_text_as']]
-    self.actions_list.extend(ACTION_LIST_ITEMS_BASE)
+    self.actions_list.extend([ACTION_LIST_OPTIONS['update_text_as']])
 
     if instr(self.dta_working_copy[self.dta_selected_idx], '>'):
         text_from_to_parts = self.dta_working_copy[self.dta_selected_idx].split('>')
@@ -300,7 +305,7 @@ def form_display_text_as_update(self):
                     default=text_to):
                     selector.TextSelector(),
         vol.Required('action_items',
-                    default=utils_cf.default_action_text('save')):
+                    default=utils_cf.default_action_text('update_text_as')):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
@@ -310,32 +315,44 @@ def form_display_text_as_update(self):
 #            INZONE INTERVALS
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def form_inzone_intervals(self):
-    self.actions_list = ACTION_LIST_ITEMS_BASE.copy()
+    self.actions_list = ACTION_LIST_ITEMS_SAVE_MENU.copy()
     return vol.Schema({
         vol.Optional(IPHONE,
                     default=Gb.conf_general[CONF_INZONE_INTERVALS][IPHONE]):
                     selector.NumberSelector(selector.NumberSelectorConfig(
-                        min=5, max=480, step=5, unit_of_measurement='minutes')),
-        vol.Optional(IPAD,
-                    default=Gb.conf_general[CONF_INZONE_INTERVALS][IPAD]):
-                    selector.NumberSelector(selector.NumberSelectorConfig(
-                        min=5, max=480, step=5, unit_of_measurement='minutes')),
+                        min=5, max=360, step=5, unit_of_measurement='minutes')),
         vol.Optional(WATCH,
                     default=Gb.conf_general[CONF_INZONE_INTERVALS][WATCH]):
                     selector.NumberSelector(selector.NumberSelectorConfig(
-                        min=5, max=480, step=5, unit_of_measurement='minutes')),
-        vol.Optional(AIRPODS,
-                    default=Gb.conf_general[CONF_INZONE_INTERVALS][AIRPODS]):
+                        min=5, max=360, step=5, unit_of_measurement='minutes')),
+        vol.Optional(WATCH_WIFI,
+                    default=Gb.conf_general[CONF_INZONE_INTERVALS][WATCH_WIFI]):
                     selector.NumberSelector(selector.NumberSelectorConfig(
-                        min=5, max=480, step=5, unit_of_measurement='minutes')),
+                        min=5, max=360, step=5, unit_of_measurement='minutes')),
+        vol.Optional(IPAD,
+                    default=Gb.conf_general[CONF_INZONE_INTERVALS][IPAD_CELL]):
+                    selector.NumberSelector(selector.NumberSelectorConfig(
+                        min=5, max=360, step=5, unit_of_measurement='minutes')),
+        vol.Optional(IPAD_CELL,
+                    default=Gb.conf_general[CONF_INZONE_INTERVALS][IPAD_CELL]):
+                    selector.NumberSelector(selector.NumberSelectorConfig(
+                        min=5, max=360, step=5, unit_of_measurement='minutes')),
+        vol.Optional(MAC,
+                    default=Gb.conf_general[CONF_INZONE_INTERVALS][MAC]):
+                    selector.NumberSelector(selector.NumberSelectorConfig(
+                        min=5, max=360, step=5, unit_of_measurement='minutes')),
+        # vol.Optional(AIRPODS,
+        #             default=Gb.conf_general[CONF_INZONE_INTERVALS][AIRPODS]):
+        #             selector.NumberSelector(selector.NumberSelectorConfig(
+        #                 min=5, max=480, step=5, unit_of_measurement='minutes')),
         vol.Optional(NO_MOBAPP,
                     default=Gb.conf_general[CONF_INZONE_INTERVALS][NO_MOBAPP]):
                     selector.NumberSelector(selector.NumberSelectorConfig(
-                        min=5, max=480, step=5, unit_of_measurement='minutes')),
+                        min=5, max=360, step=5, unit_of_measurement='minutes')),
         vol.Optional(OTHER,
                     default=Gb.conf_general[CONF_INZONE_INTERVALS][OTHER]):
                     selector.NumberSelector(selector.NumberSelectorConfig(
-                        min=5, max=480, step=5, unit_of_measurement='minutes')),
+                        min=5, max=360, step=5, unit_of_measurement='minutes')),
 
         vol.Optional('action_items',
                     default=utils_cf.default_action_text('save')):
@@ -347,7 +364,7 @@ def form_inzone_intervals(self):
 #            WAZE MAIN
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def form_waze_main(self):
-    self.actions_list = ACTION_LIST_ITEMS_BASE.copy()
+    self.actions_list = ACTION_LIST_ITEMS_SAVE_MENU.copy()
 
     wuh_default  = [WAZE_USED_HEADER] if Gb.conf_general[CONF_WAZE_USED] else []
     whuh_default = [WAZE_HISTORY_USED_HEADER] if Gb.conf_general[CONF_WAZE_HISTORY_DATABASE_USED] else []
@@ -395,7 +412,7 @@ def form_waze_main(self):
 #            SPECIAL ZONES
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def form_special_zones(self):
-    self.actions_list = ACTION_LIST_ITEMS_BASE.copy()
+    self.actions_list = ACTION_LIST_ITEMS_SAVE_MENU.copy()
 
     try:
         pass_thru_zone_used  = (Gb.conf_general[CONF_PASSTHRU_ZONE_TIME] > 0)

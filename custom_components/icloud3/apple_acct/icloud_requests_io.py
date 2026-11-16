@@ -78,7 +78,10 @@ def update_headers(AppleAcct, **kwargs):
 
 #--------------------------------------------------------------------
 def new_session(AppleAcct, **kwargs):
-    _session = iCloudSession(AppleAcct)
+    # A validate-only AppleAcct must not register itself in
+    # Gb.iCloudSession_by_username - that entry belongs to the real AppleAcct
+    # for this username and would be replaced by the throw-away session
+    _session = iCloudSession(AppleAcct, validate_aa_upw=AppleAcct.validate_aa_upw)
     return _session
 
 #--------------------------------------------------------------------
@@ -113,6 +116,17 @@ def request_get_post(url, **kwargs):
         - error dictionary with the url, error and status_code if a connection or other error
             occurred
     '''
+
+    # Prevent SyncWorker threads from blocking indefinitely on hung remote
+    # endpoints (notably the connectivity check in internet_error.py). Without
+    # a socket-level timeout, requests.get / requests.post can wait forever
+    # inside ssl.do_handshake() / sock.recv(), saturating HA's thread pool and
+    # leading to the symptoms reported in issue #552.
+    try:
+        kwargs.setdefault("timeout", 30)
+
+    except Exception as err:
+        log_exception(err)
 
     try:
         error = 'InternetError-'

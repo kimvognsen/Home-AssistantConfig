@@ -1,0 +1,26 @@
+# eeese Luna dehumidifier - Tuya Local custom device profile
+# Product ID and DPs verified from Tuya Cloud + local diagnostics.
+name: eeese Luna Dehumidifier
+products:
+  - id: 5wc50g3lt3bzbai2
+    manufacturer: eeese
+    model: Luna
+entities:
+  - entity: humidifier
+    class: dehumidifier
+    translation_only_key: extended
+    dps:
+      - id: 1
+        name: switch
+        type: boolean
+      - id: 2
+        name: humidity
+        type: integer
+        range:
+          min: 25
+          max: 80
+        mapping:
+          - step: 5
+      - id: 6
+        name: current_humidity
+        type: integer

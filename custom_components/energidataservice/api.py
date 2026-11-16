@@ -10,7 +10,7 @@ from logging import getLogger
 
 import homeassistant.util.dt as dt_util
 import voluptuous as vol
-from aiohttp import ClientConnectorError, ServerDisconnectedError
+from aiohttp import ClientError, ServerDisconnectedError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_EMAIL
 from homeassistant.core import HomeAssistant
@@ -299,32 +299,29 @@ class APIConnector:
                 self.predictions = await carnot.async_get_forecast(
                     self._carnot_apikey, self._carnot_user
                 )
-            except ClientConnectorError:
-                _LOGGER.warning("Error fetching data from Carnot")
+            except (ClientError, TimeoutError):
+                _LOGGER.warning(
+                    "Unable to fetch Carnot forecast; retrying at the next scheduled update"
+                )
 
             if not isinstance(self.predictions, type(None)):
+                # Compare whole dates in local time - comparing day/month numbers
+                # breaks at month boundaries, and naive now() is in the system
+                # timezone (often UTC) while predictions are in local time.
+                first_day = (dt_util.now(self._tz) + datetime.timedelta(days=1)).date()
+                if self._tomorrow_valid:
+                    # Remove tomorrows predictions, as we have the actual values
+                    first_day += datetime.timedelta(days=1)
+
                 self.predictions[:] = (
                     value
                     for value in self.predictions
-                    if value.time.day
-                    >= (datetime.datetime.now() + datetime.timedelta(days=1)).day
-                    or value.time.month
-                    > (datetime.datetime.now() + datetime.timedelta(days=1)).month
-                    or value.time.year > datetime.datetime.now().year
+                    if value.time.astimezone(self._tz).date() >= first_day
                 )
-
-                if self._tomorrow_valid:
-                    # Remove tomorrows predictions, as we have the actual values
-                    self.predictions[:] = (
-                        value
-                        for value in self.predictions
-                        if value.time.day
-                        != (datetime.datetime.now() + datetime.timedelta(days=1)).day
-                    )
 
                 self.api_predictions = self.predictions
 
-    async def async_get_tariffs(self, request_module=None) -> None:
+    async def async_get_tariffs(self, dt=None, request_module=None) -> None:  # type: ignore pylint: disable=unused-argument,invalid-name
         """Get tariff data."""
 
         if self.tariff:
@@ -352,8 +349,12 @@ class APIConnector:
                         "status": 503,
                     }
 
-                if self.tariff_data["status"] != 200:
-                    if self.tariff_data["status"] in [400, 403, 411]:
+                if (
+                    self.tariff_data["status"] != 200
+                    or not self.tariff_data["tariffs"]
+                    or not self.tariff_data["additional_tariffs"]
+                ):
+                    if self.tariff_data["status"] in [400, 411]:
                         _LOGGER.warning(
                             "Tariff endpoint returned %s, skipping retry for now",
                             self.tariff_data["status"],

@@ -1,0 +1,25 @@
+# ha_mcp_backup
+schema_version: 1
+domain: entity
+entity_id: input_number.h2d_filament_grams
+captured: '2026-11-15T16:53:53.320145+00:00'
+tool: ha_set_entity
+config:
+  id: cf2bf225479eaa617abf8f75e84078d0
+  entity_id: input_number.h2d_filament_grams
+  name: null
+  icon: null
+  area_id: null
+  device_class: null
+  aliases:
+  - null
+  labels:
+  - 3d_printer
+  categories: {}
+  hidden_by: null
+  disabled_by: null
+  options:
+    conversation:
+      should_expose: false
+    collection:
+      hash: 388f3cc5c629e1508b9d1f102d5cb866

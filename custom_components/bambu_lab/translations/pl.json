@@ -8,7 +8,8 @@
       "event_print_error": "Błąd drukowania",
       "event_print_error_cleared": "Błąd drukowania usunięty",
       "event_printer_error": "Błąd HMS",
-      "event_printer_error_cleared": "Błąd HMS usunięty"
+      "event_printer_error_cleared": "Błąd HMS usunięty",
+      "event_printer_missing_sdcard": "Brakująca karta SD"
     }
   },
   "config": {
@@ -37,7 +38,8 @@
       "cannot_connect_cloud_connection_refused": "Połączenie odrzucone przez chmurę Bambu Lab.",
       "cannot_connect_cloud_address_unreachable": "Adres chmury Bambu Lab jest nieosiągalny.",
       "cannot_connect_cloud_unknown": "Nieznany błąd podczas łączenia z chmurą Bambu Lab.",
-      "cannot_connect_local_unknown": "Nie udało się połączyć. Sprawdź podane ustawienia."
+      "cannot_connect_local_unknown": "Nie udało się połączyć. Sprawdź podane ustawienia.",
+      "tfa_csrf_fallback": "Punkt końcowy uwierzytelniania dwuskładnikowego Bambu Lab aktualnie odrzuca żądania. Zamiast tego na Twój adres e-mail lub telefon został wysłany kod weryfikacyjny – wpisz go poniżej."
     },
     "step": {
       "user": {
@@ -135,7 +137,8 @@
       "cannot_connect_cloud_connection_refused": "Połączenie odrzucone przez chmurę Bambu Lab.",
       "cannot_connect_cloud_address_unreachable": "Adres chmury Bambu Lab jest nieosiągalny.",
       "cannot_connect_cloud_unknown": "Nieznany błąd podczas łączenia z chmurą Bambu Lab.",
-      "cannot_connect_local_unknown": "Nie udało się połączyć. Sprawdź podane ustawienia."
+      "cannot_connect_local_unknown": "Nie udało się połączyć. Sprawdź podane ustawienia.",
+      "tfa_csrf_fallback": "Punkt końcowy uwierzytelniania dwuskładnikowego Bambu Lab aktualnie odrzuca żądania. Zamiast tego na Twój adres e-mail lub telefon został wysłany kod weryfikacyjny – wpisz go poniżej."
     },
     "step": {
       "init": {
@@ -241,6 +244,12 @@
       },
       "hybrid_mode_blocks_control": {
         "name": "Hybrydowe MQTT blokuje kontrolę"
+      },
+      "left_extruder_filament_state": {
+        "name": "Lewy włókno wytłaczarki"
+      },
+      "right_extruder_filament_state": {
+        "name": "Prawy włókno wytłaczarki"
       }
     },
     "button": {
@@ -281,6 +290,18 @@
       },
       "secondary_aux_fan": {
         "name": "Dodatkowy wentylator pomocniczy"
+      },
+      "part_fan": {
+        "name": "Część fana"
+      },
+      "left_aux_fan": {
+        "name": "Lewy wentylator dodatkowy"
+      },
+      "right_aux_fan": {
+        "name": "Prawy wentylator dodatkowy"
+      },
+      "exhaust_fan": {
+        "name": "Wentylator wyciągowy"
       }
     },
     "image": {
@@ -472,7 +493,8 @@
           "build_plate_alignment_detection": "Wykrywanie wyrównania płyty konstrukcyjnej",
           "heatbed_surface_foreign_object_detection": "Wykrywanie ciał obcych na powierzchni podgrzewanego stołu",
           "heatbed_underside_foreign_object_detection": "Wykrywanie ciał obcych pod podgrzewanym spodem stołu",
-          "pre_extrusion_before_printing": "Wstępne wytłaczanie przed drukiem"
+          "pre_extrusion_before_printing": "Wstępne wytłaczanie przed drukiem",
+          "heatbed_stabilizing": "Stabilizujący stół grzewczy"
         }
       },
       "print_progress": {
@@ -575,7 +597,8 @@
           "high_flow_hardened_steel": "stalowa stal z dużym przepływem",
           "high_flow_stainless_steel": "stal nierdzewna z dużym przepływem",
           "high_flow_tungsten_carbide": "Węglenie wolframowe z dużym przepływem",
-          "unknown": "Nieznany"
+          "unknown": "Nieznany",
+          "tpu_high_flow": "TPU o wysokim przepływie"
         }
       },
       "ip_address": {
@@ -735,7 +758,8 @@
           "missing": "Brak karty",
           "normal": "Obecna, OK",
           "abnormal": "Nieprawidłowy",
-          "readonly": "Tylko do odczytu"
+          "readonly": "Tylko do odczytu",
+          "not_applicable": "Nie dotyczy"
         }
       },
       "left_nozzle_diameter": {
@@ -861,6 +885,203 @@
           "heating": "Ogrzewanie",
           "laser": "Laser"
         }
+      },
+      "secondary_aux_fan_speed": {
+        "name": "Prędkość dodatkowego wentylatora dodatkowego"
+      },
+      "drying_temperature": {
+        "name": "Temperatura suszenia"
+      },
+      "drying_duration": {
+        "name": "Czas suszenia"
+      },
+      "drying_filament": {
+        "name": "Suszenie włókna"
+      },
+      "hotend_rack_hotend_used_time": {
+        "name": "Hotend {hotend_id} wykorzystał czas"
+      },
+      "makerworld_boosts_received": {
+        "name": "Otrzymane wzmocnienia"
+      },
+      "makerworld_prints_total": {
+        "name": "Druki m.in. wydrukować profile"
+      },
+      "makerworld_downloads_total": {
+        "name": "Pliki do pobrania m.in. wydrukować profile"
+      },
+      "makerworld_points": {
+        "name": "Zwrotnica"
+      },
+      "makerworld_points_earned": {
+        "name": "Zdobyte punkty"
+      },
+      "makerworld_points_spent": {
+        "name": "Wydane punkty"
+      },
+      "makerworld_points_exclusive": {
+        "name": "Ekskluzywne punkty"
+      },
+      "makerworld_boost_tokens": {
+        "name": "Tokeny wzmocnienia"
+      },
+      "makerworld_boosts_used": {
+        "name": "Wykorzystane wzmocnienia"
+      },
+      "makerworld_boosts_expired": {
+        "name": "Boosty wygasły"
+      },
+      "makerworld_downloads": {
+        "name": "Pliki do pobrania"
+      },
+      "makerworld_instance_downloads": {
+        "name": "Drukuj pliki do pobrania profilu"
+      },
+      "makerworld_prints": {
+        "name": "Drukuje"
+      },
+      "makerworld_instance_prints": {
+        "name": "Drukuj wydruki profili"
+      },
+      "makerworld_designs": {
+        "name": "Opublikowane modele"
+      },
+      "makerworld_likes": {
+        "name": "Upodobania"
+      },
+      "makerworld_collections": {
+        "name": "Zbiera"
+      },
+      "makerworld_followers": {
+        "name": "Świta"
+      },
+      "makerworld_following": {
+        "name": "Następny"
+      },
+      "makerworld_level": {
+        "name": "Poziom"
+      },
+      "active_nozzle": {
+        "name": "Aktywna dysza",
+        "state": {
+          "left": "Lewy",
+          "right": "Prawidłowy"
+        }
+      },
+      "ams_status": {
+        "name": "Status",
+        "state": {
+          "idle": "Bezczynny",
+          "changing_filament": "Zmiana włókna",
+          "heating_nozzle": "Dysza grzewcza",
+          "cutting_filament": "Cięcie włókna",
+          "pulling_back_filament": "Odciąganie bieżącego żarnika",
+          "pushing_new_filament": "Wciskanie nowego żarnika",
+          "purging_old_filament": "Czyszczenie starego żarnika",
+          "checking_position": "Sprawdzanie położenia żarnika",
+          "rfid_identifying": "Identyfikacja RFID",
+          "filament_loaded": "Załadowano żarnik",
+          "calibration": "Kalibrowanie",
+          "cold_pull": "Zimne pociągnięcie",
+          "self_check": "Samokontrola",
+          "debug": "Odpluskwić",
+          "unknown": "Nieznany"
+        }
+      },
+      "track_switch_input": {
+        "name": "Wejście przełącznika toru {input_number}",
+        "state": {
+          "left": "Lewa dysza",
+          "right": "Prawa dysza",
+          "empty": "Pusty"
+        }
+      },
+      "connected_nozzle": {
+        "name": "Podłączona dysza",
+        "state": {
+          "left": "Lewy",
+          "right": "Prawidłowy",
+          "track_switch": "Przełącznik toru"
+        }
+      },
+      "part_fan_speed": {
+        "name": "Częściowa prędkość wentylatora"
+      },
+      "left_aux_fan_speed": {
+        "name": "Prędkość lewego dodatkowego wentylatora"
+      },
+      "right_aux_fan_speed": {
+        "name": "Prędkość prawego wentylatora dodatkowego"
+      },
+      "exhaust_fan_speed": {
+        "name": "Prędkość wentylatora wyciągowego"
+      },
+      "external_storage_connection": {
+        "name": "Połączenie z pamięcią zewnętrzną",
+        "state": {
+          "connected": "Połączony",
+          "disconnected": "Bezładny"
+        }
+      },
+      "external_storage_total": {
+        "name": "Całkowita pamięć zewnętrzna"
+      },
+      "external_storage_used": {
+        "name": "Używana pamięć zewnętrzna"
+      },
+      "external_storage_free": {
+        "name": "Pamięć zewnętrzna bezpłatna"
+      },
+      "zone_temperature": {
+        "name": "Temperatura w strefie {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Strefa"
+          },
+          "zone_id": {
+            "name": "Identyfikator strefy"
+          },
+          "slots": {
+            "name": "Sloty"
+          },
+          "dry_setting": {
+            "name": "Ustawienie suszenia"
+          }
+        }
+      },
+      "zone_humidity": {
+        "name": "Wilgotność strefy {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Strefa"
+          },
+          "zone_id": {
+            "name": "Identyfikator strefy"
+          },
+          "slots": {
+            "name": "Sloty"
+          },
+          "dry_setting": {
+            "name": "Ustawienie suszenia"
+          }
+        }
+      },
+      "zone_remaining_drying_time": {
+        "name": "Pozostały czas suszenia strefy {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Strefa"
+          },
+          "zone_id": {
+            "name": "Identyfikator strefy"
+          },
+          "slots": {
+            "name": "Sloty"
+          },
+          "dry_setting": {
+            "name": "Ustawienie suszenia"
+          }
+        }
       }
     },
     "camera": {
@@ -916,6 +1137,10 @@
     "hybrid_mode_blocking": {
       "title": "Sterowanie hybrydowymi blokami połączeń",
       "description": "{device} jest połączone z chmurą, ale dzięki integracji ma lokalne połączenie mqtt. Blokuje to ustawienie temperatur i ponowne wydrukowanie historii. Przełącz połączenie na czystą chmurę, aby umożliwić pełną kontrolę."
+    },
+    "access_code_rejected": {
+      "title": "Kod dostępu odrzucony",
+      "description": "Drukarka odrzuciła skonfigurowany kod dostępu dla {device}. Zwykle oznacza to, że kod został zregenerowany, na przykład poprzez przywrócenie ustawień fabrycznych. Przeczytaj nowy kod dostępu z ekranu ustawień sieciowych drukarki i ponownie skonfiguruj z nim integrację."
     }
   }
 }

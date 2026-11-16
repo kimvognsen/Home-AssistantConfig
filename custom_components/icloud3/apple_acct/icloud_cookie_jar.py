@@ -1,6 +1,6 @@
 """Cookie jar with persistence support."""
 
-from ..const             import HIGH_INTEGER
+from ..const             import HIGH_INTEGER, TRUST_COOKIE_NAME
 from ..utils.messaging   import (_log, log_info_msg, log_exception, shrink_item, )
 from ..utils.time_util   import (secs_to_datetime, format_date_time)
 
@@ -71,9 +71,11 @@ class PyiCloudCookieJar(RequestsCookieJar, LWPCookieJar):
             ignore_expires=ignore_expires,
         )
 
-    def list(self):
+    def list(self, selected_cookie=None):
         _log_msg = ''
         for cookie in self:
+            if selected_cookie and cookie.name != selected_cookie: continue
+
             _log_msg +=(f"\n⠂  ❗ _.Cookie.{cookie.name}, "
                         f"Expires-{secs_to_datetime(cookie.expires)}, "
                         f"{shrink_item(cookie.value)}")
@@ -153,7 +155,7 @@ class PyiCloudCookieJar(RequestsCookieJar, LWPCookieJar):
             if cookie.expires is None:
                 result['is_session_cookie'] = True
                 result['expired']           = False
-                result['expire_date_time']       = 'Session cookie (expires on HA restart)'
+                result['expire_date_time']  = 'Session cookie (expires on HA restart)'
                 result['expire_in_secs']    = HIGH_INTEGER
                 result['expire_in_days']    = HIGH_INTEGER
                 result['expire_in_text']    = '99999 days'
@@ -165,6 +167,8 @@ class PyiCloudCookieJar(RequestsCookieJar, LWPCookieJar):
             #                             '%m-%d %H:%M:%S')
 
             secs_remaining = cookie.expires - now_secs
+            rd = round(secs_remaining / 86400, 1)
+
             result['expired']         = secs_remaining <= 0
             result['expire_in_secs']  = int(secs_remaining)
             if secs_remaining < 86400:

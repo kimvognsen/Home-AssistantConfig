@@ -8,7 +8,8 @@
       "event_print_error": "Printfout",
       "event_print_error_cleared": "Printfout gewist",
       "event_printer_error": "HMS-fout",
-      "event_printer_error_cleared": "HMS-fout gewist"
+      "event_printer_error_cleared": "HMS-fout gewist",
+      "event_printer_missing_sdcard": "Ontbrekende SD-kaart"
     }
   },
   "config": {
@@ -37,7 +38,8 @@
       "cannot_connect_cloud_connection_refused": "Verbinding geweigerd door Bambu Lab-cloud.",
       "cannot_connect_cloud_address_unreachable": "Bambu Lab-cloudadres onbereikbaar.",
       "cannot_connect_cloud_unknown": "Onbekende fout bij het verbinden met de Bambu Lab-cloud.",
-      "cannot_connect_local_unknown": "Kan geen verbinding maken. Controleer de opgegeven instellingen."
+      "cannot_connect_local_unknown": "Kan geen verbinding maken. Controleer de opgegeven instellingen.",
+      "tfa_csrf_fallback": "Het tweefactorauthenticatie-eindpunt van Bambu Lab wijst momenteel verzoeken af. Er is in plaats daarvan een verificatiecode naar uw e-mailadres of telefoon verzonden. Voer deze hieronder in."
     },
     "step": {
       "user": {
@@ -135,7 +137,8 @@
       "cannot_connect_cloud_connection_refused": "Verbinding geweigerd door Bambu Lab-cloud.",
       "cannot_connect_cloud_address_unreachable": "Bambu Lab-cloudadres onbereikbaar.",
       "cannot_connect_cloud_unknown": "Onbekende fout bij het verbinden met de Bambu Lab-cloud.",
-      "cannot_connect_local_unknown": "Kan geen verbinding maken. Controleer de opgegeven instellingen."
+      "cannot_connect_local_unknown": "Kan geen verbinding maken. Controleer de opgegeven instellingen.",
+      "tfa_csrf_fallback": "Het tweefactorauthenticatie-eindpunt van Bambu Lab wijst momenteel verzoeken af. Er is in plaats daarvan een verificatiecode naar uw e-mailadres of telefoon verzonden. Voer deze hieronder in."
     },
     "step": {
       "init": {
@@ -241,6 +244,12 @@
       },
       "hybrid_mode_blocks_control": {
         "name": "Hybride MQTT blokkeert de controle"
+      },
+      "left_extruder_filament_state": {
+        "name": "Linker extruderfilament"
+      },
+      "right_extruder_filament_state": {
+        "name": "Rechter extruderfilament"
       }
     },
     "button": {
@@ -281,6 +290,18 @@
       },
       "secondary_aux_fan": {
         "name": "Secundaire hulpventilator"
+      },
+      "part_fan": {
+        "name": "Gedeeltelijk ventilator"
+      },
+      "left_aux_fan": {
+        "name": "Linker aux-ventilator"
+      },
+      "right_aux_fan": {
+        "name": "Rechter aux-ventilator"
+      },
+      "exhaust_fan": {
+        "name": "Afzuigventilator"
       }
     },
     "image": {
@@ -472,7 +493,8 @@
           "build_plate_alignment_detection": "Detectie van uitlijning van bouwplaten",
           "heatbed_surface_foreign_object_detection": "Detectie van vreemde voorwerpen op het verwarmingsbedoppervlak",
           "heatbed_underside_foreign_object_detection": "Detectie van vreemde voorwerpen aan de onderkant van het verwarmingsbed",
-          "pre_extrusion_before_printing": "Pre-extrusie vóór het afdrukken"
+          "pre_extrusion_before_printing": "Pre-extrusie vóór het afdrukken",
+          "heatbed_stabilizing": "Stabiliserend verwarmingsbed"
         }
       },
       "print_progress": {
@@ -569,7 +591,8 @@
           "high_flow_hardened_steel": "gehard staal met grote stroom",
           "high_flow_stainless_steel": "roestvrij staal met grote stroom",
           "high_flow_tungsten_carbide": "wolfraamcarbide met grote stroom",
-          "unknown": "Onbekend"
+          "unknown": "Onbekend",
+          "tpu_high_flow": "TPU hoge stroom"
         }
       },
       "ip_address": {
@@ -718,16 +741,16 @@
         "name": "Vochtigheid"
       },
       "left_nozzle_temp": {
-        "name": "Linker mondstuktemperatuur"
+        "name": "Linker nozzle temperatuur"
       },
       "left_target_nozzle_temp": {
-        "name": "Verlof mondstuk doeltemperatuur"
+        "name": "Linker nozzle doeltemperatuur"
       },
       "right_nozzle_temp": {
-        "name": "Juiste mondstuktemperatuur"
+        "name": "Rechter nozzle temperatuur"
       },
       "right_target_nozzle_temp": {
-        "name": "Rechter mondstuk doeltemperatuur"
+        "name": "Rechter nozzle doeltemperatuur"
       },
       "sdcard_status": {
         "name": "SD -kaartstatus",
@@ -735,14 +758,15 @@
           "missing": "Ontbrekend",
           "normal": "Normaal",
           "abnormal": "Abnormaal",
-          "readonly": "Alleen lezen"
+          "readonly": "Alleen lezen",
+          "not_applicable": "Niet van toepassing"
         }
       },
       "left_nozzle_diameter": {
-        "name": "Linker mondstukformaat"
+        "name": "Linker nozzle formaat"
       },
       "left_nozzle_type": {
-        "name": "Linker mondstuktype",
+        "name": "Linker nozzle type",
         "state": {
           "hardened_steel": "Gehard staal",
           "stainless_steel": "Roestvrij staal",
@@ -753,10 +777,10 @@
         }
       },
       "right_nozzle_diameter": {
-        "name": "Juiste mondstukformaat"
+        "name": "Rechter nozzle formaat"
       },
       "right_nozzle_type": {
-        "name": "Rechter mondstuktype",
+        "name": "Rechter nozzle type",
         "state": {
           "hardened_steel": "Gehard staal",
           "stainless_steel": "Roestvrij staal",
@@ -812,19 +836,19 @@
             "name": "Sleuf"
           },
           "nozzle_type": {
-            "name": "Type mondstuk",
+            "name": "Type nozzle",
             "state": {
               "hardened_steel": "Gehard staal",
               "stainless_steel": "Roestvrij staal",
               "tungsten_carbide": "Wolfraamcarbide",
               "high_flow_hardened_steel": "Gehard staal met hoge vloei",
-              "high_flow_stainless_steel": "Roestvrij staal met hoge stroming",
-              "high_flow_tungsten_carbide": "Wolfraamcarbide met hoog debiet",
+              "high_flow_stainless_steel": "Roestvrij staal met hoge vloei",
+              "high_flow_tungsten_carbide": "Wolfraamcarbide met hoge vloei",
               "unknown": "Onbekend"
             }
           },
           "nozzle_diameter": {
-            "name": "Diameter mondstuk"
+            "name": "Diameter nozzle"
           },
           "serial": {
             "name": "Serienummer"
@@ -860,6 +884,203 @@
           "cooling": "Koeling",
           "heating": "Verwarming",
           "laser": "Laser"
+        }
+      },
+      "secondary_aux_fan_speed": {
+        "name": "Snelheid secundaire hulpventilator"
+      },
+      "drying_temperature": {
+        "name": "Droogtemperatuur"
+      },
+      "drying_duration": {
+        "name": "Droogduur"
+      },
+      "drying_filament": {
+        "name": "Drogend filament"
+      },
+      "hotend_rack_hotend_used_time": {
+        "name": "Hotend {hotend_id} gebruikte tijd"
+      },
+      "makerworld_boosts_received": {
+        "name": "Boosts ontvangen"
+      },
+      "makerworld_prints_total": {
+        "name": "Afdrukken incl. profielen afdrukken"
+      },
+      "makerworld_downloads_total": {
+        "name": "Downloaden incl. profielen afdrukken"
+      },
+      "makerworld_points": {
+        "name": "Punten"
+      },
+      "makerworld_points_earned": {
+        "name": "Punten verdiend"
+      },
+      "makerworld_points_spent": {
+        "name": "Punten besteed"
+      },
+      "makerworld_points_exclusive": {
+        "name": "Exclusieve punten"
+      },
+      "makerworld_boost_tokens": {
+        "name": "Boost-tokens"
+      },
+      "makerworld_boosts_used": {
+        "name": "Boosts gebruikt"
+      },
+      "makerworld_boosts_expired": {
+        "name": "Boosts zijn verlopen"
+      },
+      "makerworld_downloads": {
+        "name": "Downloads"
+      },
+      "makerworld_instance_downloads": {
+        "name": "Profieldownloads afdrukken"
+      },
+      "makerworld_prints": {
+        "name": "Afdrukken"
+      },
+      "makerworld_instance_prints": {
+        "name": "Profielafdrukken afdrukken"
+      },
+      "makerworld_designs": {
+        "name": "Gepubliceerde modellen"
+      },
+      "makerworld_likes": {
+        "name": "Vind ik leuk"
+      },
+      "makerworld_collections": {
+        "name": "Verzamelt"
+      },
+      "makerworld_followers": {
+        "name": "Volgers"
+      },
+      "makerworld_following": {
+        "name": "Volgende"
+      },
+      "makerworld_level": {
+        "name": "Niveau"
+      },
+      "active_nozzle": {
+        "name": "Actief mondstuk",
+        "state": {
+          "left": "Links",
+          "right": "Rechts"
+        }
+      },
+      "ams_status": {
+        "name": "Status",
+        "state": {
+          "idle": "Inactief",
+          "changing_filament": "Wisselend filament",
+          "heating_nozzle": "Verwarmingsmondstuk",
+          "cutting_filament": "Filament snijden",
+          "pulling_back_filament": "Het terugtrekken van de huidige gloeidraad",
+          "pushing_new_filament": "Nieuw filament duwen",
+          "purging_old_filament": "Oud filament verwijderen",
+          "checking_position": "Positie van filament controleren",
+          "rfid_identifying": "RFID identificeren",
+          "filament_loaded": "Filament geladen",
+          "calibration": "Kalibratie",
+          "cold_pull": "Koude trek",
+          "self_check": "Zelfcontrole",
+          "debug": "Foutopsporing",
+          "unknown": "Onbekend"
+        }
+      },
+      "track_switch_input": {
+        "name": "Spoorschakelaaringang {input_number}",
+        "state": {
+          "left": "Linker mondstuk",
+          "right": "Rechter mondstuk",
+          "empty": "Leeg"
+        }
+      },
+      "connected_nozzle": {
+        "name": "Aangesloten mondstuk",
+        "state": {
+          "left": "Links",
+          "right": "Rechts",
+          "track_switch": "Baanschakelaar"
+        }
+      },
+      "part_fan_speed": {
+        "name": "Gedeeltelijke ventilatorsnelheid"
+      },
+      "left_aux_fan_speed": {
+        "name": "Snelheid aux-ventilator links"
+      },
+      "right_aux_fan_speed": {
+        "name": "Snelheid aux-ventilator rechts"
+      },
+      "exhaust_fan_speed": {
+        "name": "Snelheid uitlaatventilator"
+      },
+      "external_storage_connection": {
+        "name": "Externe opslagverbinding",
+        "state": {
+          "connected": "Aangesloten",
+          "disconnected": "Verbinding verbroken"
+        }
+      },
+      "external_storage_total": {
+        "name": "Totaal externe opslag"
+      },
+      "external_storage_used": {
+        "name": "Externe opslag gebruikt"
+      },
+      "external_storage_free": {
+        "name": "Externe opslag gratis"
+      },
+      "zone_temperature": {
+        "name": "Zone {zone_number} temperatuur",
+        "state_attributes": {
+          "zone": {
+            "name": "Zone"
+          },
+          "zone_id": {
+            "name": "Zone-ID"
+          },
+          "slots": {
+            "name": "Slots"
+          },
+          "dry_setting": {
+            "name": "Drooginstelling"
+          }
+        }
+      },
+      "zone_humidity": {
+        "name": "Zone {zone_number} vochtigheid",
+        "state_attributes": {
+          "zone": {
+            "name": "Zone"
+          },
+          "zone_id": {
+            "name": "Zone-ID"
+          },
+          "slots": {
+            "name": "Slots"
+          },
+          "dry_setting": {
+            "name": "Drooginstelling"
+          }
+        }
+      },
+      "zone_remaining_drying_time": {
+        "name": "Zone {zone_number} resterende droogtijd",
+        "state_attributes": {
+          "zone": {
+            "name": "Zone"
+          },
+          "zone_id": {
+            "name": "Zone-ID"
+          },
+          "slots": {
+            "name": "Slots"
+          },
+          "dry_setting": {
+            "name": "Drooginstelling"
+          }
         }
       }
     },
@@ -916,6 +1137,10 @@
     "hybrid_mode_blocking": {
       "title": "Hybride verbinding blokkeert controle",
       "description": "{device} is verbonden met de cloud maar met lokale mqtt-verbinding door de integratie. Dit blokkeert het instellen van temperaturen en het opnieuw afdrukken van de geschiedenis. Schakel de verbinding over naar pure cloud om volledige controle mogelijk te maken."
+    },
+    "access_code_rejected": {
+      "title": "Toegangscode afgewezen",
+      "description": "De printer heeft de geconfigureerde toegangscode voor {device} afgewezen. Dit betekent meestal dat de code opnieuw is gegenereerd, bijvoorbeeld door een fabrieksreset. Lees de nieuwe toegangscode op het netwerkinstellingenscherm van de printer en configureer de integratie ermee opnieuw."
     }
   }
 }

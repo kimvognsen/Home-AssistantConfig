@@ -25,7 +25,8 @@ from homeassistant.data_entry_flow import section
 from homeassistant.helpers import entity_registry as er, selector
 from homeassistant.helpers.schema_config_entry_flow import SchemaFlowError
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-import voluptuous as vol
+
+from custom_components.powercalc.validation import vol
 
 from .common import SourceEntity, create_source_entity
 from .const import (
@@ -38,6 +39,7 @@ from .const import (
     CONF_POWER,
     CONF_SENSOR_TYPE,
     CONF_STANDBY_POWER,
+    DISCOVERY_INTEGRATION_NAME,
     DISCOVERY_POWER_PROFILES,
     DISCOVERY_SOURCE_ENTITY,
     DOMAIN,
@@ -46,7 +48,7 @@ from .const import (
     CalculationStrategy,
     SensorType,
 )
-from .device_binding import attach_configured_device_entry
+from .device_binding import resolve_source_device
 from .errors import ModelNotSupportedError, StrategyConfigurationError
 from .flow_helper.common import FlowType, PowercalcFormStep, Step, fill_schema_defaults, flatten_sections
 from .flow_helper.flows.cost import CostConfigFlow, CostOptionsFlow
@@ -199,10 +201,15 @@ class PowercalcCommonFlow(ABC, ConfigEntryBaseFlow):
                 return await getattr(handler, step_method)(user_input)  # type: ignore[no-any-return]
         raise SchemaFlowError("No handler defined")  # pragma: nocover
 
-    async def validate_strategy_config(self, user_input: dict[str, Any] | None = None) -> None:
+    async def validate_strategy_config(
+        self,
+        user_input: dict[str, Any] | None = None,
+        power_profile: PowerProfile | None = None,
+    ) -> None:
         """Validate the strategy config."""
+        profile = power_profile or self.selected_profile
         strategy_name = CalculationStrategy(
-            self.sensor_config.get(CONF_MODE) or self.selected_profile.calculation_strategy,  # type: ignore
+            self.sensor_config.get(CONF_MODE) or profile.calculation_strategy,  # type: ignore
         )
         factory = PowerCalculatorStrategyFactory(self.hass)
         assert self.source_entity is not None
@@ -210,7 +217,7 @@ class PowercalcCommonFlow(ABC, ConfigEntryBaseFlow):
             await factory.create(
                 user_input or self.sensor_config,
                 strategy_name,
-                self.selected_profile,
+                profile,
                 self.source_entity,
             )
         except StrategyConfigurationError as error:
@@ -219,7 +226,7 @@ class PowercalcCommonFlow(ABC, ConfigEntryBaseFlow):
 
     def create_source_entity_selector(
         self,
-    ) -> selector.EntitySelector:
+    ) -> selector.Selector[selector.EntitySelectorConfig]:
         """Create the entity selector for the source entity."""
         if self.is_library_flow:
             return selector.EntitySelector(
@@ -227,7 +234,9 @@ class PowercalcCommonFlow(ABC, ConfigEntryBaseFlow):
             )
         return selector.EntitySelector()
 
-    def create_device_entity_selector(self, domains: list[str], multiple: bool = False) -> selector.EntitySelector:
+    def create_device_entity_selector(
+        self, domains: list[str], multiple: bool = False
+    ) -> selector.Selector[selector.EntitySelectorConfig]:
         entity_registry = er.async_get(self.hass)
         if self.source_entity and self.source_entity.device_entry:
             entities = [
@@ -279,7 +288,7 @@ class PowercalcCommonFlow(ABC, ConfigEntryBaseFlow):
             return user_input
 
         validated_input = form_step.validate_user_input(user_input)
-        return await validated_input if isawaitable(validated_input) else validated_input  # ty: ignore[invalid-return-type]
+        return await validated_input if isawaitable(validated_input) else validated_input
 
     def _store_form_step_input(
         self,
@@ -400,6 +409,7 @@ class PowercalcConfigFlow(PowercalcCommonFlow, ConfigFlow, domain=DOMAIN):
 
         self.source_entity_id = self.source_entity.entity_id
         self.name = self.source_entity.name
+        integration_name = discovery_info.pop(DISCOVERY_INTEGRATION_NAME, None)
 
         power_profiles: list[PowerProfile] = []
         if DISCOVERY_POWER_PROFILES in discovery_info:
@@ -410,7 +420,7 @@ class PowercalcConfigFlow(PowercalcCommonFlow, ConfigFlow, domain=DOMAIN):
         self.sensor_config = discovery_info.copy()
 
         self.context["title_placeholders"] = {
-            "name": self.name or "",
+            "name": f"{self.name} - {integration_name}" if integration_name else self.name or "",
             "manufacturer": str(self.sensor_config.get(CONF_MANUFACTURER)),
             "model": str(self.sensor_config.get(CONF_MODEL)),
         }
@@ -508,7 +518,7 @@ class PowercalcOptionsFlow(PowercalcCommonFlow, OptionsFlow):
 
         self.sensor_config = dict(self.config_entry.data)
         if self.source_entity_id:
-            self.source_entity = attach_configured_device_entry(
+            self.source_entity = resolve_source_device(
                 self.hass,
                 self.sensor_config,
                 create_source_entity(
@@ -549,12 +559,7 @@ class PowercalcOptionsFlow(PowercalcCommonFlow, OptionsFlow):
 
         menu = [Step.BASIC_OPTIONS]
         if self.selected_sensor_type == SensorType.VIRTUAL_POWER:
-            if self.strategy and self.should_add_strategy_option_to_menu():
-                strategy_step = STRATEGY_STEP_MAPPING[self.strategy]
-                menu.append(strategy_step)
-            if self.selected_profile:
-                menu.append(Step.LIBRARY_OPTIONS)
-            menu.append(Step.ADVANCED_OPTIONS)
+            menu.extend(self.build_virtual_power_menu())
         if self.selected_sensor_type == SensorType.DAILY_ENERGY:
             menu.append(Step.DAILY_ENERGY)
         if self.selected_sensor_type == SensorType.REAL_POWER:
@@ -569,6 +574,32 @@ class PowercalcOptionsFlow(PowercalcCommonFlow, OptionsFlow):
             menu.append(Step.UTILITY_METER_OPTIONS)
 
         return menu
+
+    def build_virtual_power_menu(self) -> list[Step]:
+        """Build the options menu entries specific to virtual power sensors."""
+        menu: list[Step] = []
+        if self.strategy and self.should_add_strategy_option_to_menu():
+            menu.append(STRATEGY_STEP_MAPPING[self.strategy])
+        if self.selected_profile:
+            menu.append(Step.LIBRARY_OPTIONS)
+        if self.should_add_select_device_to_menu():
+            menu.append(Step.SELECT_DEVICE)
+        menu.append(Step.ADVANCED_OPTIONS)
+        return menu
+
+    def should_add_select_device_to_menu(self) -> bool:
+        """Check whether the device selection should be added to the menu."""
+        if not self.selected_profile or self.selected_profile.discovery_by not in [
+            DiscoveryBy.DEVICE,
+            DiscoveryBy.CONFIG_ENTRY,
+        ]:
+            return False
+
+        if self.selected_profile.discovery_by == DiscoveryBy.CONFIG_ENTRY:
+            # Only devices of the source config entry are selectable, so there must be something to choose from.
+            return len(self.flow_handlers[FlowType.LIBRARY].get_selectable_devices()) > 1
+
+        return True
 
     def should_add_strategy_option_to_menu(self) -> bool:
         """Check whether the strategy option should be added to the menu."""
@@ -657,7 +688,11 @@ class PowercalcOptionsFlow(PowercalcCommonFlow, OptionsFlow):
         current_step: Step = Step(str(self.cur_step["step_id"]))
         is_strategy_step = current_step in STRATEGY_STEP_MAPPING.values()
         if self.strategy and is_strategy_step:
-            if self.selected_profile and self.selected_profile.device_type == DeviceType.SMART_SWITCH:
+            if (
+                self.strategy == CalculationStrategy.FIXED
+                and self.selected_profile
+                and self.selected_profile.device_type == DeviceType.SMART_SWITCH
+            ):
                 self._process_user_input(user_input, SCHEMA_POWER_SMART_SWITCH)
                 user_input = {CONF_POWER: user_input.get(CONF_POWER, 0)}
 
@@ -733,7 +768,7 @@ class PowercalcOptionsFlow(PowercalcCommonFlow, OptionsFlow):
                 {vol.Optional(CONF_STANDBY_POWER): vol.Coerce(float)},
             )
 
-        return schema.extend(  # type: ignore[no-any-return]
+        return schema.extend(
             {
                 **SCHEMA_ENERGY_SENSOR_TOGGLE.schema,
                 **SCHEMA_STANDBY_ENERGY_SENSOR_TOGGLE.schema,

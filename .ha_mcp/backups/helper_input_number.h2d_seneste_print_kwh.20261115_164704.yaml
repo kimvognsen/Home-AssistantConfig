@@ -1,0 +1,16 @@
+# ha_mcp_backup
+schema_version: 1
+domain: helper_input_number
+entity_id: h2d_seneste_print_kwh
+captured: '2026-11-15T16:47:04.353787+00:00'
+tool: ha_config_set_helper
+config:
+  id: h2d_seneste_print_kwh
+  name: H2D Seneste print kWh
+  icon: mdi:lightning-bolt
+  min: 0.0
+  max: 100000.0
+  step: 0.0001
+  mode: box
+  unit_of_measurement: kWh
+  registry_icon: null

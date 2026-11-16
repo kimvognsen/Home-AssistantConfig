@@ -455,6 +455,9 @@
       "acs": {
         "name": "ACS"
       },
+      "position_light": {
+        "name": "Position light"
+      },
       "party_mode": {
         "name": "Party mode"
       }
@@ -476,6 +479,9 @@
       },
       "cutting_height": {
         "name": "Cutting height"
+      },
+      "zone_cutting_height": {
+        "name": "Cutting height zone {zone}"
       },
       "time_extension": {
         "name": "Time extension"

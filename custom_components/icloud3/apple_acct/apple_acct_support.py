@@ -24,16 +24,17 @@ from ..utils.messaging  import (post_event, post_alert, post_alert, post_error_m
                                 internal_error_msg2, _evlog, _log, )
 from ..utils.time_util  import (time_now_secs, secs_to_time, format_age, secs_to_hhmm,
                                 format_time_age, )
-from ..utils.utils      import (instr, list_to_str, list_add, list_del, dict_del, 
+from ..utils.utils      import (instr, list_to_str, list_add, list_del, dict_del,
                                 is_empty, isnot_empty,
                                 username_id, is_running_in_event_loop,)
 from ..startup          import config_file
 
 #--------------------------------------------------------------------
+import asyncio
 import traceback
 from re import match
 
-
+APPLE_ACCT_ALERT_MSG_REAUTH_DAYS = [-5, 10, 20, 88, 89, 86, 87]
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #
 #   APPLE ACCT INTERFACE FUNCTIONS
@@ -66,7 +67,7 @@ def retry_apple_acct_login_after_error():
                         f"at {secs_to_hhmm(AppleAcct.error_next_retry_secs)}")
             alert_msg =(f"Apple Login Failed, {AppleAcct.error_reason}, "
                         f"Retry at {secs_to_hhmm(AppleAcct.error_next_retry_secs)}")
-            update_alert_sensor(AppleAcct.username_id, alert_msg, replace_alert_msg=True)
+            update_alert_sensor(AppleAcct.username_id, alert_msg)
 
 
 #--------------------------------------------------------------------
@@ -127,7 +128,7 @@ def log_into_apple_account(username, password, apple_server_location, locate_all
             except Exception as err:
                 log_exception(err)
 
-        verify_icloud_device_info_received(AppleAcct)
+        verify_aa_device_info_received(AppleAcct)
         is_authentication_2fa_code_needed(AppleAcct, initial_setup=True)
 
         return AppleAcct
@@ -144,7 +145,7 @@ def log_into_apple_account(username, password, apple_server_location, locate_all
     except AppleAcctFailedLoginException as err:
         AppleAcct = Gb.AppleAcctLoggingInto
         login_err = str(err)
-        login_err + ", Will retry logging into the Apple Account later"
+        login_err += ", Will retry logging into the Apple Account later"
 
     except Exception as err:
         AppleAcct = Gb.AppleAcctLoggingInto
@@ -169,6 +170,49 @@ def refresh_AppleAcct_AADdevices_data(AppleAcct):
     AppleAcct.refresh_icloud_data(locate_all_devices=True)
 
     setup_status_msg(AppleAcct, "1, Refresh iCloud Devices")
+
+#....................................................................
+def create_AppleAcct_validate_upw(username, password):
+    '''
+    Create a lightweight, validate-only AppleAcctManager used solely to check
+    that a username/password is valid via a SRP signin/init+signin/complete
+    exchange (AppleAcct.validate_upw_via_srp).
+
+    The session is set up but the full login, data refresh and global AppleAcct
+    registration are skipped (srp_validate_only=True), so this does NOT replace
+    any real AppleAcct in Gb.AppleAcct_by_username.
+
+    Return:
+        - AppleAcctManager object (session ready for the SRP validation)
+        - None if an internet error occurred or the object could not be created
+    '''
+    AppleAcct = None
+    try:
+        AppleAcct = AppleAcctManager(
+                            username,
+                            password,
+                            apple_server_location='usa',
+                            locate_all_devices=False,
+                            cookie_directory=Gb.icloud_cookies_directory,
+                            session_directory=Gb.icloud_session_directory,
+                            srp_validate_only=True,
+                            validate_aa_upw=True)
+
+    except Exception as err:
+        log_exception(err)
+
+    if Gb.internet_error:
+        post_alert( f"INTERNET CONNECTION ERROR > "
+                    f"Apple Acct unavailable:"
+                    f"{CRLF_DOT}{username_id(username)}")
+        return None
+
+    if AppleAcct is None:
+        post_alert( f"Apple Acct > Apple Acct unavailable"
+                    f"{CRLF_DOT}{username_id(username)}")
+        return None
+
+    return AppleAcct
 
 #....................................................................
 def create_AppleAcct(username, password, apple_server_location, locate_all_devices):
@@ -215,14 +259,14 @@ def create_AppleAcct(username, password, apple_server_location, locate_all_devic
         if is_empty(AppleAcct.AADevData_by_device_id):
             AppleAcct.refresh_icloud_data(locate_all_devices=True)
 
-        aadevdata_items = [_AADevData.fname_device_id
+        aadevdata_items = [_AADevData.dname_device_id
                                 for _AADevData in AppleAcct.AADevData_by_device_id.values()]
 
         # Refresh devices if none returned
         if is_empty(aadevdata_items):
             AppleAcct.refresh_icloud_data(locate_all_devices=True)
 
-            aadevdata_items = [_AADevData.fname_device_id
+            aadevdata_items = [_AADevData.dname_device_id
                                     for _AADevData in AppleAcct.AADevData_by_device_id.values()]
 
     setup_status_msg(AppleAcct, "3, Create AppleAcct & Devices", username)
@@ -238,7 +282,7 @@ def setup_status_msg(AppleAcct, setup_method, username=None):
         return
 
     dev_data = list(AppleAcct.AADevData_by_device_id.values()) if AppleAcct.AADevices else []
-    aadevdata_items = [_AADevData.fname_device_id
+    aadevdata_items = [_AADevData.dname_device_id
                                     for _AADevData in AppleAcct.AADevData_by_device_id.values()]
     # post_event(f"Apple Acct > {AppleAcct.account_owner}, iCloud Data Handler Setup")
     log_debug_msg(  f"APPLE ACCT SETUP > {AppleAcct.username_id} ({AppleAcct.account_owner}), "
@@ -247,7 +291,7 @@ def setup_status_msg(AppleAcct, setup_method, username=None):
     log_debug_msg(  f"APPLE ACCT SETUP > Devices-{list_to_str(aadevdata_items)}")
 
 #--------------------------------------------------------------------
-def verify_icloud_device_info_received(AppleAcct):
+def verify_aa_device_info_received(AppleAcct):
     if (AppleAcct is None
             or AppleAcct.AADevices is None):
         return False
@@ -282,7 +326,7 @@ def is_authentication_2fa_code_needed(AppleAcct, initial_setup=False):
     '''
     if AppleAcct is None:
         return False
-    elif AppleAcct.is_auth_code_needed:
+    elif AppleAcct.is_reauth_needed:
         pass
     elif Gb.conf_data_source_MOBAPP is False:
         return False
@@ -294,15 +338,15 @@ def is_authentication_2fa_code_needed(AppleAcct, initial_setup=False):
     alert_msg = ''
     if (new_2fa_authentication_code_requested(AppleAcct, initial_setup)
             and AppleAcct.was_ha_auth_code_alert_sent is False):
-        alert_msg = f"Apple Authentication needed ({secs_to_hhmm(AppleAcct.is_auth_code_needed_secs)})"
+        alert_msg = f"Apple Authentication needed ({secs_to_hhmm(AppleAcct.is_reauth_needed_secs)})"
         post_alert(f"{AppleAcct.username_id_short} > {alert_msg}")
         update_alert_sensor(AppleAcct.username_id, alert_msg)
 
-        if Gb.AppleAcct_needing_reauth_via_ha is None:
-            Gb.AppleAcct_needing_reauth_via_ha = AppleAcct
+        if Gb.AppleAcct_reauth_needed is None:
+            Gb.AppleAcct_reauth_needed = AppleAcct
 
     if AppleAcct.terms_of_use_update_needed:
-        alert_msg = "Apple Acct > Accept `Terms of Use` needed (Auth Code entry screen)"
+        alert_msg = "Apple Acct > Accept `Terms of Use` needed (Authenticate Apple Account Sign-in)"
         post_alert(f"{AppleAcct.username_id} > {alert_msg}")
         update_alert_sensor(AppleAcct.username_id, alert_msg)
         log_warning_msg(f"{AppleAcct.username_id} > {alert_msg}")
@@ -369,7 +413,7 @@ def new_2fa_authentication_code_requested(AppleAcct, initial_setup=False):
             return True
 
         #See if 2fa Verification needed
-        if AppleAcct.is_auth_code_needed is False:
+        if AppleAcct.is_reauth_needed is False:
             return False
 
         return True
@@ -377,6 +421,26 @@ def new_2fa_authentication_code_requested(AppleAcct, initial_setup=False):
     except Exception as err:
         internal_error_msg2('Apple ID Verification', traceback.format_exc)
         return True
+
+#--------------------------------------------------------------------
+def issue_reauth_in_days_alert_msg(evlog_msg=False):
+    '''
+    Check to see if an Apple acct is approaching  it's
+    reauthentication date. if it is,  issue an alert warning message
+    '''
+    for AppleAcct in Gb.AppleAcct_by_username.values():
+        reauth_in_days, reauth_msg = \
+                AppleAcct.get_next_reauth_in_days_info_msg(APPLE_ACCT_ALERT_MSG_REAUTH_DAYS)
+        if (AppleAcct.is_reauth_needed is False
+                and reauth_in_days <= 10
+                and reauth_msg is not None):
+            alert_msg = (f"AppleAcct {reauth_msg}")
+            update_alert_sensor(AppleAcct.username_id, alert_msg)
+
+            if evlog_msg:
+                post_event( f"{EVLOG_ALERT}Apple Acct > "
+                            f"{AppleAcct.account_owner}, "
+                            f"Reauth Warning, {reauth_msg}")
 
 #--------------------------------------------------------------------
 def reset_AppleAcct_Gb_variables():
@@ -403,7 +467,7 @@ def reset_AppleAcct_Gb_variables():
     Gb.Devices_by_username            = {}
     Gb.owner_device_ids_by_username   = {}
     Gb.owner_Devices_by_username      = {}
-    Gb.AppleAcct_needing_reauth_via_ha = None
+    Gb.AppleAcct_reauth_needed = None
 
     Gb.AppleAcct_logging_in_usernames = []
     Gb.conf_usernames                 = set()
@@ -445,8 +509,8 @@ def delete_AppleAcct_Gb_variables_username(username):
 
     AppleAcct = Gb.AppleAcct_by_username.pop(username, None)
     if AppleAcct:
-        if  Gb.AppleAcct_needing_reauth_via_ha == AppleAcct:
-            Gb.AppleAcct_needing_reauth_via_ha = None
+        if  Gb.AppleAcct_reauth_needed == AppleAcct:
+            Gb.AppleAcct_reauth_needed = None
         del AppleAcct.iCloudSession
         del AppleAcct
 

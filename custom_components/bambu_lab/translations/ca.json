@@ -8,7 +8,8 @@
       "event_print_error": "Error d'impressió",
       "event_print_error_cleared": "Error d'impressió esborrat",
       "event_printer_error": "Error d'HMS",
-      "event_printer_error_cleared": "Error d'HMS esborrat"
+      "event_printer_error_cleared": "Error d'HMS esborrat",
+      "event_printer_missing_sdcard": "Falta la targeta SD"
     }
   },
   "config": {
@@ -37,7 +38,8 @@
       "cannot_connect_cloud_connection_refused": "Connexió rebutjada pel núvol de Bambu Lab.",
       "cannot_connect_cloud_address_unreachable": "L'adreça del núvol de Bambu Lab no és accessible.",
       "cannot_connect_cloud_unknown": "Error desconegut en connectar-se al núvol de Bambu Lab.",
-      "cannot_connect_local_unknown": "No s'ha pogut connectar. Comproveu la configuració proporcionada."
+      "cannot_connect_local_unknown": "No s'ha pogut connectar. Comproveu la configuració proporcionada.",
+      "tfa_csrf_fallback": "Actualment, el punt final d'autenticació de dos factors de Bambu Lab està rebutjant sol·licituds. S'ha enviat un codi de verificació al vostre correu electrònic o telèfon; introduïu-lo a continuació."
     },
     "step": {
       "user": {
@@ -135,7 +137,8 @@
       "cannot_connect_cloud_connection_refused": "Connexió rebutjada pel núvol de Bambu Lab.",
       "cannot_connect_cloud_address_unreachable": "L'adreça del núvol de Bambu Lab no és accessible.",
       "cannot_connect_cloud_unknown": "Error desconegut en connectar-se al núvol de Bambu Lab.",
-      "cannot_connect_local_unknown": "No s'ha pogut connectar. Comproveu la configuració proporcionada."
+      "cannot_connect_local_unknown": "No s'ha pogut connectar. Comproveu la configuració proporcionada.",
+      "tfa_csrf_fallback": "Actualment, el punt final d'autenticació de dos factors de Bambu Lab està rebutjant sol·licituds. S'ha enviat un codi de verificació al vostre correu electrònic o telèfon; introduïu-lo a continuació."
     },
     "step": {
       "init": {
@@ -241,6 +244,12 @@
       },
       "hybrid_mode_blocks_control": {
         "name": "Control híbrid de blocs MQTT"
+      },
+      "left_extruder_filament_state": {
+        "name": "Filament de l'extrusora esquerre"
+      },
+      "right_extruder_filament_state": {
+        "name": "Filament extrusor dret"
       }
     },
     "button": {
@@ -281,6 +290,18 @@
       },
       "secondary_aux_fan": {
         "name": "Ventilador auxiliar secundari"
+      },
+      "part_fan": {
+        "name": "Ventilador parcial"
+      },
+      "left_aux_fan": {
+        "name": "Ventilador auxiliar esquerre"
+      },
+      "right_aux_fan": {
+        "name": "Ventilador auxiliar dret"
+      },
+      "exhaust_fan": {
+        "name": "Ventilador d'escapament"
       }
     },
     "image": {
@@ -472,7 +493,8 @@
           "build_plate_alignment_detection": "Construeix detecció d'alineació de plaques",
           "heatbed_surface_foreign_object_detection": "Detecció d'objectes estranys a la superfície del llit calent",
           "heatbed_underside_foreign_object_detection": "Detecció d'objectes estranys a la part inferior del llit calent",
-          "pre_extrusion_before_printing": "Pre-extrusió abans de la impressió"
+          "pre_extrusion_before_printing": "Pre-extrusió abans de la impressió",
+          "heatbed_stabilizing": "Llit calent estabilitzador"
         }
       },
       "print_progress": {
@@ -566,7 +588,8 @@
           "high_flow_hardened_steel": "Acer endurit amb un gran flux",
           "high_flow_stainless_steel": "Acer inoxidable amb un gran flux",
           "high_flow_tungsten_carbide": "Carbur de tungstè amb gran flux",
-          "unknown": "Desconegut"
+          "unknown": "Desconegut",
+          "tpu_high_flow": "TPU d'alt flux"
         }
       },
       "humidity_index": {
@@ -735,7 +758,8 @@
           "missing": "Perduda",
           "normal": "Normal",
           "abnormal": "Anormal",
-          "readonly": "Llegiu només"
+          "readonly": "Llegiu només",
+          "not_applicable": "No aplicable"
         }
       },
       "left_nozzle_diameter": {
@@ -861,6 +885,203 @@
           "heating": "Calefacció",
           "laser": "Làser"
         }
+      },
+      "secondary_aux_fan_speed": {
+        "name": "Velocitat del ventilador auxiliar secundari"
+      },
+      "drying_temperature": {
+        "name": "Temperatura d'assecat"
+      },
+      "drying_duration": {
+        "name": "Durada de l'assecat"
+      },
+      "drying_filament": {
+        "name": "Filament d'assecat"
+      },
+      "hotend_rack_hotend_used_time": {
+        "name": "Hotend {hotend_id} temps utilitzat"
+      },
+      "makerworld_boosts_received": {
+        "name": "Impuls rebuts"
+      },
+      "makerworld_prints_total": {
+        "name": "Impressions incl. imprimir perfils"
+      },
+      "makerworld_downloads_total": {
+        "name": "Descàrregues incl. imprimir perfils"
+      },
+      "makerworld_points": {
+        "name": "Punts"
+      },
+      "makerworld_points_earned": {
+        "name": "Punts guanyats"
+      },
+      "makerworld_points_spent": {
+        "name": "Punts gastats"
+      },
+      "makerworld_points_exclusive": {
+        "name": "Punts exclusius"
+      },
+      "makerworld_boost_tokens": {
+        "name": "Potenciar fitxes"
+      },
+      "makerworld_boosts_used": {
+        "name": "Impuls utilitzats"
+      },
+      "makerworld_boosts_expired": {
+        "name": "Els impulsos han caducat"
+      },
+      "makerworld_downloads": {
+        "name": "Descàrregues"
+      },
+      "makerworld_instance_downloads": {
+        "name": "Imprimeix descàrregues de perfils"
+      },
+      "makerworld_prints": {
+        "name": "Estampats"
+      },
+      "makerworld_instance_prints": {
+        "name": "Imprimeix impressions de perfil"
+      },
+      "makerworld_designs": {
+        "name": "Models publicats"
+      },
+      "makerworld_likes": {
+        "name": "M'agrada"
+      },
+      "makerworld_collections": {
+        "name": "Recull"
+      },
+      "makerworld_followers": {
+        "name": "Seguidors"
+      },
+      "makerworld_following": {
+        "name": "Seguint"
+      },
+      "makerworld_level": {
+        "name": "Nivell"
+      },
+      "active_nozzle": {
+        "name": "Broquet actiu",
+        "state": {
+          "left": "Esquerra",
+          "right": "D'acord"
+        }
+      },
+      "ams_status": {
+        "name": "Estat",
+        "state": {
+          "idle": "Inactiu",
+          "changing_filament": "Canvi de filament",
+          "heating_nozzle": "Broquet de calefacció",
+          "cutting_filament": "Filament de tall",
+          "pulling_back_filament": "Tirant enrere el filament actual",
+          "pushing_new_filament": "Empenyent filament nou",
+          "purging_old_filament": "Purga del filament vell",
+          "checking_position": "Comprovació de la posició del filament",
+          "rfid_identifying": "Identificació RFID",
+          "filament_loaded": "Filament carregat",
+          "calibration": "Calibració",
+          "cold_pull": "Tirada freda",
+          "self_check": "Autocontrol",
+          "debug": "Depuració",
+          "unknown": "Desconegut"
+        }
+      },
+      "track_switch_input": {
+        "name": "Entrada de l'interruptor de pista {input_number}",
+        "state": {
+          "left": "Broquet esquerre",
+          "right": "Broquet dret",
+          "empty": "Buit"
+        }
+      },
+      "connected_nozzle": {
+        "name": "Broquet connectat",
+        "state": {
+          "left": "Esquerra",
+          "right": "D'acord",
+          "track_switch": "Interruptor de pista"
+        }
+      },
+      "part_fan_speed": {
+        "name": "Velocitat del ventilador parcial"
+      },
+      "left_aux_fan_speed": {
+        "name": "Velocitat del ventilador auxiliar esquerre"
+      },
+      "right_aux_fan_speed": {
+        "name": "Velocitat del ventilador auxiliar dret"
+      },
+      "exhaust_fan_speed": {
+        "name": "Velocitat del ventilador d'escapament"
+      },
+      "external_storage_connection": {
+        "name": "Connexió d'emmagatzematge extern",
+        "state": {
+          "connected": "Connectat",
+          "disconnected": "Desconnectat"
+        }
+      },
+      "external_storage_total": {
+        "name": "Emmagatzematge extern total"
+      },
+      "external_storage_used": {
+        "name": "Emmagatzematge extern utilitzat"
+      },
+      "external_storage_free": {
+        "name": "Emmagatzematge extern gratuït"
+      },
+      "zone_temperature": {
+        "name": "Temperatura de la zona {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Zona"
+          },
+          "zone_id": {
+            "name": "ID de zona"
+          },
+          "slots": {
+            "name": "Ranures"
+          },
+          "dry_setting": {
+            "name": "Configuració d'assecat"
+          }
+        }
+      },
+      "zone_humidity": {
+        "name": "Humitat de la zona {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Zona"
+          },
+          "zone_id": {
+            "name": "ID de zona"
+          },
+          "slots": {
+            "name": "Ranures"
+          },
+          "dry_setting": {
+            "name": "Configuració d'assecat"
+          }
+        }
+      },
+      "zone_remaining_drying_time": {
+        "name": "Zona {zone_number} temps d'assecat restant",
+        "state_attributes": {
+          "zone": {
+            "name": "Zona"
+          },
+          "zone_id": {
+            "name": "ID de zona"
+          },
+          "slots": {
+            "name": "Ranures"
+          },
+          "dry_setting": {
+            "name": "Configuració d'assecat"
+          }
+        }
       }
     },
     "camera": {
@@ -916,6 +1137,10 @@
     "hybrid_mode_blocking": {
       "title": "Control de blocs de connexió híbrid",
       "description": "{device} està connectat al núvol però amb connexió mqtt local per la integració. Això bloqueja la configuració de temperatures i la reimpressió de l'historial. Canvia la connexió al núvol pur per permetre el control total."
+    },
+    "access_code_rejected": {
+      "title": "Codi d'accés rebutjat",
+      "description": "La impressora ha rebutjat el codi d'accés configurat per a {device}. Això normalment significa que el codi s'ha regenerat, per exemple mitjançant un restabliment de fàbrica. Llegiu el nou codi d'accés des de la pantalla de configuració de xarxa de la impressora i torneu a configurar la integració amb ell."
     }
   }
 }

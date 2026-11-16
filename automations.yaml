@@ -19,18 +19,31 @@
       message: Z-wave addon er stoppet
   mode: single
 - id: '1636992870421'
-  alias: Alarm - Røgalarm i Brygge har registreret røg - tænd alt Lys
+  alias: Alarm - Røgalarm i Brygge har registreret røg - tænd lys
   description: ''
   triggers:
   - entity_id:
-    - binary_sensor.smoke_detector_smoke_detected_bryggers
-    to: detected
+    - binary_sensor.smoke_detector_bryggers_smoke_detected
+    to:
+    - detected
     for:
       hours: 0
       minutes: 0
       seconds: 30
-    from: clear
+    from:
+    - clear
     trigger: state
+  - trigger: state
+    entity_id:
+    - binary_sensor.smoke_detector_hall_smoke
+    to:
+    - 'on'
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 30
+    from:
+    - 'off'
   conditions:
   - condition: sun
     before: sunrise
@@ -39,16 +52,10 @@
   - data: {}
     target:
       area_id:
-      - carport
-      - bryggers
-      - bryggers
-      - drengenes_sovevaerelse
-      - drengevaerelse
       - entre
       - hall
-      - gang
-      - sovevaerelse
       - stuen
+      - bryggers
     action: light.turn_on
   mode: single
 - id: '1662313982766'
@@ -205,10 +212,11 @@
     trigger: state
   conditions: []
   actions:
-  - metadata: {}
+  - action: notify.send_message
+    target:
+      entity_id: notify.kims_mobiltelefon
     data:
-      message: Freint energi sensor svare ikke
-    action: notify.kims_mobiltelefon
+      message: Freint energi sensor svarer ikke
   mode: single
 - id: '1731934062538'
   alias: 'Termostat kontor: Skru ned ved høj temperatur'
@@ -388,9 +396,9 @@
     entity_id: input_boolean.home_alone
     state: 'on'
   actions:
-  - data:
-      message: soveværelse vindue åben!
-    action: notify.kims_mobiltelefon
+  - action: notify.mobile_app_kims_iphone
+    data:
+      message: Soveværelses vindue åben i Sovelværelse
   mode: single
 - id: '1735130963725'
   alias: Notifikatione nogen i Hall
@@ -409,9 +417,9 @@
     entity_id: input_boolean.home_alone
     state: 'on'
   actions:
-  - data:
+  - action: notify.mobile_app_kims_iphone
+    data:
       message: Nogen i Hall!
-    action: notify.kims_mobiltelefon
   mode: single
 - id: '1735131092178'
   alias: Notifikation Motion i Stuen
@@ -638,9 +646,9 @@
     entity_id: input_boolean.home_alone
     state: 'on'
   actions:
-  - data:
+  - action: notify.mobile_app_kims_iphone
+    data:
       message: Nogen i bryggers!
-    action: notify.kims_mobiltelefon
   mode: single
 - id: '1751112500748'
   alias: Opdater pollen “tidligere” værdier
@@ -726,26 +734,9 @@
       \       'input_boolean.matias_vindue'\n} %} {{ is_state(map[trigger.entity_id],
       'on') }}\n"
   actions:
-  - data:
-      title: "\U0001F6A8 Bevægelse / Dør åben"
-      message: "{% set names = {\n  'binary_sensor.dor_sensor_stuen_contact':        'Stuen
-        (bevægelse)',\n  'binary_sensor.ikea_vallhorn_hall_occupancy':         'Hall
-        (bevægelse)',\n  'binary_sensor.hue_outdoor_motion_sensor_hovedindgang_bevaegelse':
-        'Hovedindgang (bevægelse)',\n  'binary_sensor.aqara_p1_motion_sensor_bryggers_occupancy':
-        \           'Bryggers (bevægelse)',\n  'binary_sensor.hue_outdoor_sensor_indkoersel_bevaegelse':
-        \     'Indkørsel (bevægelse)',\n  'binary_sensor.hue_outdoor_sensor_terrasse_bevaegelse':
-        \       'Terrasse (bevægelse)',\n  'binary_sensor.motion_sensor_entre_occupancy':
-        \        'Entre (bevægelse)',\n  'binary_sensor.motion_sensor_vaerksted_occupancy':
-        \           'Værksted (bevægelse)',\n  'binary_sensor.dor_sensor_vaerksted_contact':
-        \       'Stuen (dør)',\n  'binary_sensor.dor_sensor_entre_contact':   'Entre
-        (dør)',\n  'binary_sensor.sonoff_dor_sensor_bryggers_contact': 'Bryggers (dør)',\n
-        \ 'binary_sensor.dor_sensor_vaerksted_contact':        'Værksted (dør)',\n
-        \ 'binary_sensor.vindue_sensor_badevaerelse_contact':        'Badeværelse
-        (vindue)',\n  'binary_sensor.vindue_sensor_sovevaerelse_contact':        'Soveværelse
-        (vindue)',\n  'binary_sensor.vindue_sensor_jonatans_vaerelse_contact':        'Jonatan
-        (vindue)',\n  'binary_sensor.vindue_sensor_matias_vaerelse_contact':        'Matias
-        (vindue)'\n} %} Nogen i {{ names[trigger.entity_id] }}!\n"
-    action: notify.kims_mobiltelefon
+  - action: notify.mobile_app_kims_iphone17
+    data:
+      message: Nogen i huset
   mode: single
 - id: '1752061213091'
   alias: Notifikation – valgte rum - test
@@ -873,134 +864,6 @@
         }}%.
 
         '
-  mode: single
-- id: 9b087526-27e9-4473-b69c-a94bb421a7f3
-  alias: Carport – sluk lyskæde på tidspunkt fra input_datetime
-  description: Slukker lyskæde i carport på brugerdefineret tidspunkt, hvis party_mode
-    er off
-  triggers:
-  - at: input_datetime.sluk_lyskaede_i_carport
-    trigger: time
-  conditions:
-  - condition: state
-    entity_id: input_boolean.party_mode
-    state: 'off'
-  actions:
-  - target:
-      entity_id: light.hue_smart_plug_lyskaede
-    action: light.turn_off
-  mode: single
-- id: 9b087526-27e9-4473-b69c-a94bb421a7f3345245354
-  alias: Carport AI lys i lyskæde, hvis vi ikke er hjemme
-  description: 'Tænder ved solnedgang uanset tilstedeværelse. Auto-sluk efter input_datetime
-    hvis ikke party_mode, ikke manual_override, og enten begge er hjemme, eller holiday*
-    er on, eller 15 min efter første hjemkomst der sker efter sluktid.
-
-    '
-  triggers:
-  - event: sunset
-    trigger: sun
-  - entity_id:
-    - person.kim_vognsen
-    - person.gitte_vognsen
-    - input_boolean.party_mode
-    - input_boolean.holiday_mode
-    - input_boolean.holiday_all_mode
-    - input_datetime.sluk_lyskaede_i_carport
-    - input_boolean.manual_override_carport_lyskaede
-    trigger: state
-  - at: input_datetime.sluk_lyskaede_i_carport
-    trigger: time
-  - minutes: /10
-    trigger: time_pattern
-  - event: start
-    trigger: homeassistant
-  conditions: []
-  actions:
-  - variables:
-      sluk_ts: '{{ as_timestamp(today_at(states(''input_datetime.sluk_lyskaede_i_carport'')))
-        }}
-
-        '
-      now_ts: '{{ as_timestamp(now()) }}
-
-        '
-      party_on: '{{ is_state(''input_boolean.party_mode'',''on'') }}
-
-        '
-      holiday_on: "{{ is_state('input_boolean.holiday_mode','on') or\n   is_state('input_boolean.holiday_all_mode','on')
-        }}\n"
-      manual_override_on: '{{ is_state(''input_boolean.manual_override_carport_lyskaede'',''on'')
-        }}
-
-        '
-      kim_home: '{{ is_state(''person.kim_vognsen'',''home'') }}
-
-        '
-      gitte_home: '{{ is_state(''person.gitte_vognsen'',''home'') }}
-
-        '
-      both_home: '{{ kim_home and gitte_home }}
-
-        '
-      kim_home_since: '{{ as_timestamp(states.person.kim_vognsen.last_changed) if
-        kim_home else 0 }}
-
-        '
-      gitte_home_since: '{{ as_timestamp(states.person.gitte_vognsen.last_changed)
-        if gitte_home else 0 }}
-
-        '
-      latest_arrival_after_sluktid: "{% set arrivals = [\n  kim_home_since if kim_home
-        and kim_home_since > sluk_ts else 0,\n  gitte_home_since if gitte_home and
-        gitte_home_since > sluk_ts else 0\n] %} {{ (arrivals | max) if (arrivals |
-        max) > 0 else none }}\n"
-      allow_by_arrival_plus_15: "{{ latest_arrival_after_sluktid is not none and\n
-        \  now_ts >= (latest_arrival_after_sluktid + 15*60) }}\n"
-  - choose:
-    - alias: 'Manual override: tænd efter solnedgang'
-      conditions:
-      - condition: template
-        value_template: '{{ manual_override_on }}'
-      - condition: state
-        entity_id: sun.sun
-        state: below_horizon
-      sequence:
-      - target:
-          entity_id: light.hue_smart_plug_lyskaede
-        action: light.turn_on
-        data: {}
-    - alias: Tænd ved solnedgang
-      conditions:
-      - condition: state
-        entity_id: sun.sun
-        state: below_horizon
-      sequence:
-      - target:
-          entity_id: light.hue_smart_plug_lyskaede
-        action: light.turn_on
-        data: {}
-    - alias: Sluk efter input_datetime (+15 min v. away), ikke i party/manual override
-      conditions:
-      - condition: template
-        value_template: '{{ not party_on }}'
-      - condition: template
-        value_template: '{{ not manual_override_on }}'
-      - condition: template
-        value_template: '{{ now_ts >= sluk_ts }}'
-      - condition: or
-        conditions:
-        - condition: template
-          value_template: '{{ both_home }}'
-        - condition: template
-          value_template: '{{ holiday_on }}'
-        - condition: template
-          value_template: '{{ allow_by_arrival_plus_15 }}'
-      sequence:
-      - target:
-          entity_id: light.hue_smart_plug_lyskaede
-        action: light.turn_off
-        data: {}
   mode: single
 - id: 7c7aae7e4dc04540b98fd4f44a91d6b7
   alias: Entrelys tænd efter motion
@@ -1214,7 +1077,6 @@
   triggers:
   - entity_id:
     - person.kim_vognsen
-    - device_tracker.kims_iphone_17_pro_cloud
     to:
     - home
     for:
@@ -1224,7 +1086,10 @@
     trigger: state
     from:
     - not_home
-  conditions: []
+  conditions:
+  - condition: template
+    value_template: "{{ (as_timestamp(now()) -\n    as_timestamp(states('sensor.uptime'),
+      0)) > 180 }}\n"
   actions:
   - action: notify.send_message
     metadata: {}
@@ -1254,53 +1119,9 @@
   mode: single
   variables:
     lights:
-    - light.hue_smart_plug_lyskaede
     - light.terrasse_ikea_inspelning_smart_plug_terrrasse_lyskaede
     to_turn_off: "{{ expand(lights)\n   | selectattr('state','eq','on')\n   | map(attribute='entity_id')
       | list }}\n"
-- id: 2d25e8a3ccd59
-  alias: Carport  Tænd lys i lyskæde
-  description: Tænd lys ved solnedgang
-  triggers:
-  - event: sunset
-    offset: '0'
-    trigger: sun
-  actions:
-  - target:
-      entity_id: light.hue_smart_plug_lyskaede
-    action: light.turn_on
-  mode: single
-- id: '1760428920752'
-  alias: Carport – tænd 06:30 hvis mørkt, sluk ved solopgang
-  description: Én automation der tænder 06:30 før solopgang og slukker ved solopgang
-  triggers:
-  - at: 06:30
-    id: kl0630
-    trigger: time
-  - event: sunrise
-    id: sunrise
-    trigger: sun
-    offset: -00:15
-  conditions: []
-  actions:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: kl0630
-      - condition: sun
-        before: sunrise
-      sequence:
-      - target:
-          entity_id: light.hue_smart_plug_lyskaede
-        action: light.turn_on
-    - conditions:
-      - condition: trigger
-        id: sunrise
-      sequence:
-      - target:
-          entity_id: light.hue_smart_plug_lyskaede
-        action: light.turn_off
-  mode: single
 - id: '1760430838905'
   alias: Lys Hall dæmp efter party mode
   description: ''
@@ -1453,7 +1274,7 @@
   conditions:
   - condition: template
     value_template: '{{ state_attr(''sensor.storskrald_affald'', ''days_until_collection'')
-      | int == 1 }}'
+      | int == 2 }}'
   actions:
   - action: notify.send_message
     target:
@@ -1518,7 +1339,13 @@
   - event: sunset
     offset: -01:00:00
     trigger: sun
-  conditions: []
+  conditions:
+  - condition: switch.is_off
+    target:
+      entity_id: input_boolean.stuen_dor
+    options:
+      behavior: any
+      for: 00:00:00
   actions:
   - data:
       brightness_pct: 78
@@ -1564,7 +1391,6 @@
   triggers:
   - entity_id:
     - person.gitte_vognsen
-    - device_tracker.gitte_iphone_17_pro_cloud_gitte_iphone_17_pro_cloud_gitte_iphone_17_pro_cloud
     to:
     - home
     for:
@@ -1574,6 +1400,10 @@
     trigger: state
     from:
     - not_home
+  conditions:
+  - condition: time
+    after: '10:00:00'
+    before: 00:01:00
   actions:
   - action: notify.send_message
     metadata: {}
@@ -1625,10 +1455,12 @@
     above: 450
   conditions: []
   actions:
-  - action: notify.gittes_og_kims_mobiltelefon
+  - action: notify.send_message
     metadata: {}
+    target:
+      entity_id: notify.gittes_og_kims_mobiltelefon
     data:
-      message: Advarsel, luften er forurenet, åbne vinduer!
+      message: Luft ud
   mode: single
 - id: '1763973437978'
   alias: Stuen - Advarsel, luften er beskidt, åbne havedør! (PM2.5)
@@ -1644,100 +1476,12 @@
     above: 15
   conditions: []
   actions:
-  - action: notify.gittes_og_kims_mobiltelefon
+  - action: notify.send_message
     metadata: {}
+    target:
+      entity_id: notify.gittes_og_kims_mobiltelefon
     data:
-      message: Advarsel, luften er forurenet, åbne vinduer! (PM2.5)
-  mode: single
-- id: hue_dimmer_stuen_lys
-  alias: Hue Dimmer 1 – Stuen lys
-  description: ''
-  triggers:
-  - domain: hue
-    device_id: 5d05bf23b98e15fdcc715ab88a969fd9
-    type: initial_press
-    subtype: 1
-    id: btn1_on
-    trigger: device
-  - domain: hue
-    device_id: 5d05bf23b98e15fdcc715ab88a969fd9
-    type: initial_press
-    subtype: 4
-    id: btn4_off
-    trigger: device
-  - domain: hue
-    device_id: 5d05bf23b98e15fdcc715ab88a969fd9
-    type: repeat
-    subtype: 2
-    id: btn2_up
-    trigger: device
-  - domain: hue
-    device_id: 5d05bf23b98e15fdcc715ab88a969fd9
-    type: repeat
-    subtype: 3
-    id: btn3_down
-    trigger: device
-  - device_id: 5d05bf23b98e15fdcc715ab88a969fd9
-    domain: hue
-    type: long_press
-    subtype: 4
-    unique_id: 9b12dd2c-4a52-4800-928b-cb72688180fe
-    trigger: device
-    id: btn5_down
-  actions:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: btn1_on
-      sequence:
-      - target:
-          entity_id: light.alt_lys_i_stuen
-        data:
-          transition: 0.3
-        action: light.turn_on
-    - conditions:
-      - condition: trigger
-        id: btn4_off
-      sequence:
-      - target:
-          entity_id:
-          - light.hvid_lampe
-          - light.driver_montanareol
-          - light.kina_lampe
-        data:
-          transition: 0.3
-        action: light.turn_off
-    - conditions:
-      - condition: trigger
-        id: btn2_up
-      sequence:
-      - target:
-          entity_id: light.alt_lys_i_stuen
-        data:
-          brightness_step_pct: 5
-          transition: 0.1
-        action: light.turn_on
-    - conditions:
-      - condition: trigger
-        id: btn3_down
-      sequence:
-      - target:
-          entity_id: light.alt_lys_i_stuen
-        data:
-          brightness_step_pct: -5
-          transition: 0.1
-        action: light.turn_on
-    - conditions:
-      - condition: trigger
-        id:
-        - btn4_off
-        - btn5_down
-      sequence:
-      - target:
-          entity_id: light.alt_lys_i_stuen
-        data:
-          transition: 0.3
-        action: light.turn_off
+      message: Luft ud
   mode: single
 - id: '1766321476299'
   alias: Sluk Sonos højtaler i køkken efter 1 time uden afspilning
@@ -1904,77 +1648,6 @@
     action: '{{ trigger.payload | default('''') }}'
     ramp_delay_ms: 180
     max_ramp_seconds: 8
-- id: '1766506103842'
-  alias: Hue Dimmer 2 - Lys i stuen
-  description: ''
-  triggers:
-  - device_id: ebe390a7bd0a640ecc048c45b9ca037c
-    domain: hue
-    type: initial_press
-    subtype: 1
-    unique_id: ebe390a7bd0a640ecc048c45b9ca037c
-    trigger: device
-    id: btn1_on
-  - domain: hue
-    device_id: ebe390a7bd0a640ecc048c45b9ca037c
-    type: initial_press
-    subtype: 4
-    id: btn4_off
-    trigger: device
-  - domain: hue
-    device_id: ebe390a7bd0a640ecc048c45b9ca037c
-    type: repeat
-    subtype: 2
-    id: btn2_up
-    trigger: device
-  - domain: hue
-    device_id: ebe390a7bd0a640ecc048c45b9ca037c
-    type: repeat
-    subtype: 3
-    id: btn3_down
-    trigger: device
-  conditions: []
-  actions:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: btn1_on
-      sequence:
-      - target:
-          entity_id: light.alt_lys_i_stuen
-        data:
-          transition: 0.3
-        action: light.turn_on
-    - conditions:
-      - condition: trigger
-        id: btn4_off
-      sequence:
-      - target:
-          entity_id: light.alt_lys_i_stuen
-        data:
-          transition: 0.3
-        action: light.turn_off
-    - conditions:
-      - condition: trigger
-        id: btn2_up
-      sequence:
-      - target:
-          entity_id: light.alt_lys_i_stuen
-        data:
-          brightness_step_pct: 5
-          transition: 0.1
-        action: light.turn_on
-    - conditions:
-      - condition: trigger
-        id: btn3_down
-      sequence:
-      - target:
-          entity_id: light.alt_lys_i_stuen
-        data:
-          brightness_step_pct: -5
-          transition: 0.1
-        action: light.turn_on
-  mode: single
 - id: '1767606421073'
   alias: Zigbee – Alarm ved frosne klima sensorer
   triggers:
@@ -2269,44 +1942,6 @@
     target:
       entity_id: climate.vaerksted_termostat
   mode: single
-- id: '1773393459862'
-  alias: Carport lys – tænd hvis mørkt 06:30
-  description: ''
-  triggers:
-  - at: 06:30:00
-    trigger: time
-  conditions:
-  - condition: numeric_state
-    entity_id: sun.sun
-    attribute: elevation
-    below: 0
-  actions:
-  - target:
-      entity_id: light.hue_smart_plug_lyskaede
-    action: light.turn_on
-  mode: single
-- id: '1773393532149'
-  alias: Carport lys – sluk ved solopgang
-  description: ''
-  triggers:
-  - event: sunrise
-    trigger: sun
-  actions:
-  - target:
-      entity_id: light.hue_smart_plug_lyskaede
-    action: light.turn_off
-  mode: single
-- id: '1773393625139'
-  alias: Carport lys – failsafe sluk
-  description: ''
-  triggers:
-  - trigger: time
-    at: 09:00:00
-  actions:
-  - action: light.turn_off
-    target:
-      entity_id: light.hue_smart_plug_lyskaede
-  mode: single
 - id: '1777455934805'
   alias: Opdater OpenUV
   description: ''
@@ -2384,7 +2019,7 @@
   conditions:
   - condition: template
     value_template: '{{ state_attr(''sensor.haveaffald'', ''days_until_collection'')
-      | int == 1 }}'
+      | int == 4 }}'
   actions:
   - action: notify.send_message
     target:
@@ -2411,3 +2046,1153 @@
       entity_id: counter.regnmaler_tip
   mode: queued
   max: 50
+- id: '1787904392843'
+  alias: Hue Dimmer 1 – Stuen lys version 2
+  description: ''
+  triggers:
+  - device_id: 14a997c3cb97fdc0ab2c0a57757853e0
+    domain: hue
+    type: initial_press
+    subtype: 1
+    unique_id: d077f0e3-530c-4763-91a6-41d79282e0a3
+    trigger: device
+    id: btn1_on
+  - device_id: 14a997c3cb97fdc0ab2c0a57757853e0
+    domain: hue
+    type: initial_press
+    subtype: 4
+    unique_id: 9b12dd2c-4a52-4800-928b-cb72688180fe
+    trigger: device
+    id: btn4_off
+  - device_id: 14a997c3cb97fdc0ab2c0a57757853e0
+    domain: hue
+    type: repeat
+    subtype: 2
+    unique_id: c1fd2567-d664-40f7-80ae-4348bfe05c5f
+    trigger: device
+    id: btn2_up
+  - device_id: 14a997c3cb97fdc0ab2c0a57757853e0
+    domain: hue
+    type: repeat
+    subtype: 3
+    unique_id: b812b5f7-2e73-4153-9e24-0cb38c8f2e4f
+    trigger: device
+    id: btn3_down
+  - device_id: 14a997c3cb97fdc0ab2c0a57757853e0
+    domain: hue
+    type: long_press
+    subtype: 4
+    unique_id: 9b12dd2c-4a52-4800-928b-cb72688180fe
+    trigger: device
+    id: btn5_down
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: btn1_on
+      sequence:
+      - target:
+          entity_id: light.alt_lys_i_stuen
+        data:
+          transition: 0.3
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: btn4_off
+      sequence:
+      - target:
+          entity_id:
+          - light.hvid_lampe
+          - light.driver_montanareol
+          - light.kina_lampe
+          - light.hue_filament_bulb_1
+        data:
+          transition: 0.3
+        action: light.turn_off
+    - conditions:
+      - condition: trigger
+        id: btn2_up
+      sequence:
+      - target:
+          entity_id: light.alt_lys_i_stuen
+        data:
+          brightness_step_pct: 5
+          transition: 0.1
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: btn3_down
+      sequence:
+      - target:
+          entity_id: light.alt_lys_i_stuen
+        data:
+          brightness_step_pct: -5
+          transition: 0.1
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id:
+        - btn4_off
+        - btn5_down
+      sequence:
+      - target:
+          entity_id: light.alt_lys_i_stuen
+        data:
+          transition: 0.3
+        action: light.turn_off
+  mode: single
+- id: '1787904538436'
+  alias: Hue Dimmer 2 – Stuen lys version 2
+  description: ''
+  triggers:
+  - device_id: 87ea7ec609e5dc04f2a7d6303191e8df
+    domain: hue
+    type: initial_press
+    subtype: 1
+    unique_id: 92acda26-dbea-4ba5-aaa1-30f03bde1b2f
+    trigger: device
+    id: btn1_on
+  - device_id: 87ea7ec609e5dc04f2a7d6303191e8df
+    domain: hue
+    type: initial_press
+    subtype: 4
+    unique_id: 97a47d77-bdf4-4951-8627-ffbf4f814e86
+    trigger: device
+    id: btn4_off
+  - device_id: 87ea7ec609e5dc04f2a7d6303191e8df
+    domain: hue
+    type: repeat
+    subtype: 2
+    unique_id: 9b1668d5-33e9-492c-824a-9b0815d48098
+    trigger: device
+    id: btn2_up
+  - device_id: 87ea7ec609e5dc04f2a7d6303191e8df
+    domain: hue
+    type: repeat
+    subtype: 3
+    unique_id: 7f99e311-ff68-405b-b903-38756a9c5c54
+    trigger: device
+    id: btn3_down
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: btn1_on
+      sequence:
+      - target:
+          entity_id: light.alt_lys_i_stuen
+        data:
+          transition: 0.3
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: btn4_off
+      sequence:
+      - target:
+          entity_id: light.alt_lys_i_stuen
+        data:
+          transition: 0.3
+        action: light.turn_off
+    - conditions:
+      - condition: trigger
+        id: btn2_up
+      sequence:
+      - target:
+          entity_id: light.alt_lys_i_stuen
+        data:
+          brightness_step_pct: 5
+          transition: 0.1
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: btn3_down
+      sequence:
+      - target:
+          entity_id: light.alt_lys_i_stuen
+        data:
+          brightness_step_pct: -5
+          transition: 0.1
+        action: light.turn_on
+  mode: single
+- id: '1791540449910'
+  alias: Light - Sikkerhedssluk efter 15 minutter
+  description: Kontrollerer hvert minut om udvalgte lys har været tændt for længe
+  triggers:
+  - trigger: time_pattern
+    minutes: /1
+  actions:
+  - repeat:
+      for_each:
+      - light.carport_lidl_smart_plug_hus_nr_20
+      - light.driver_hjorneskab
+      sequence:
+      - if:
+        - condition: template
+          value_template: "{{ is_state(repeat.item, 'on')\n   and (now() - states[repeat.item].last_changed).total_seconds()
+            > 900 }}\n"
+        then:
+        - action: light.turn_off
+          target:
+            entity_id: '{{ repeat.item }}'
+          data: {}
+  mode: single
+- id: '1791624936087'
+  alias: Bambu H2D - Sluk efter færdigt print
+  description: 'Slukker H2D tidligst 30 minutter efter et vellykket print, når begge
+    dyser og byggepladen er kølet ned.
+
+    '
+  triggers:
+  - trigger: state
+    entity_id: sensor.h2d_0948db552101895_print_status
+  conditions:
+  - condition: template
+    value_template: "{{ trigger.from_state is not none\n   and trigger.from_state.state
+      == 'Running'\n   and trigger.to_state is not none\n   and trigger.to_state.state
+      == 'Finished' }}\n"
+  actions:
+  - delay: 00:30:00
+  - wait_template: "{{\n  states('sensor.h2d_0948db552101895_dysetemperatur') | float(999)
+      < 50\n  and\n  states('sensor.h2d_0948db552101895_bed_temperatur') | float(999)
+      < 35\n}}\n"
+  - condition: state
+    entity_id: sensor.h2d_0948db552101895_print_status
+    state: Finished
+  - condition: state
+    entity_id: binary_sensor.h2d_0948db552101895_hms_fejl
+    state: 'off'
+  - condition: state
+    entity_id: binary_sensor.h2d_0948db552101895_print_fejl
+    state: 'off'
+  - action: switch.turn_off
+    target:
+      entity_id: switch.lvd_smart_plug_bambu_h2d
+  mode: restart
+- id: '1791625235831'
+  alias: Bambu P1S - Sluk efter færdigt print
+  description: 'Slukker P1S tidligst 30 minutter efter et vellykket print, når dyse
+    og byggeplade er kølet ned.
+
+    '
+  triggers:
+  - trigger: state
+    entity_id: sensor.ps1_01_print_status
+  conditions:
+  - condition: template
+    value_template: "{{ trigger.from_state is not none\n   and trigger.from_state.state
+      == 'Running'\n   and trigger.to_state is not none\n   and trigger.to_state.state
+      == 'Finished' }}\n"
+  actions:
+  - delay: 00:30:00
+  - wait_template: "{{\n  states('sensor.ps1_01_nozzle_temperature') | float(999)
+      < 50\n  and\n  states('sensor.ps1_01_bed_temperature') | float(999) < 45\n}}\n"
+  - condition: state
+    entity_id: sensor.ps1_01_print_status
+    state: Finished
+  - action: switch.turn_off
+    target:
+      entity_id: switch.lvd_smart_plug_bambu_p1s
+  mode: restart
+- id: '1791636399833'
+  alias: Carport – Automatisk styring af lyskæde
+  description: 'Styrer carportens lyskæde ved solnedgang, brugerdefineret sluktidspunkt
+    og morgenlys. Respekterer Party Mode. Indeholder failsafe, periodisk kontrol og
+    HA-genstart.
+
+    '
+  triggers:
+  - trigger: sun
+    event: sunset
+    id: sunset
+  - trigger: time
+    at: input_datetime.sluk_lyskaede_i_carport
+    id: sluktid
+  - trigger: time
+    at: 06:30:00
+    id: morgen
+  - trigger: sun
+    event: sunrise
+    id: sunrise
+  - trigger: time
+    at: 09:00:00
+    id: failsafe
+  - trigger: state
+    entity_id: input_boolean.party_mode
+    from: 'on'
+    to: 'off'
+    id: party_off
+  - trigger: homeassistant
+    event: start
+    id: ha_start
+  - trigger: state
+    entity_id: input_datetime.sluk_lyskaede_i_carport
+    id: sluktid_aendret
+  - trigger: time_pattern
+    minutes: /15
+    id: kontrol
+  conditions:
+  - condition: state
+    entity_id: input_boolean.party_mode
+    state: 'off'
+  actions:
+  - variables:
+      nu: '{{ now() }}'
+      sluktid: '{{ today_at(states(''input_datetime.sluk_lyskaede_i_carport'')) }}
+
+        '
+      morgenperiode: "{{\n  today_at('06:30') <= now() < today_at('09:00')\n}}\n"
+      moerkt: '{{ is_state(''sun.sun'', ''below_horizon'') }}
+
+        '
+      aftenperiode: "{{\n  is_state('sun.sun', 'below_horizon')\n  and now() >= today_at('12:00')\n
+        \ and now() < today_at(\n    states('input_datetime.sluk_lyskaede_i_carport')\n
+        \ )\n}}\n"
+      skal_vaere_taendt: "{{\n  aftenperiode\n  or (morgenperiode and moerkt)\n}}\n"
+  - if:
+    - condition: template
+      value_template: '{{ skal_vaere_taendt }}'
+    then:
+    - if:
+      - condition: template
+        value_template: '{{ not is_state(''light.hue_smart_plug_lyskaede'', ''on'')
+          }}
+
+          '
+      then:
+      - action: light.turn_on
+        target:
+          entity_id: light.hue_smart_plug_lyskaede
+    else:
+    - if:
+      - condition: state
+        entity_id: light.hue_smart_plug_lyskaede
+        state: 'on'
+      then:
+      - action: light.turn_off
+        target:
+          entity_id: light.hue_smart_plug_lyskaede
+  mode: restart
+- id: '1791882644518'
+  alias: Værksted V2 – Central varmestyring
+  description: 'Central styring af elradiator. Respekterer sikkerhedsstop, frostbeskyttelse,
+    fyringssæson, pris-pause og Boost.
+
+    '
+  triggers:
+  - trigger: homeassistant
+    event: start
+  - trigger: time_pattern
+    minutes: /1
+  - trigger: time
+    at:
+    - 09:00:00
+    - '17:00:00'
+    - '20:00:00'
+  - trigger: state
+    entity_id:
+    - input_boolean.fyringssaeson
+    - input_boolean.vaerksted_boost
+    - input_boolean.vaerksted_sikkerhedsstop
+    - input_boolean.vaerksted_frostbeskyttelse
+    - input_number.vaerksted_temp_normal
+    - input_number.vaerksted_temp_nat
+    - input_number.vaerksted_temp_boost
+  actions:
+  - variables:
+      temp: "{{ states(\n  'sensor.sonoff_snzb_02d_weather_sensor_vaerksted_temperature'\n)
+        | float(none) }}\n"
+      sikkerhedsstop: '{{ is_state(''input_boolean.vaerksted_sikkerhedsstop'', ''on'')
+        }}
+
+        '
+      frost: '{{ is_state(''input_boolean.vaerksted_frostbeskyttelse'', ''on'') }}
+
+        '
+      fyring: '{{ is_state(''input_boolean.fyringssaeson'', ''on'') }}
+
+        '
+      boost: '{{ is_state(''input_boolean.vaerksted_boost'', ''on'') }}
+
+        '
+      pris_pause: '{{ 17 <= now().hour < 20 }}
+
+        '
+      setpunkt: "{% if is_state('input_boolean.vaerksted_boost', 'on') %}\n  {{ states('input_number.vaerksted_temp_boost')
+        | float(20) }}\n{% elif now().hour >= 20 or now().hour < 9 %}\n  {{ states('input_number.vaerksted_temp_nat')
+        | float(16.5) }}\n{% else %}\n  {{ states('input_number.vaerksted_temp_normal')
+        | float(18) }}\n{% endif %}\n"
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ sikkerhedsstop or temp is none or temp >= 22 }}
+
+          '
+      sequence:
+      - action: climate.turn_off
+        target:
+          entity_id: climate.vaerksted_termostat
+    - conditions:
+      - condition: template
+        value_template: '{{ frost or temp <= 12 }}
+
+          '
+      sequence:
+      - action: climate.set_temperature
+        target:
+          entity_id: climate.vaerksted_termostat
+        data:
+          temperature: 16
+      - action: climate.turn_on
+        target:
+          entity_id: climate.vaerksted_termostat
+    - conditions:
+      - condition: template
+        value_template: '{{ not fyring }}'
+      sequence:
+      - action: climate.turn_off
+        target:
+          entity_id: climate.vaerksted_termostat
+    - conditions:
+      - condition: template
+        value_template: '{{ pris_pause and not boost }}'
+      sequence:
+      - action: climate.turn_off
+        target:
+          entity_id: climate.vaerksted_termostat
+    default:
+    - action: climate.set_temperature
+      target:
+        entity_id: climate.vaerksted_termostat
+      data:
+        temperature: '{{ setpunkt | float }}'
+    - action: climate.turn_on
+      target:
+        entity_id: climate.vaerksted_termostat
+  mode: restart
+- id: '1791884056201'
+  alias: Værksted V2 – Boost timer
+  description: 'Starter og stopper Boost. Kontrollerer også timerens tilstand efter
+    HA-genstart.
+
+    '
+  triggers:
+  - trigger: state
+    entity_id: input_boolean.vaerksted_boost
+    to: 'on'
+    id: boost_on
+  - trigger: state
+    entity_id: input_boolean.vaerksted_boost
+    to: 'off'
+    id: boost_off
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.vaerksted_boost_timer
+    id: timer_finished
+  - trigger: homeassistant
+    event: start
+    id: startup
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: boost_on
+      sequence:
+      - action: timer.start
+        target:
+          entity_id: timer.vaerksted_boost_timer
+    - conditions:
+      - condition: trigger
+        id: boost_off
+      sequence:
+      - action: timer.cancel
+        target:
+          entity_id: timer.vaerksted_boost_timer
+    - conditions:
+      - condition: trigger
+        id: timer_finished
+      sequence:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.vaerksted_boost
+    - conditions:
+      - condition: trigger
+        id: startup
+      sequence:
+      - delay: 00:00:30
+      - if:
+        - condition: state
+          entity_id: input_boolean.vaerksted_boost
+          state: 'on'
+        - condition: state
+          entity_id: timer.vaerksted_boost_timer
+          state: idle
+        then:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.vaerksted_boost
+  mode: restart
+- id: '1791884110680'
+  alias: Værksted V2 – Sikkerhed og frostbeskyttelse
+  description: 'Overvåger temperatur og sensor. Håndterer sikkerhedsstop og frostbeskyttelse.
+
+    '
+  triggers:
+  - trigger: homeassistant
+    event: start
+  - trigger: time_pattern
+    minutes: /1
+  - trigger: state
+    entity_id:
+    - sensor.sonoff_snzb_02d_weather_sensor_vaerksted_temperature
+  actions:
+  - variables:
+      temp: "{{ states(\n  'sensor.sonoff_snzb_02d_weather_sensor_vaerksted_temperature'\n)
+        | float(none) }}\n"
+      sikkerhedsstop: '{{ is_state(''input_boolean.vaerksted_sikkerhedsstop'', ''on'')
+        }}
+
+        '
+      frost: '{{ is_state(''input_boolean.vaerksted_frostbeskyttelse'', ''on'') }}
+
+        '
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ temp is none or temp >= 22 }}
+
+          '
+      sequence:
+      - if:
+        - condition: state
+          entity_id: input_boolean.vaerksted_sikkerhedsstop
+          state: 'off'
+        then:
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.vaerksted_sikkerhedsstop
+        - action: notify.send_message
+          target:
+            entity_id: notify.kims_mobiltelefon
+          data:
+            message: 'Værksted: Sikkerhedsstop aktiveret. Temperatur: {{ temp if temp
+              is not none else ''Sensorfejl'' }} °C.
+
+              '
+      - action: climate.turn_off
+        target:
+          entity_id:
+          - climate.vaerksted_termostat
+          - climate.el_radiator_i_varksted
+    - conditions:
+      - condition: template
+        value_template: "{{ temp is not none\n   and temp < 21\n   and sikkerhedsstop
+          }}\n"
+      sequence:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.vaerksted_sikkerhedsstop
+    - conditions:
+      - condition: template
+        value_template: "{{ temp is not none\n   and temp <= 12\n   and not frost
+          }}\n"
+      sequence:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.vaerksted_frostbeskyttelse
+      - action: notify.send_message
+        target:
+          entity_id: notify.kims_mobiltelefon
+        data:
+          message: 'Værksted: Frostbeskyttelse aktiveret. Temperaturen er {{ temp
+            }} °C.
+
+            '
+    - conditions:
+      - condition: template
+        value_template: "{{ temp is not none\n   and temp >= 16\n   and frost }}\n"
+      sequence:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.vaerksted_frostbeskyttelse
+  mode: restart
+- id: '1791884174662'
+  alias: Værksted V2 – Radiator watchdog
+  description: 'Kontrollerer at Tuya-radiatoren er slukket, når sikkerhedsstop er
+    aktivt.
+
+    '
+  triggers:
+  - trigger: homeassistant
+    event: start
+  - trigger: time_pattern
+    minutes: /5
+  conditions:
+  - condition: state
+    entity_id: input_boolean.vaerksted_sikkerhedsstop
+    state: 'on'
+  - condition: state
+    entity_id: climate.el_radiator_i_varksted
+    state: heat
+  actions:
+  - action: climate.turn_off
+    target:
+      entity_id:
+      - climate.vaerksted_termostat
+      - climate.el_radiator_i_varksted
+  - delay: 00:00:10
+  - if:
+    - condition: state
+      entity_id: climate.el_radiator_i_varksted
+      state: heat
+    then:
+    - action: notify.send_message
+      target:
+        entity_id: notify.kims_mobiltelefon
+      data:
+        message: 'ADVARSEL: Værkstedets radiator reagerer ikke på slukkommandoen.
+          Kontroller radiatoren.
+
+          '
+  mode: single
+- id: '1794410163337'
+  alias: Værksted V2 – Overvågning af luftfugtighed
+  description: 'Overvåger fugtigheden i værkstedet. Sender én advarsel efter 60 minutter
+    over 70 % RH. Nulstiller ved 65 % RH eller lavere. Robust ved genstart af Home
+    Assistant.
+
+    '
+  triggers:
+  - trigger: time_pattern
+    minutes: /1
+  - trigger: homeassistant
+    event: start
+  - trigger: state
+    entity_id:
+    - sensor.sonoff_snzb_02d_weather_sensor_vaerksted_humidity
+  actions:
+  - variables:
+      fugt: "{{ states('sensor.sonoff_snzb_02d_weather_sensor_vaerksted_humidity')\n
+        \  | float(none) }}\n"
+      sendt: '{{ is_state(''input_boolean.vaerksted_fugtadvarsel_sendt'', ''on'')
+        }}
+
+        '
+      start_tid: "{{ as_timestamp(\n     states('input_datetime.vaerksted_fugt_hoej_siden'),
+        0\n   ) }}\n"
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ fugt is none }}'
+      sequence:
+      - stop: Fugtsensor er ikke tilgængelig
+    - conditions:
+      - condition: template
+        value_template: '{{ fugt <= 65 }}'
+      sequence:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.vaerksted_fugtadvarsel_sendt
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.vaerksted_fugt_hoej_siden
+        data:
+          datetime: '1970-01-01 00:00:00'
+    - conditions:
+      - condition: template
+        value_template: '{{ fugt > 70 and start_tid < 100000 }}'
+      sequence:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.vaerksted_fugt_hoej_siden
+        data:
+          datetime: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
+    - conditions:
+      - condition: template
+        value_template: "{{ fugt > 70\n   and not sendt\n   and start_tid > 100000\n
+          \  and (as_timestamp(now()) - start_tid) >= 3600 }}\n"
+      sequence:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.vaerksted_fugtadvarsel_sendt
+      - action: notify.send_message
+        target:
+          entity_id: notify.kims_mobiltelefon
+        data:
+          message: "\U0001F4A7 Værksted: Høj luftfugtighed!\nLuftfugtighed: {{ fugt
+            | round(1) }} %.\nLuftfugtigheden har været over 70 % i mindst 60 minutter.\nOvervej
+            at aktivere affugteren.\n"
+  mode: queued
+  max: 3
+- id: '1794413119252'
+  alias: Sluk Sonos i stuen efter 1 time uden aktivitet v2
+  description: Slukker strømmen 1 time efter både Apple TV og Sonos er stoppet
+  triggers:
+  - trigger: state
+    entity_id: media_player.apple_tv_stuen
+    from: playing
+    for: 01:00:00
+  - trigger: state
+    entity_id:
+    - media_player.stue_arc
+    from:
+    - playing
+    for: 01:00:00
+  conditions:
+  - condition: state
+    entity_id: switch.sonos_stuen
+    state: 'on'
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: media_player.apple_tv_stuen
+      state: playing
+    - condition: state
+      entity_id: media_player.stue_arc
+      state:
+      - playing
+  actions:
+  - action: switch.turn_off
+    target:
+      entity_id: switch.sonos_stuen
+  mode: single
+- id: '1794413361994'
+  alias: Sluk Sonos i køkken efter 1 time uden aktivitet V2
+  description: Slukker strømmen 1 time efter både Apple TV og Sonos er stoppet
+  triggers:
+  - trigger: state
+    entity_id: media_player.apple_tv_kokken
+    from: playing
+    for: 01:00:00
+  - trigger: state
+    entity_id: media_player.kokken_hojtaler
+    from: playing
+    for: 01:00:00
+  - trigger: state
+    entity_id: switch.symfonisk_kokken
+    to: 'on'
+    for: 01:00:00
+  conditions:
+  - condition: state
+    entity_id: switch.symfonisk_kokken
+    state: 'on'
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: media_player.apple_tv_kokken
+      state: playing
+    - condition: state
+      entity_id: media_player.kokken_hojtaler
+      state: playing
+  actions:
+  - action: switch.turn_off
+    target:
+      entity_id: switch.symfonisk_kokken
+  mode: single
+- id: '1794415556821'
+  alias: Sluk Sonos i køkken efter 1 time uden aktivitet V3
+  description: Slukker strømmen 1 time efter både Apple TV og Sonos er stoppet
+  triggers:
+  - trigger: state
+    entity_id:
+    - media_player.apple_tv_kokken
+    - media_player.kokken_hojtaler
+    to:
+    - paused
+    - idle
+    - standby
+    - 'off'
+    for: 01:00:00
+  - trigger: state
+    entity_id: switch.symfonisk_kokken
+    to: 'on'
+    for: 01:00:00
+  conditions:
+  - condition: state
+    entity_id: switch.symfonisk_kokken
+    state: 'on'
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: media_player.apple_tv_kokken
+      state: playing
+    - condition: state
+      entity_id: media_player.kokken_hojtaler
+      state: playing
+  actions:
+  - action: switch.turn_off
+    target:
+      entity_id: switch.symfonisk_kokken
+  mode: single
+- id: '1794759560927'
+  alias: Bambu H2D - Registrer strømforbrug
+  description: Start ved prepare, afregn energidelta med aktuel EDS-pris, håndter
+    pauser, afslutning og genstart. Et igangværende print uden aktiv registrering
+    overtages ikke midt i jobbet.
+  triggers:
+  - trigger: state
+    entity_id: sensor.h2d_0948db552101895_print_status
+    to: prepare
+    id: start
+  - trigger: state
+    entity_id: sensor.h2d_0948db552101895_print_status
+    to: running
+    id: running
+  - trigger: state
+    entity_id: sensor.h2d_0948db552101895_print_status
+    to: finish
+    id: finish
+  - trigger: state
+    entity_id: sensor.h2d_0948db552101895_print_status
+    to: failed
+    id: failed
+  - trigger: state
+    entity_id: sensor.h2d_0948db552101895_print_status
+    to: idle
+    id: idle
+  - trigger: state
+    entity_id: sensor.vaerksted_lvd_smart_plug_bambu_h2d_h2d_energiforbrug_beregnet
+    id: afregn
+  - trigger: state
+    entity_id: sensor.eds_pris_dkk_kwh
+    id: afregn
+  - trigger: time_pattern
+    minutes: /1
+    id: afregn
+  - trigger: homeassistant
+    event: start
+    id: genstart
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: start
+      - condition: state
+        entity_id: input_boolean.h2d_print_aktiv
+        state: 'off'
+      sequence:
+      - condition: numeric_state
+        entity_id: sensor.vaerksted_lvd_smart_plug_bambu_h2d_h2d_energiforbrug_beregnet
+        above: -1.0e-05
+      - condition: numeric_state
+        entity_id: sensor.eds_pris_dkk_kwh
+        above: -1.0e-05
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.h2d_start_kwh
+        data:
+          value: '{{ states(''sensor.vaerksted_lvd_smart_plug_bambu_h2d_h2d_energiforbrug_beregnet'')
+            | float }}'
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.h2d_sidst_afregnet_kwh
+        data:
+          value: '{{ states(''sensor.vaerksted_lvd_smart_plug_bambu_h2d_h2d_energiforbrug_beregnet'')
+            | float }}'
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.h2d_akkumuleret_printpris
+        data:
+          value: 0
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.h2d_job_name
+        data:
+          value: '{{ states(''sensor.h2d_0948db552101895_opgavenavn'')[:100] }}'
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.h2d_print_aktiv
+    - conditions:
+      - condition: trigger
+        id: running
+      - condition: state
+        entity_id: input_boolean.h2d_print_aktiv
+        state: 'off'
+      - condition: state
+        entity_id: sensor.h2d_0948db552101895_print_status
+        state: running
+      sequence:
+      - action: system_log.write
+        data:
+          level: warning
+          message: H2D er running uden aktiv printregistrering. Starter ikke midt
+            i print for at undgå misvisende totaler.
+    - conditions:
+      - condition: trigger
+        id:
+        - finish
+        - failed
+        - idle
+      - condition: state
+        entity_id: input_boolean.h2d_print_aktiv
+        state: 'on'
+      sequence:
+      - condition: numeric_state
+        entity_id: sensor.vaerksted_lvd_smart_plug_bambu_h2d_h2d_energiforbrug_beregnet
+        above: -1.0e-05
+      - condition: numeric_state
+        entity_id: sensor.eds_pris_dkk_kwh
+        above: -1.0e-05
+      - variables:
+          current_kwh: '{{ states(''sensor.vaerksted_lvd_smart_plug_bambu_h2d_h2d_energiforbrug_beregnet'')
+            | float }}'
+          previous_kwh: '{{ states(''input_number.h2d_sidst_afregnet_kwh'') | float
+            }}'
+          rate: '{{ states(''sensor.eds_pris_dkk_kwh'') | float }}'
+          old_cost: '{{ states(''input_number.h2d_akkumuleret_printpris'') | float
+            }}'
+      - variables:
+          delta_kwh: '{{ [current_kwh | float - previous_kwh | float, 0] | max }}'
+          new_cost: '{{ (old_cost | float + ([current_kwh | float - previous_kwh |
+            float, 0] | max) * rate | float) | round(4) }}'
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.h2d_akkumuleret_printpris
+        data:
+          value: '{{ new_cost }}'
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.h2d_sidst_afregnet_kwh
+        data:
+          value: '{{ current_kwh }}'
+      - variables:
+          total_kwh: '{{ [states(''sensor.vaerksted_lvd_smart_plug_bambu_h2d_h2d_energiforbrug_beregnet'')
+            | float - states(''input_number.h2d_start_kwh'') | float, 0] | max | round(4)
+            }}'
+          total_cost: '{{ states(''input_number.h2d_akkumuleret_printpris'') | float
+            | round(4) }}'
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.h2d_seneste_print_kwh
+        data:
+          value: '{{ total_kwh }}'
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.h2d_seneste_print_pris
+        data:
+          value: '{{ total_cost }}'
+      - action: system_log.write
+        data:
+          level: info
+          message: 'H2D print afsluttet ({{ states(''sensor.h2d_0948db552101895_print_status'')
+            }}). Job: {{ states(''input_text.h2d_job_name'') }}. Forbrug: {{ total_kwh
+            }} kWh. Pris: {{ total_cost }} kr.'
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.h2d_print_aktiv
+    - conditions:
+      - condition: trigger
+        id: afregn
+      - condition: state
+        entity_id: input_boolean.h2d_print_aktiv
+        state: 'on'
+      sequence:
+      - condition: numeric_state
+        entity_id: sensor.vaerksted_lvd_smart_plug_bambu_h2d_h2d_energiforbrug_beregnet
+        above: -1.0e-05
+      - condition: numeric_state
+        entity_id: sensor.eds_pris_dkk_kwh
+        above: -1.0e-05
+      - variables:
+          current_kwh: '{{ states(''sensor.vaerksted_lvd_smart_plug_bambu_h2d_h2d_energiforbrug_beregnet'')
+            | float }}'
+          previous_kwh: '{{ states(''input_number.h2d_sidst_afregnet_kwh'') | float
+            }}'
+          rate: '{{ states(''sensor.eds_pris_dkk_kwh'') | float }}'
+          old_cost: '{{ states(''input_number.h2d_akkumuleret_printpris'') | float
+            }}'
+      - variables:
+          delta_kwh: '{{ [current_kwh | float - previous_kwh | float, 0] | max }}'
+          new_cost: '{{ (old_cost | float + ([current_kwh | float - previous_kwh |
+            float, 0] | max) * rate | float) | round(4) }}'
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.h2d_akkumuleret_printpris
+        data:
+          value: '{{ new_cost }}'
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.h2d_sidst_afregnet_kwh
+        data:
+          value: '{{ current_kwh }}'
+    - conditions:
+      - condition: trigger
+        id: genstart
+      sequence:
+      - delay:
+          seconds: 30
+      - choose:
+        - conditions:
+          - condition: state
+            entity_id: input_boolean.h2d_print_aktiv
+            state: 'on'
+          - condition: state
+            entity_id: sensor.h2d_0948db552101895_print_status
+            state:
+            - finish
+            - failed
+            - idle
+          sequence:
+          - condition: numeric_state
+            entity_id: sensor.vaerksted_lvd_smart_plug_bambu_h2d_h2d_energiforbrug_beregnet
+            above: -1.0e-05
+          - condition: numeric_state
+            entity_id: sensor.eds_pris_dkk_kwh
+            above: -1.0e-05
+          - variables:
+              current_kwh: '{{ states(''sensor.vaerksted_lvd_smart_plug_bambu_h2d_h2d_energiforbrug_beregnet'')
+                | float }}'
+              previous_kwh: '{{ states(''input_number.h2d_sidst_afregnet_kwh'') |
+                float }}'
+              rate: '{{ states(''sensor.eds_pris_dkk_kwh'') | float }}'
+              old_cost: '{{ states(''input_number.h2d_akkumuleret_printpris'') | float
+                }}'
+          - variables:
+              delta_kwh: '{{ [current_kwh | float - previous_kwh | float, 0] | max
+                }}'
+              new_cost: '{{ (old_cost | float + ([current_kwh | float - previous_kwh
+                | float, 0] | max) * rate | float) | round(4) }}'
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.h2d_akkumuleret_printpris
+            data:
+              value: '{{ new_cost }}'
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.h2d_sidst_afregnet_kwh
+            data:
+              value: '{{ current_kwh }}'
+          - variables:
+              total_kwh: '{{ [states(''sensor.vaerksted_lvd_smart_plug_bambu_h2d_h2d_energiforbrug_beregnet'')
+                | float - states(''input_number.h2d_start_kwh'') | float, 0] | max
+                | round(4) }}'
+              total_cost: '{{ states(''input_number.h2d_akkumuleret_printpris'') |
+                float | round(4) }}'
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.h2d_seneste_print_kwh
+            data:
+              value: '{{ total_kwh }}'
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.h2d_seneste_print_pris
+            data:
+              value: '{{ total_cost }}'
+          - action: system_log.write
+            data:
+              level: info
+              message: 'H2D print afsluttet ({{ states(''sensor.h2d_0948db552101895_print_status'')
+                }}). Job: {{ states(''input_text.h2d_job_name'') }}. Forbrug: {{ total_kwh
+                }} kWh. Pris: {{ total_cost }} kr.'
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.h2d_print_aktiv
+        - conditions:
+          - condition: state
+            entity_id: input_boolean.h2d_print_aktiv
+            state: 'on'
+          sequence:
+          - condition: numeric_state
+            entity_id: sensor.vaerksted_lvd_smart_plug_bambu_h2d_h2d_energiforbrug_beregnet
+            above: -1.0e-05
+          - condition: numeric_state
+            entity_id: sensor.eds_pris_dkk_kwh
+            above: -1.0e-05
+          - variables:
+              current_kwh: '{{ states(''sensor.vaerksted_lvd_smart_plug_bambu_h2d_h2d_energiforbrug_beregnet'')
+                | float }}'
+              previous_kwh: '{{ states(''input_number.h2d_sidst_afregnet_kwh'') |
+                float }}'
+              rate: '{{ states(''sensor.eds_pris_dkk_kwh'') | float }}'
+              old_cost: '{{ states(''input_number.h2d_akkumuleret_printpris'') | float
+                }}'
+          - variables:
+              delta_kwh: '{{ [current_kwh | float - previous_kwh | float, 0] | max
+                }}'
+              new_cost: '{{ (old_cost | float + ([current_kwh | float - previous_kwh
+                | float, 0] | max) * rate | float) | round(4) }}'
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.h2d_akkumuleret_printpris
+            data:
+              value: '{{ new_cost }}'
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.h2d_sidst_afregnet_kwh
+            data:
+              value: '{{ current_kwh }}'
+  mode: queued
+  max: 50
+  trace:
+    stored_traces: 20
+- id: '1794776519957'
+  alias: Alarmo - Nedis sirene (Alarm 7)
+  description: Alarm 7, 5 sekunder pr. puls, højst 5 minutter fra oprindelig udløsning.
+    Alarmstart gemmes og overlever HA-genstart. Dørklokke uændret.
+  triggers:
+  - trigger: state
+    entity_id: alarm_control_panel.alarmo
+    to: triggered
+    id: alarm
+  - trigger: state
+    entity_id: alarm_control_panel.alarmo
+    to: disarmed
+    id: stop
+  - trigger: homeassistant
+    event: start
+    id: startup
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: stop
+      sequence:
+      - action: siren.turn_off
+        target:
+          entity_id: siren.bryggers_sirene
+    default:
+    - if:
+      - condition: trigger
+        id: alarm
+      then:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.alarmo_sirene_alarmstart
+        data:
+          timestamp: '{{ now().timestamp() }}'
+    - if:
+      - condition: trigger
+        id: startup
+      then:
+      - delay: 00:00:20
+    - if:
+      - condition: state
+        entity_id: alarm_control_panel.alarmo
+        state: triggered
+      - condition: template
+        value_template: '{{ 0 <= (as_timestamp(now()) - as_timestamp(states(''input_datetime.alarmo_sirene_alarmstart''),
+          0)) < 300 }}'
+      then:
+      - repeat:
+          while:
+          - condition: state
+            entity_id: alarm_control_panel.alarmo
+            state: triggered
+          - condition: template
+            value_template: '{{ 0 <= (as_timestamp(now()) - as_timestamp(states(''input_datetime.alarmo_sirene_alarmstart''),
+              0)) < 300 }}'
+          sequence:
+          - action: siren.turn_on
+            target:
+              entity_id: siren.bryggers_sirene
+            data:
+              tone: Alarm 7
+              duration: 5
+          - delay: 00:00:05
+    - action: siren.turn_off
+      target:
+        entity_id: siren.bryggers_sirene
+  mode: restart

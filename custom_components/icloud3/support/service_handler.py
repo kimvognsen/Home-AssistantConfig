@@ -7,7 +7,6 @@
 from ..global_variables import GlobalVariables as Gb
 from ..const            import (DOMAIN,
                                 RED_ALERT, EVLOG_ALERT, EVLOG_ERROR, CRLF_DOT, EVLOG_ATTENTION,
-                                ICLOUD3_VERSION_MSG,
                                 CMD_RESET_PYICLOUD_SESSION,
                                 LOCATION, NEXT_UPDATE_TIME, NEXT_UPDATE, INTERVAL,
                                 CONF_DEVICENAME, CONF_ZONE, CONF_COMMAND, CONF_LOG_LEVEL,
@@ -91,8 +90,7 @@ ACTION_FNAME_TO_ACTION = {
                     'Resume Tracking': 'resume',
                     'Locate Device(s) using iCloud iCloud': 'locate',
                     'Send Locate Request to iOS App': 'locate iosapp',
-                    'Send Locate Request to Mobile App': 'locate mobapp',
-                    'Send Locate Request to Mobile App': 'locate mobileapp'
+                    'Send Locate Request to Mobile App': 'locate mobapp'
 }
 
 SERVICE_SCHEMA = vol.Schema({
@@ -118,10 +116,12 @@ def process_update_service_request(call):
     action = call.data.get('command') or call.data.get('action')
     if action is None: return
 
-    action       = action.lower()
-    action_fname = call.data.get('action_fname')
-    devicename   = call.data.get(CONF_DEVICENAME)
+    action_fname = call.data.get('action_fname', action)
+    if action_fname.startswith('• '):
+        action_fname = action_fname[1:]
 
+    action       = action.lower()
+    devicename   = call.data.get(CONF_DEVICENAME)
     action, devicename = resolve_action_devicename_values(action, devicename)
 
     update_service_handler(action, action_fname, devicename)
@@ -137,7 +137,7 @@ def process_find_iphone_alert_service_request(call):
     """Call the find_iphone_alert to play a sound on the phone"""
 
     devicename = call.data.get(CONF_DEVICENAME)
-    action, devicename = resolve_action_devicename_values("", devicename)
+    action, devicename = resolve_action_devicename_values("find_iphone_alert", devicename)
 
     find_iphone_alert_service_handler(devicename)
 
@@ -148,7 +148,7 @@ def process_lost_device_alert_service_request(call):
     devicename = call.data.get(CONF_DEVICENAME)
     number     = call.data.get('number')
     message    = call.data.get('message')
-    action, devicename = resolve_action_devicename_values("", devicename)
+    action, devicename = resolve_action_devicename_values("lost_device_alert_service", devicename)
 
     try:
         Device = Gb.Devices_by_devicename.get(devicename)
@@ -190,7 +190,7 @@ def process_display_message_alert_service_request(call):
     devicename = call.data.get(CONF_DEVICENAME)
     message    = call.data.get('message')
     sounds     = call.data.get('sounds')
-    action, devicename = resolve_action_devicename_values("", devicename)
+    action, devicename = resolve_action_devicename_values("display_message_alert", devicename)
 
     display_message_alert_service_handler(devicename, message, sounds)
 
@@ -210,11 +210,18 @@ def resolve_action_devicename_values(action, devicename):
         action = ACTION_FNAME_TO_ACTION[action]
     if devicename == 'startup_log':
         return action, devicename
+    log_info_msg(f"Service Call > Action-{action}, Device-{devicename}")
 
-    if devicename in Gb.Devices_by_ha_device_id:
-        devicename = Gb.Devices_by_ha_device_id[devicename].devicename
-    if devicename not in Gb.Devices_by_devicename:
+    device_id = devicename
+    if devicename in Gb.Devices_by_devicename:
+        pass
+
+    elif device_id in Gb.ha_device_id_x_devicename:
+        devicename = Gb.ha_device_id_x_devicename[device_id]
+    else:
         devicename = None
+
+    log_info_msg(f"Service Call > Action-{action}, Device-{devicename}")
 
     return action, devicename
 
@@ -297,16 +304,17 @@ def update_service_handler(action_entry=None, action_fname=None, devicename=None
     if (action == CMD_REFRESH_EVENT_LOG
             and Gb.EvLog.secs_since_refresh <= 2
             and Gb.EvLog.last_refresh_devicename == devicename):
-        _post_device_monitor_msg(devicename, f"Service Action Ignored > {action_fname}, Action-{action_entry}")
+        _post_device_monitor_msg(devicename, f"Action Ignored > {action_fname}, Action-{action_entry}")
         return
 
     if action_fname not in NO_EVLOG_ACTION_POST_EVENT:
-        _post_device_monitor_msg(devicename, f"Service Action Received > Action-{action_entry}")
+        _post_device_monitor_msg(devicename, f"Action Received > Action-{action_entry}")
 
     action_entry  = action_entry.replace('eventlog', 'monitor')
     action_entry  = action_entry.replace(':', '')
     action        = action_entry.split(' ')[0]
     action_option = action_entry.replace(action, '').strip()
+    action_option = action_option.replace('device(s) using icloud', '')
 
     # EvLog version sent from the EvLog program already set, ignore the svc call
     if action == 'event_log_version':
@@ -315,7 +323,7 @@ def update_service_handler(action_entry=None, action_fname=None, devicename=None
     devicename_msg = devicename if devicename in Gb.Devices_by_devicename else None
     action_msg     = action_fname if action_fname else f"{action.title()}"
 
-    event_msg = f"Service Action > Action-{action_msg}"
+    event_msg = f"Action > {action_msg}"
     if action_option: event_msg += f", Options-{action_option}"
     if devicename:    event_msg += f", Device-{devicename}"
 
@@ -323,7 +331,7 @@ def update_service_handler(action_entry=None, action_fname=None, devicename=None
         _post_device_event_msg(devicename_msg, event_msg)
 
     if action_msg == 'Restart iCloud3':
-        post_event(f"{EVLOG_ALERT}iCloud3 {ICLOUD3_VERSION_MSG} > Restart Requested")
+        post_event(f"{EVLOG_ALERT}iCloud3 {Gb.icloud3_version_msg} > Restart Requested")
 
     if action in GLOBAL_ACTIONS:
         _handle_global_action(action, action_option)
@@ -359,7 +367,7 @@ def update_service_handler(action_entry=None, action_fname=None, devicename=None
                 Gb.InternetError.reset_internet_error(reset_test_control_flags=True)
                 Gb.test_internet_error = True
                 Gb.icloud_io_request_secs = time_now_secs() + 70
-                Device = Gb.Devices_by_devicename.get(Gb.EvLog.evlog_attrs["devicename"])
+                Device = Gb.Devices_by_devicename.get(Gb.EvLog.evlog_attrs['selected_dname'])
                 if Device:
                     _handle_action_device_locate(Device, '')
                 return
@@ -382,7 +390,7 @@ def update_service_handler(action_entry=None, action_fname=None, devicename=None
 
     # Another option selected, startup log already displayed
     # Keep Startup log display but also display other selection
-    elif (Gb.EvLog.evlog_attrs['fname'] == 'Startup Events'
+    elif (Gb.EvLog.evlog_attrs['selected_fname'] == 'Startup Events'
             and action == 'log_level'
             and action_option == 'monitor'):
         devicename = 'startup_log'
@@ -408,7 +416,7 @@ def _handle_global_action(global_action, action_option):
         Gb.was_icloud3_restart_requested   = True
         Gb.restart_requested_by           = 'user'
         Gb.InternetError.reset_internet_error(reset_test_control_flags=True)
-        post_greenbar_msg(f"Restarting {ICLOUD3_VERSION_MSG}")
+        post_greenbar_msg(f"Restarting {Gb.icloud3_version_msg}")
         Gb.EvLog.display_user_message('iCloud3 is Restarting')
 
         log_info_msg(f"\n{'-'*10} Opened by Event Log > Actions > Restart {'-'*10}")
@@ -510,8 +518,6 @@ def _handle_action_device_location_mobapp(Device):
     if Device.is_data_source_MOBAPP is False:
         return _handle_action_device_locate(Device, 'mobapp')
 
-    Device.display_info_msg('Updating Location')
-
     if Device.is_mobapp_monitored:
         Device.mobapp_data_change_reason = f"Location Requested@{time_now()}"
         mobapp_interface.request_location(Device, force_request=True)
@@ -584,12 +590,14 @@ def issue_ha_notification():
 #--------------------------------------------------------------------
 def find_iphone_alert_service_handler(devicename):
     """
-    Call the lost iPhone function if using th e iCloud tracking method.
+    Call the lost iPhone function if using the iCloud tracking method.
     Otherwise, send a notification to the Mobile App
     """
+
     Device = Gb.Devices_by_devicename[devicename]
     if Device.is_data_source_ICLOUD:
         device_id = Device.icloud_device_id
+
         if device_id and Device.AppleAcct and Device.AppleAcct.AADevices:
             Device.AppleAcct.AADevices.play_sound(device_id, subject="Find My iPhone Alert")
 
@@ -658,11 +666,10 @@ def reload_icloud3():
     '''
     Reload iCloud3 via HA reload integration request
     '''
-    # .write_config_file_to_ic3log()
-    config_file.write_icloud3_configuration_file()
+    if Gb.is_all_tracking_paused is False:
+        config_file.write_icloud3_configuration_file()
 
     Gb.icloud3_reload_requested = True
-    #Gb.icloud3_reload_requested_secs = time_now_secs() + 5
 
     Gb.hass.add_job(Gb.hass.config_entries.async_schedule_reload,
                     Gb.config_entry_id)

@@ -8,7 +8,8 @@
       "event_print_error": "Chyba tisku",
       "event_print_error_cleared": "Chyba tisku vyřešena",
       "event_printer_error": "Chyba HMS",
-      "event_printer_error_cleared": "Chyba HMS vyřešena"
+      "event_printer_error_cleared": "Chyba HMS vyřešena",
+      "event_printer_missing_sdcard": "Chybí SD karta"
     }
   },
   "config": {
@@ -37,7 +38,8 @@
       "verifyCode": "Je vyžadován ověřovací kód. Zkontrolujte svůj e-mail nebo telefon.",
       "code_expired": "Platnost ověřovacího kódu vypršela. Byl vyžádán nový kód. Zkontrolujte svůj e-mail nebo telefon.",
       "code_incorrect": "Ověřovací kód byl nesprávný. Zadejte jej prosím znovu.",
-      "tfaCode": "Je vyžadován 2FA kód. Zadejte jej nyní."
+      "tfaCode": "Je vyžadován 2FA kód. Zadejte jej nyní.",
+      "tfa_csrf_fallback": "Koncový bod dvoufaktorové autentizace společnosti Bambu Lab aktuálně odmítá požadavky. Místo toho byl na váš e-mail nebo telefon odeslán ověřovací kód – zadejte jej níže."
     },
     "step": {
       "user": {
@@ -135,7 +137,8 @@
       "verifyCode": "Je vyžadován ověřovací kód. Zkontrolujte svůj e-mail nebo telefon.",
       "code_expired": "Platnost ověřovacího kódu vypršela. Byl vyžádán nový kód. Zkontrolujte svůj e-mail nebo telefon.",
       "code_incorrect": "Ověřovací kód byl nesprávný. Zadejte jej prosím znovu.",
-      "tfaCode": "Je vyžadován 2FA kód. Zadejte jej nyní."
+      "tfaCode": "Je vyžadován 2FA kód. Zadejte jej nyní.",
+      "tfa_csrf_fallback": "Koncový bod dvoufaktorové autentizace společnosti Bambu Lab aktuálně odmítá požadavky. Místo toho byl na váš e-mail nebo telefon odeslán ověřovací kód – zadejte jej níže."
     },
     "step": {
       "init": {
@@ -241,6 +244,12 @@
       },
       "extruder_filament_state": {
         "name": "Stav filamentu v extruderu"
+      },
+      "left_extruder_filament_state": {
+        "name": "Levé vlákno extrudéru"
+      },
+      "right_extruder_filament_state": {
+        "name": "Pravé vlákno extrudéru"
       }
     },
     "button": {
@@ -281,6 +290,18 @@
       },
       "secondary_aux_fan": {
         "name": "Sekundární pomocný ventilátor"
+      },
+      "part_fan": {
+        "name": "Část ventilátoru"
+      },
+      "left_aux_fan": {
+        "name": "Levý pomocný ventilátor"
+      },
+      "right_aux_fan": {
+        "name": "Pravý pomocný ventilátor"
+      },
+      "exhaust_fan": {
+        "name": "Výfukový ventilátor"
       }
     },
     "image": {
@@ -487,7 +508,8 @@
           "build_plate_alignment_detection": "Detekce zarovnání desky sestavení",
           "heatbed_surface_foreign_object_detection": "Detekce cizích předmětů na povrchu vyhřívané podložky",
           "heatbed_underside_foreign_object_detection": "Detekce cizích předmětů na spodní straně vyhřívané podložky",
-          "pre_extrusion_before_printing": "Předběžné vytlačování před tiskem"
+          "pre_extrusion_before_printing": "Předběžné vytlačování před tiskem",
+          "heatbed_stabilizing": "Stabilizační vyhřívaná postel"
         }
       },
       "sdcard_status": {
@@ -496,7 +518,8 @@
           "missing": "Chybí",
           "normal": "Normální",
           "abnormal": "Abnormální",
-          "readonly": "Pouze pro čtení"
+          "readonly": "Pouze pro čtení",
+          "not_applicable": "Nelze použít"
         }
       },
       "print_progress": {
@@ -608,7 +631,8 @@
           "high_flow_hardened_steel": "Tvrzená ocel High Flow",
           "high_flow_stainless_steel": "Nerezová ocel High Flow",
           "high_flow_tungsten_carbide": "Karbid wolframu High Flow",
-          "unknown": "Neznámý"
+          "unknown": "Neznámý",
+          "tpu_high_flow": "TPU High-Flow"
         }
       },
       "left_nozzle_diameter": {
@@ -861,6 +885,203 @@
           "heating": "Topení",
           "laser": "Laser"
         }
+      },
+      "secondary_aux_fan_speed": {
+        "name": "Rychlost sekundárního pomocného ventilátoru"
+      },
+      "drying_temperature": {
+        "name": "Teplota sušení"
+      },
+      "drying_duration": {
+        "name": "Doba sušení"
+      },
+      "drying_filament": {
+        "name": "Sušící vlákno"
+      },
+      "hotend_rack_hotend_used_time": {
+        "name": "Hotend {hotend_id} využil čas"
+      },
+      "makerworld_boosts_received": {
+        "name": "Přijaté posily"
+      },
+      "makerworld_prints_total": {
+        "name": "Tisky vč. tiskových profilů"
+      },
+      "makerworld_downloads_total": {
+        "name": "Stahování vč. tiskových profilů"
+      },
+      "makerworld_points": {
+        "name": "Body"
+      },
+      "makerworld_points_earned": {
+        "name": "Získané body"
+      },
+      "makerworld_points_spent": {
+        "name": "Utracené body"
+      },
+      "makerworld_points_exclusive": {
+        "name": "Exkluzivní body"
+      },
+      "makerworld_boost_tokens": {
+        "name": "Zvyšte tokeny"
+      },
+      "makerworld_boosts_used": {
+        "name": "Použity posilovače"
+      },
+      "makerworld_boosts_expired": {
+        "name": "Platnost posílení vypršela"
+      },
+      "makerworld_downloads": {
+        "name": "Stahování"
+      },
+      "makerworld_instance_downloads": {
+        "name": "Tisk profilu ke stažení"
+      },
+      "makerworld_prints": {
+        "name": "Tisky"
+      },
+      "makerworld_instance_prints": {
+        "name": "Tisk profilu"
+      },
+      "makerworld_designs": {
+        "name": "Publikované modely"
+      },
+      "makerworld_likes": {
+        "name": "Líbí se"
+      },
+      "makerworld_collections": {
+        "name": "Sbírá"
+      },
+      "makerworld_followers": {
+        "name": "Následovníci"
+      },
+      "makerworld_following": {
+        "name": "Následující"
+      },
+      "makerworld_level": {
+        "name": "Úroveň"
+      },
+      "active_nozzle": {
+        "name": "Aktivní tryska",
+        "state": {
+          "left": "Vlevo",
+          "right": "Právo"
+        }
+      },
+      "ams_status": {
+        "name": "Postavení",
+        "state": {
+          "idle": "Líný",
+          "changing_filament": "Výměna vlákna",
+          "heating_nozzle": "Ohřívací tryska",
+          "cutting_filament": "Řezací vlákno",
+          "pulling_back_filament": "Vytažení vlákna proudu zpět",
+          "pushing_new_filament": "Zatlačení nového vlákna",
+          "purging_old_filament": "Čištění starého vlákna",
+          "checking_position": "Kontrola polohy vlákna",
+          "rfid_identifying": "Identifikace RFID",
+          "filament_loaded": "Vlákno nabité",
+          "calibration": "Kalibrace",
+          "cold_pull": "Studený tah",
+          "self_check": "Vlastní kontrola",
+          "debug": "Ladit",
+          "unknown": "Neznámý"
+        }
+      },
+      "track_switch_input": {
+        "name": "Vstup přepínače kolejí {input_number}",
+        "state": {
+          "left": "Levá tryska",
+          "right": "Pravá tryska",
+          "empty": "Prázdný"
+        }
+      },
+      "connected_nozzle": {
+        "name": "Připojená tryska",
+        "state": {
+          "left": "Vlevo",
+          "right": "Právo",
+          "track_switch": "Traťový spínač"
+        }
+      },
+      "part_fan_speed": {
+        "name": "Rychlost ventilátoru části"
+      },
+      "left_aux_fan_speed": {
+        "name": "Rychlost levého pomocného ventilátoru"
+      },
+      "right_aux_fan_speed": {
+        "name": "Rychlost pravého pomocného ventilátoru"
+      },
+      "exhaust_fan_speed": {
+        "name": "Rychlost výfukového ventilátoru"
+      },
+      "external_storage_connection": {
+        "name": "Připojení externího úložiště",
+        "state": {
+          "connected": "Připojeno",
+          "disconnected": "Odpojeno"
+        }
+      },
+      "external_storage_total": {
+        "name": "Externí úložiště celkem"
+      },
+      "external_storage_used": {
+        "name": "Použito externí úložiště"
+      },
+      "external_storage_free": {
+        "name": "Externí úložiště zdarma"
+      },
+      "zone_temperature": {
+        "name": "Teplota zóny {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Zóna"
+          },
+          "zone_id": {
+            "name": "ID zóny"
+          },
+          "slots": {
+            "name": "Sloty"
+          },
+          "dry_setting": {
+            "name": "Nastavení sušení"
+          }
+        }
+      },
+      "zone_humidity": {
+        "name": "Vlhkost zóny {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Zóna"
+          },
+          "zone_id": {
+            "name": "ID zóny"
+          },
+          "slots": {
+            "name": "Sloty"
+          },
+          "dry_setting": {
+            "name": "Nastavení sušení"
+          }
+        }
+      },
+      "zone_remaining_drying_time": {
+        "name": "Zbývající doba sušení zóny {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Zóna"
+          },
+          "zone_id": {
+            "name": "ID zóny"
+          },
+          "slots": {
+            "name": "Sloty"
+          },
+          "dry_setting": {
+            "name": "Nastavení sušení"
+          }
+        }
       }
     },
     "camera": {
@@ -916,6 +1137,10 @@
     "hybrid_mode_blocking": {
       "title": "Hybridní připojení blokuje ovládání",
       "description": "{device} je připojeno ke cloudu, ale s místním připojením mqtt integrací. To blokuje nastavení teplot a opakovaný tisk z historie. Přepněte připojení na čistý cloud, abyste měli plnou kontrolu."
+    },
+    "access_code_rejected": {
+      "title": "Přístupový kód zamítnut",
+      "description": "Tiskárna odmítla nakonfigurovaný přístupový kód pro {device}. To obvykle znamená, že kód byl znovu vygenerován, například obnovením továrního nastavení. Přečtěte si nový přístupový kód z obrazovky nastavení sítě tiskárny a překonfigurujte s ním integraci."
     }
   }
 }

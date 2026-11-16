@@ -1,6 +1,7 @@
 """Constants for the Blitzortung integration."""
 
-import datetime
+import datetime as dt
+import struct
 from dataclasses import dataclass
 from typing import Any
 
@@ -17,6 +18,15 @@ class BlitzortungConfig:
 
 
 SW_VERSION = __version__
+
+# Must match ws_client/ws_client/binary.py, which publishes these messages.
+BINARY_TOPIC_PREFIX = "b/1"
+# Geohash levels in the topic; a deeper subscription would never match.
+BINARY_TOPIC_GEOHASH_LEN = 6
+# lat, lon (float32), strike time in ns since epoch
+BINARY_STRIKE = struct.Struct("<ffq")
+# float32 noise starts below ~1 m; rounding keeps the lat/lon attributes readable.
+BINARY_COORD_DECIMALS = 5
 
 PLATFORMS = ["sensor", "geo_location"]
 
@@ -42,21 +52,27 @@ DEFAULT_IDLE_RESET_TIMEOUT = 120
 DEFAULT_RADIUS = 100
 DEFAULT_MAX_TRACKED_LIGHTNINGS = 100
 DEFAULT_TIME_WINDOW = 120
-DEFAULT_UPDATE_INTERVAL = datetime.timedelta(seconds=60)
+DEFAULT_UPDATE_INTERVAL = dt.timedelta(seconds=60)
 
 # Options bounds. Enforced by the options-flow schema so users can't accidentally
 # enter values that would explode memory, evict every strike on the next tick,
 # or otherwise put the integration in a degenerate state.
 RADIUS_MIN = 1
-# 4000 covers the actual usable upper bound regardless of unit. For metric
-# users that's 4000 km; for imperial that's 4000 mi = 6437 km. Both stay
-# under the geohash_overlap() empty-set cliff at most latitudes: above
-# ~6700 km the bounding box exceeds precision-1 tile coverage and the
-# function silently returns no subscriptions, so no strikes ever arrive.
-RADIUS_MAX = 4000
+# 1000 km, or 620 mi (the slider steps by 10). geohash_overlap() keeps every
+# precision-2 tile of a large radius, so this bounds the subscriptions and proxy
+# traffic of one entry: about 30 tiles below 70° latitude.
+RADIUS_MAX = 1000
+RADIUS_MAX_MI = 620
+
+
+def radius_max(imperial: bool) -> int:
+    """Largest radius in the unit the options are stored in."""
+    return RADIUS_MAX_MI if imperial else RADIUS_MAX
+
+
 TIME_WINDOW_MIN = 1  # minutes
 TIME_WINDOW_MAX = 1440  # 24 hours; longer than this churns the recorder hard.
-MAX_TRACKED_LIGHTNINGS_MIN = 1
+MAX_TRACKED_LIGHTNINGS_MIN = 0  # 0 = sensors only, no geo_location entities
 MAX_TRACKED_LIGHTNINGS_MAX = 1000
 MAX_TRACKED_LIGHTNINGS_WARNING = 500
 MIN_LOCATION_CHANGE_MULTIPLIER = 0.25
@@ -68,5 +84,7 @@ ATTR_EXTERNAL_ID = "external_id"
 ATTR_PUBLICATION_DATE = "publication_date"
 
 BLIZORTUNG_URL = "https://map.blitzortung.org/#10/{lat}/{lon}"
+# Passed as a translation placeholder: hassfest rejects URLs inside strings.
+DONATE_URL = "https://buymeacoffee.com/emrk"
 
 ZONE_HOME = "zone.home"

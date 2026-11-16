@@ -253,6 +253,19 @@ class iCloudSession(Session):
                 retry_cnt=retry_cnt)
 
     def _request(self, method, url, **kwargs, ):
+
+        # Prevent SyncWorker threads from blocking indefinitely on hung remote
+        # endpoints (notably the connectivity check in internet_error.py). Without
+        # a socket-level timeout, requests.get / requests.post can wait forever
+        # inside ssl.do_handshake() / sock.recv(), saturating HA's thread pool and
+        # leading to the symptoms reported in issue #552.
+        try:
+            kwargs.setdefault("timeout", 30)
+
+        except Exception as err:
+            log_exception(err)
+
+
         # callee.function and callee.lineno provice calling function and the line number
         callee = inspect.stack()[2]
         module = inspect.getmodule(callee[0])
@@ -267,6 +280,9 @@ class iCloudSession(Session):
         if 'data' in kwargs and type(kwargs['data']) is str:
             kwargs['data'] = json.loads(kwargs['data'])
         retry_cnt = kwargs.get('retry_cnt', 0)
+
+        if kwargs.get("timeout") is None:
+            kwargs["timeout"] = 30
 
         log_request_data('Request', method, url, kwargs, self.AppleAcct)
 
@@ -369,6 +385,7 @@ class iCloudSession(Session):
 
 
         log_request_data('Response', method, url, kwargs, self.AppleAcct, response)
+        #_log(f"{self.data=}")
 
         # Validating the username/password, code=409 is valid, code=401 is invalid
         if (url.startswith(APPLE_SERVER_ENDPOINT['auth_url'])

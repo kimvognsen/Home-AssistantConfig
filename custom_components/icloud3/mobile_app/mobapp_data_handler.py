@@ -17,7 +17,7 @@ from ..utils.utils      import (instr, is_statzone, is_zone, zone_dname,
 from ..utils.messaging  import (post_event, post_alert, post_monitor_msg, more_info,
                                     log_debug_msg, log_exception, log_error_msg, log_data, log_data_unfiltered,
                                     _evlog, _log, )
-from ..utils.time_util  import (secs_to_time, secs_since, mins_since, time_now, time_now_secs,
+from ..utils.time_util  import (secs_to_time, secs_since, secs_to_hhmm, time_now, time_now_secs,
                                     format_time_age, format_age,  )
 from ..utils.dist_util    import (format_dist_km, format_dist_m, )
 
@@ -45,7 +45,7 @@ def check_mobapp_state_trigger_change(Device):
     'timestamp_secs': 1680103760.0, 'timestamp_time': '11:29:20a'}
     '''
     try:
-        Device.was_mobapp_data_updated = False
+        Device.was_mobapp_data_updated   = False
         Device.mobapp_data_change_reason = ''
         Device.mobapp_data_reject_reason = ''
 
@@ -56,15 +56,21 @@ def check_mobapp_state_trigger_change(Device):
         if device_trkr_attrs is None:
             return
 
-        mobapp_data_state      = device_trkr_attrs[DEVICE_TRACKER]
-        mobapp_data_state_secs = device_trkr_attrs[f"state_{TIMESTAMP_SECS}"]
-        mobapp_data_state_time = device_trkr_attrs[f"state_{TIMESTAMP_TIME}"]
-        mobapp_data_state_time = device_trkr_attrs[f"state_{TIMESTAMP_TIME}"]
+        mobapp_data_state        = device_trkr_attrs[DEVICE_TRACKER]
+        mobapp_data_state_secs   = device_trkr_attrs[f"state_{TIMESTAMP_SECS}"]
+        mobapp_data_state_time   = device_trkr_attrs[f"state_{TIMESTAMP_TIME}"]
+        mobapp_data_state_time   = device_trkr_attrs[f"state_{TIMESTAMP_TIME}"]
+        mobapp_data_trigger      = device_trkr_attrs["trigger"]                   = 'None'
+        mobapp_data_trigger_secs = device_trkr_attrs[f"trigger_{TIMESTAMP_SECS}"] = 0
+        mobapp_data_trigger_time = device_trkr_attrs[f"trigger_{TIMESTAMP_TIME}"] = HHMMSS_ZERO
 
         # State change will create enter/exit Zone trigger
-        if Device.mobapp_data_state != mobapp_data_state:
-            mobapp_data_trigger      = device_trkr_attrs["trigger"] = EXIT_ZONE \
-                            if mobapp_data_state == NOT_HOME else     ENTER_ZONE
+        if Device.isin_statzone and mobapp_data_state == NOT_HOME:
+            pass
+
+        elif Device.mobapp_data_state != mobapp_data_state:
+            enter_exit_zone = EXIT_ZONE if mobapp_data_state == NOT_HOME else ENTER_ZONE
+            mobapp_data_trigger      = device_trkr_attrs["trigger"] = enter_exit_zone
             mobapp_data_trigger_secs = device_trkr_attrs[f"trigger_{TIMESTAMP_SECS}"] = mobapp_data_state_secs
             mobapp_data_trigger_time = device_trkr_attrs[f"trigger_{TIMESTAMP_TIME}"] = mobapp_data_state_time
 
@@ -78,10 +84,7 @@ def check_mobapp_state_trigger_change(Device):
             mobapp_data_trigger      = device_trkr_attrs["trigger"]                   = entity_io.get_state(entity_id)
             mobapp_data_trigger_secs = device_trkr_attrs[f"trigger_{TIMESTAMP_SECS}"] = entity_io.get_last_changed_time(entity_id)
             mobapp_data_trigger_time = device_trkr_attrs[f"trigger_{TIMESTAMP_TIME}"] = secs_to_time(mobapp_data_trigger_secs)
-        else:
-            mobapp_data_trigger      = device_trkr_attrs["trigger"]                   = 'None'
-            mobapp_data_trigger_secs = device_trkr_attrs[f"trigger_{TIMESTAMP_SECS}"] = 0
-            mobapp_data_trigger_time = device_trkr_attrs[f"trigger_{TIMESTAMP_TIME}"] = HHMMSS_ZERO
+
 
         # Get the latest of the state time or trigger time for the new data (rc9)
         if (mobapp_data_state_not_set_flag
@@ -115,10 +118,21 @@ def check_mobapp_state_trigger_change(Device):
                                 or Device.mobapp_data_state == NOT_SET)
 
         # Force a reject if periodic and has not moved
-        if mobapp_data_trigger == 'periodic':
-            if (Device.is_dev_data_source_SET
+        if (mobapp_data_trigger == 'periodic'
+                and Gb.use_data_source_ICLOUD):
+            if Device.isin_zone and mobapp_data_state == Device.loc_data_zone:
+                mobapp_data_change_flag = False
+            elif (Device.is_dev_data_source_SET
                     and device_trkr_attrs[LATITUDE] == Device.mobapp_data_latitude
                     and device_trkr_attrs[LONGITUDE] == Device.mobapp_data_longitude):
+                mobapp_data_change_flag = False
+
+        # Force a reject if signaled and last update was less than 15-secs ago
+        elif (mobapp_data_trigger == 'signaled'
+                and Gb.use_data_source_ICLOUD):
+            if secs_since(Device.loc_data_secs) < 15:
+                mobapp_data_change_flag = False
+            elif Device.isin_zone and mobapp_data_state == Device.loc_data_zone:
                 mobapp_data_change_flag = False
 
         # Update Device mobapp_data with the state & trigger location data
@@ -136,49 +150,90 @@ def check_mobapp_state_trigger_change(Device):
         # ---------------------------------------------
         # Entering a zone and this state time > last zone enter time
         # We are entering a new zone from not_home or going from one zone to another
+        # if (Device.mobapp_data_trigger == ENTER_ZONE
+        #         and Device.isin_zone_mobapp_state
+        #         and mobapp_data_secs >= Device.zone_enter_secs):
+        #     Device.zone_enter_secs = mobapp_data_secs
+        #     _evlog(f"MOBAPP {Device} {secs_to_hhmm(Device.zone_enter_secs)}")
+        #     Device.zone_enter_time = mobapp_data_state_time
+        #     Device.zone_enter_name = mobapp_data_state
+        #     if mobapp_data_state in Gb.HAZones_by_zone:
+        #         Device.zone_enter_dist_m = \
+        #                 Gb.Zones_by_zone[mobapp_data_state].distance_m(
+        #                         Device.mobapp_data_latitude, Device.mobapp_data_longitude)
+        #     else:
+        #         Device.zone_enter_dist_m = 0
         if (Device.mobapp_data_trigger == ENTER_ZONE
                 and Device.isin_zone_mobapp_state
-                and mobapp_data_secs >= Device.mobapp_zone_enter_secs):
-            Device.mobapp_zone_enter_secs = mobapp_data_secs
-            Device.mobapp_zone_enter_time = mobapp_data_state_time
-            Device.mobapp_zone_enter_zone = mobapp_data_state
+                and mobapp_data_secs >= Device.mobapp_enter_zone_secs):
+            Device.mobapp_enter_zone_secs = mobapp_data_secs
+            Device.mobapp_enter_zone_time = mobapp_data_state_time
+            Device.mobapp_enter_zone_name = mobapp_data_state
             if mobapp_data_state in Gb.HAZones_by_zone:
-                Device.mobapp_zone_enter_dist_m = \
+                Device.mobapp_enter_zone_dist_m = \
                         Gb.Zones_by_zone[mobapp_data_state].distance_m(
                                 Device.mobapp_data_latitude, Device.mobapp_data_longitude)
             else:
-                Device.mobapp_zone_enter_dist_m = 0
+                Device.mobapp_enter_zone_dist_m = 0
 
         # ---------------------------------------------
         # Exiting a zone when we are in a zone
+        # elif (Device.mobapp_data_trigger == EXIT_ZONE
+        #         and Device.isin_zone):
+        #     Device.got_exit_trigger = True
+        #     Device.zone_exit_secs = mobapp_data_secs
+        #     Device.zone_exit_time = mobapp_data_state_time
+
+        #     if Device.is_passthru_timer_set:
+        #         Device.zone_exit_name = Device.passthru_zone
+
+        #     elif (Device.zone_enter_secs >= Device.loc_data_secs
+        #             or Device.isin_statzone):
+        #         Device.zone_exit_name = Device.loc_data_zone
+
+        #     elif is_zone(Device.sensors[ZONE]):
+        #         Device.zone_exit_name = Device.sensors[ZONE]
+
+        #     elif is_zone(Device.zone_enter_name):
+        #         Device.zone_exit_name = Device.zone_enter_name
+        #     else:
+        #         Device.zone_exit_name = Device.sensors[LAST_ZONE]
+
+        #     if Device.zone_exit_name in Gb.HAZones_by_zone:
+        #         Device.zone_exit_dist_m = \
+        #                 Gb.Zones_by_zone[Device.zone_exit_name].distance_m(
+        #                         Device.mobapp_data_latitude, Device.mobapp_data_longitude)
+        #     else:
+        #         Device.zone_exit_name   = 'unknown'
+        #         Device.zone_exit_dist_m = 0
         elif (Device.mobapp_data_trigger == EXIT_ZONE
                 and Device.isin_zone):
             Device.got_exit_trigger = True
-            Device.mobapp_zone_exit_secs = mobapp_data_secs
-            Device.mobapp_zone_exit_time = mobapp_data_state_time
+            Device.mobapp_exit_zone_secs = mobapp_data_secs
+            Device.mobapp_exit_zone_time = mobapp_data_state_time
 
             if Device.is_passthru_timer_set:
-                Device.mobapp_zone_exit_zone = Device.passthru_zone
+                Device.mobapp_exit_zone_name = Device.passthru_zone
 
-            elif (Device.mobapp_zone_enter_secs >= Device.loc_data_secs
+            elif (Device.mobapp_enter_zone_secs >= Device.loc_data_secs
                     or Device.isin_statzone):
-                Device.mobapp_zone_exit_zone = Device.loc_data_zone
+                Device.mobapp_exit_zone_name = Device.loc_data_zone
 
             elif is_zone(Device.sensors[ZONE]):
-                Device.mobapp_zone_exit_zone = Device.sensors[ZONE]
+                Device.mobapp_exit_zone_name = Device.sensors[ZONE]
 
-            elif is_zone(Device.mobapp_zone_enter_zone):
-                Device.mobapp_zone_exit_zone = Device.mobapp_zone_enter_zone
+            elif is_zone(Device.mobapp_enter_zone_name):
+                Device.mobapp_exit_zone_name = Device.mobapp_enter_zone_name
             else:
-                Device.mobapp_zone_exit_zone = Device.sensors[LAST_ZONE]
+                Device.mobapp_exit_zone_name = Device.sensors[LAST_ZONE]
 
-            if Device.mobapp_zone_exit_zone in Gb.HAZones_by_zone:
-                Device.mobapp_zone_exit_dist_m = \
-                        Gb.Zones_by_zone[Device.mobapp_zone_exit_zone].distance_m(
+            if Device.mobapp_exit_zone_name in Gb.HAZones_by_zone:
+                Device.mobapp_exit_zone_dist_m = \
+                        Gb.Zones_by_zone[Device.mobapp_exit_zone_name].distance_m(
                                 Device.mobapp_data_latitude, Device.mobapp_data_longitude)
             else:
-                Device.mobapp_zone_exit_zone   = 'unknown'
-                Device.mobapp_zone_exit_dist_m = 0
+                Device.mobapp_exit_zone_name   = 'unknown'
+                Device.mobapp_exit_zone_dist_m = 0
 
         # ---------------------------------------------
         mobapp_msg =(f"MobApp Monitor > "
@@ -206,8 +261,8 @@ def check_mobapp_state_trigger_change(Device):
                 and Device.got_exit_trigger is False):
             if mobapp_data_secs > Device.located_secs_plus_5:
                 Device.got_exit_trigger = True
-                Device.mobapp_zone_exit_secs = mobapp_data_secs
-                Device.mobapp_zone_exit_time = mobapp_data_state_time
+                Device.zone_exit_secs = mobapp_data_secs
+                Device.zone_exit_time = mobapp_data_state_time
                 exit_zone_name = Device.StatZone.dname if Device.StatZone else 'Unknown'
                 Device.mobapp_data_trigger = (  f"Verify Exit {exit_zone_name}@"
                                                 f"{mobapp_data_state_time}")
@@ -220,19 +275,19 @@ def check_mobapp_state_trigger_change(Device):
         elif Device.mobapp_data_trigger == EXIT_ZONE:
             if Device.mobapp_data_secs > Device.located_secs_plus_5:
                 Device.mobapp_data_change_reason = (f"{EXIT_ZONE}@{Device.mobapp_data_time} "
-                                                    f"({zone_dname(Device.mobapp_zone_exit_zone)}"
-                                                    f"/{format_dist_m(Device.mobapp_zone_exit_dist_m)})")
+                                                    f"({zone_dname(Device.zone_exit_name)}"
+                                                    f"/{format_dist_m(Device.zone_exit_dist_m)})")
 
-            Device.mobapp_zone_exit_trigger_info = Device.mobapp_data_change_reason
+            Device.zone_exit_trigger_info = Device.mobapp_data_change_reason
 
         # Enter trigger and the trigger changed from last poll overrules trigger change time
         elif (Device.mobapp_data_trigger == ENTER_ZONE):
             Device.mobapp_data_change_reason = f"{ENTER_ZONE}@{Device.mobapp_data_time} "
             if Device.isin_zone_mobapp_state:
-                Device.mobapp_data_change_reason +=(f"({zone_dname(Device.mobapp_zone_enter_zone)}/"
-                                                    f"{format_dist_m(Device.mobapp_zone_enter_dist_m)})")
+                Device.mobapp_data_change_reason +=(f"({zone_dname(Device.zone_enter_name)}/"
+                                                    f"{format_dist_m(Device.zone_enter_dist_m)})")
 
-            Device.mobapp_zone_enter_trigger_info = Device.mobapp_data_change_reason
+            Device.zone_enter_trigger_info = Device.mobapp_data_change_reason
 
         elif (Device.mobapp_data_trigger not in [ENTER_ZONE, EXIT_ZONE]
                 and Device.mobapp_data_secs > Device.located_secs_plus_5
@@ -330,12 +385,12 @@ def _display_mobapp_msg(Device, mobapp_msg):
         mobapp_msg += (f"LastTrigger-{Device.sensors[TRIGGER]}, "
                         f"MobAppData-{Device.mobapp_data_time}")
 
-        if Device.mobapp_zone_enter_zone:
-            mobapp_msg +=(f", LastZoneEnter-{Device.mobapp_zone_enter_zone}@"
-                            f"{Device.mobapp_zone_enter_time}")
-        if Device.mobapp_zone_exit_zone:
-            mobapp_msg +=(f", LastZoneExit-{Device.mobapp_zone_exit_zone}@"
-                            f"{Device.mobapp_zone_exit_time}")
+        if Device.mobapp_enter_zone_name:
+            mobapp_msg +=(f", LastZoneEnter-{Device.mobapp_enter_zone_name}@"
+                            f"{Device.mobapp_enter_zone_time}")
+        if Device.zone_exit_name:
+            mobapp_msg +=(f", LastZoneExit-{Device.mobapp_exit_zone_name}@"
+                            f"{Device.mobapp_exit_zone_time}")
 
         Device.was_mobapp_data_updated = (Device.mobapp_data_reject_reason == "")
         mobapp_msg += (f", WillUpdate-{Device.was_mobapp_data_updated}")
@@ -349,8 +404,8 @@ def _display_mobapp_msg(Device, mobapp_msg):
 
         mobapp_msg = mobapp_msg.replace("^trig_age", format_age(Device.mobapp_data_trigger_secs))
         mobapp_msg = mobapp_msg.replace("^state_age", format_age(Device.mobapp_data_state_secs))
-        mobapp_msg += f", {Device.mobapp_zone_enter_trigger_info}"
-        mobapp_msg += f", {Device.mobapp_zone_exit_trigger_info}"
+        mobapp_msg += f", {Device.zone_enter_trigger_info}"
+        mobapp_msg += f", {Device.zone_exit_trigger_info}"
         post_monitor_msg(Device.devicename, mobapp_msg)
 
     except Exception as err:
@@ -406,7 +461,7 @@ def check_if_mobapp_is_alive(Device):
                 and secs_since(Device.mobapp_data_secs) > 21600):
             event_msg =(f"Last Mobile App update from {Device.mobapp_device_trkr_entity_id_fname}"
                         f"—{format_time_age(Device.mobapp_data_secs)}")
-            Device.display_info_msg( event_msg)
+            post_event(Device, event_msg)
 
     except Exception as err:
         log_exception(err)
@@ -499,35 +554,6 @@ def get_and_verify_device_trkr_data(Device, entity_id):
 
             return None
 
-        # Display an 'unavailable' device msg every 2-hrs
-        # elif device_trkr_attrs[DEVICE_TRACKER] == NOT_SET:
-        #     if Device.mobapp_data_invalid_error_cnt > 5:    #50:
-        #         Device.mobapp_data_invalid_error_cnt += 1
-        #         if (Device.mobapp_data_invalid_error_cnt % 5) == 0:
-        #             post_event(Device, (
-        #                         f"{EVLOG_ALERT}Mobile App Error (#{Device.mobapp_data_invalid_error_cnt}) > "
-        #                         f"{Device.conf_mobapp_fname}/{entity_id} "
-        #                         f"AssignedTo-{Device.fname_devicename}, "
-        #                         f"Returned a `not available` status"))
-        #                         # f"{more_info('mobapp_device_unavailable')}")
-        #             log_error_msg(f"iCloud3 Error ({Device.fname}) > Mobile App status is `unavailable`")
-        #         return None
-
-            # More than 50 errors, shut down Mobile App monitoring for this device
-            Device.is_mobapp_monitored            = False
-            Device.is_mobapp_device_unavailable = True
-
-            post_event(Device,
-                        f"{EVLOG_ALERT}The Mobile App has not reported the gps "
-                        f"location after 4 requests. It may be asleep, offline "
-                        f"or not available and should be reviewed."
-                        f"{CRLF_DOT}{Device.fname_devicename}{RARROW}{entity_id}"
-                        f"{more_info('mobapp_device_no_location')}")
-            log_error_msg(f"iCloud3 Alert ({Device.fname_devtype}) > "
-                f"The Mobile App has not reported the gps location after 4 requests. "
-                f"It may be asleep, offline or not available.")
-            return None
-
         # Entity is available, get the attributes
         device_trkr_attrs.update(entity_io.get_attributes(entity_id))
 
@@ -537,7 +563,6 @@ def get_and_verify_device_trkr_data(Device, entity_id):
                 post_alert( f"MOBILE APP ERROR (#{Device.mobapp_data_invalid_error_cnt}) > "
                             f"No gps location reported. It may be asleep, offline or not available"
                             f"{CRLF_DOT}{Device.fname_devicename}{RARROW}{entity_id}")
-                            # f"{more_info('mobapp_device_no_location')}")
                 log_error_msg(f"iCloud3 Alert ({Device.fname}) > "
                             f"Mobile App gps location not reported")
             return None
@@ -590,8 +615,8 @@ def update_mobapp_data_from_entity_attrs(Device, device_trkr_attrs):
     else:
         home_dist = ''
 
-    monitor_msg = (f"UPDATED MobApp > {Device.devicename}, {Device.mobapp_data_trigger}, "
-                    f"{CRLF_DOT}Loc-{Device.mobapp_data_time}, "
+    monitor_msg = (f"MobApp Location > {Device.mobapp_data_trigger}, "
+                    f"Loc-{Device.mobapp_data_time}, "
                     f"Home-{home_dist}, "
                     f"{Device.mobapp_data_fgps}")
     if monitor_msg != Device.update_mobapp_data_monitor_msg:

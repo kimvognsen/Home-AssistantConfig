@@ -8,7 +8,8 @@
       "event_print_error": "Chyba tlače",
       "event_print_error_cleared": "Odstránená chyba tlače",
       "event_printer_error": "Chyba HMS",
-      "event_printer_error_cleared": "Chyba HMS odstránená"
+      "event_printer_error_cleared": "Chyba HMS odstránená",
+      "event_printer_missing_sdcard": "Chýba SD karta"
     }
   },
   "config": {
@@ -37,7 +38,8 @@
       "cannot_connect_cloud_connection_refused": "Spojenie bolo odmietnuté cloudom Bambu Lab.",
       "cannot_connect_cloud_address_unreachable": "Cloudová adresa Bambu Lab je nedostupná.",
       "cannot_connect_cloud_unknown": "Neznáma chyba pri pripájaní k cloudu Bambu Lab.",
-      "cannot_connect_local_unknown": "Nepodarilo sa pripojiť. Skontrolujte poskytnuté nastavenia."
+      "cannot_connect_local_unknown": "Nepodarilo sa pripojiť. Skontrolujte poskytnuté nastavenia.",
+      "tfa_csrf_fallback": "Koncový bod dvojfaktorovej autentifikácie Bambu Lab momentálne odmieta žiadosti. Namiesto toho bol na váš e-mail alebo telefón odoslaný overovací kód – zadajte ho nižšie."
     },
     "step": {
       "user": {
@@ -135,7 +137,8 @@
       "cannot_connect_cloud_connection_refused": "Spojenie bolo odmietnuté cloudom Bambu Lab.",
       "cannot_connect_cloud_address_unreachable": "Cloudová adresa Bambu Lab je nedostupná.",
       "cannot_connect_cloud_unknown": "Neznáma chyba pri pripájaní k cloudu Bambu Lab.",
-      "cannot_connect_local_unknown": "Nepodarilo sa pripojiť. Skontrolujte poskytnuté nastavenia."
+      "cannot_connect_local_unknown": "Nepodarilo sa pripojiť. Skontrolujte poskytnuté nastavenia.",
+      "tfa_csrf_fallback": "Koncový bod dvojfaktorovej autentifikácie Bambu Lab momentálne odmieta žiadosti. Namiesto toho bol na váš e-mail alebo telefón odoslaný overovací kód – zadajte ho nižšie."
     },
     "step": {
       "init": {
@@ -241,6 +244,12 @@
       },
       "hybrid_mode_blocks_control": {
         "name": "Hybridné MQTT blokuje riadenie"
+      },
+      "left_extruder_filament_state": {
+        "name": "Ľavé vlákno extrudéra"
+      },
+      "right_extruder_filament_state": {
+        "name": "Pravé vlákno extrudéra"
       }
     },
     "button": {
@@ -281,6 +290,18 @@
       },
       "secondary_aux_fan": {
         "name": "Sekundárny pomocný ventilátor"
+      },
+      "part_fan": {
+        "name": "Časť ventilátora"
+      },
+      "left_aux_fan": {
+        "name": "Ľavý pomocný ventilátor"
+      },
+      "right_aux_fan": {
+        "name": "Pravý pomocný ventilátor"
+      },
+      "exhaust_fan": {
+        "name": "Výfukový ventilátor"
       }
     },
     "image": {
@@ -472,7 +493,8 @@
           "build_plate_alignment_detection": "Detekcia zarovnania doštičiek",
           "heatbed_surface_foreign_object_detection": "Detekcia cudzích predmetov na povrchu vyhrievanej podložky",
           "heatbed_underside_foreign_object_detection": "Detekcia cudzích predmetov na spodnej strane vyhrievacieho lôžka",
-          "pre_extrusion_before_printing": "Predtlačenie pred tlačou"
+          "pre_extrusion_before_printing": "Predtlačenie pred tlačou",
+          "heatbed_stabilizing": "Stabilizačné vyhrievacie lôžko"
         }
       },
       "print_progress": {
@@ -566,7 +588,8 @@
           "high_flow_hardened_steel": "kalená oceľ s veľkým prietokom",
           "high_flow_stainless_steel": "nehrdzavejúca oceľ s veľkým prietokom",
           "high_flow_tungsten_carbide": "karbid volfrámu s veľkým prietokom",
-          "unknown": "Neznámy"
+          "unknown": "Neznámy",
+          "tpu_high_flow": "TPU High-Flow"
         }
       },
       "humidity_index": {
@@ -735,7 +758,8 @@
           "missing": "Chýbajúci",
           "normal": "Normálny",
           "abnormal": "Neobvyklý",
-          "readonly": "Čítať"
+          "readonly": "Čítať",
+          "not_applicable": "Neuplatňuje sa"
         }
       },
       "left_nozzle_diameter": {
@@ -861,6 +885,203 @@
           "heating": "Kúrenie",
           "laser": "Laser"
         }
+      },
+      "secondary_aux_fan_speed": {
+        "name": "Rýchlosť sekundárneho pomocného ventilátora"
+      },
+      "drying_temperature": {
+        "name": "Teplota sušenia"
+      },
+      "drying_duration": {
+        "name": "Trvanie sušenia"
+      },
+      "drying_filament": {
+        "name": "Sušiace vlákno"
+      },
+      "hotend_rack_hotend_used_time": {
+        "name": "Hotend {hotend_id} využil čas"
+      },
+      "makerworld_boosts_received": {
+        "name": "Prijaté posilnenia"
+      },
+      "makerworld_prints_total": {
+        "name": "Výtlačky vrát. tlačové profily"
+      },
+      "makerworld_downloads_total": {
+        "name": "Sťahovanie vrátane tlačové profily"
+      },
+      "makerworld_points": {
+        "name": "Body"
+      },
+      "makerworld_points_earned": {
+        "name": "Získané body"
+      },
+      "makerworld_points_spent": {
+        "name": "Spotrebované body"
+      },
+      "makerworld_points_exclusive": {
+        "name": "Exkluzívne body"
+      },
+      "makerworld_boost_tokens": {
+        "name": "Zvýšiť tokeny"
+      },
+      "makerworld_boosts_used": {
+        "name": "Používané posilňovače"
+      },
+      "makerworld_boosts_expired": {
+        "name": "Platnosť zosilnení vypršala"
+      },
+      "makerworld_downloads": {
+        "name": "sťahovanie"
+      },
+      "makerworld_instance_downloads": {
+        "name": "Tlač profilov na stiahnutie"
+      },
+      "makerworld_prints": {
+        "name": "Výtlačky"
+      },
+      "makerworld_instance_prints": {
+        "name": "Tlač profilu"
+      },
+      "makerworld_designs": {
+        "name": "Publikované modely"
+      },
+      "makerworld_likes": {
+        "name": "Páči sa mi"
+      },
+      "makerworld_collections": {
+        "name": "Zbiera"
+      },
+      "makerworld_followers": {
+        "name": "Nasledovníci"
+      },
+      "makerworld_following": {
+        "name": "Sledovanie"
+      },
+      "makerworld_level": {
+        "name": "úroveň"
+      },
+      "active_nozzle": {
+        "name": "Aktívna tryska",
+        "state": {
+          "left": "Vľavo",
+          "right": "Správne"
+        }
+      },
+      "ams_status": {
+        "name": "Stav",
+        "state": {
+          "idle": "Nečinný",
+          "changing_filament": "Výmena vlákna",
+          "heating_nozzle": "Vyhrievacia tryska",
+          "cutting_filament": "Rezacie vlákno",
+          "pulling_back_filament": "Sťahovanie vlákna prúdu",
+          "pushing_new_filament": "Zatlačenie nového vlákna",
+          "purging_old_filament": "Čistenie starého vlákna",
+          "checking_position": "Kontrola polohy vlákna",
+          "rfid_identifying": "Identifikácia RFID",
+          "filament_loaded": "Nabité vlákno",
+          "calibration": "Kalibrácia",
+          "cold_pull": "Studený ťah",
+          "self_check": "Samokontrola",
+          "debug": "Debug",
+          "unknown": "Neznámy"
+        }
+      },
+      "track_switch_input": {
+        "name": "Vstup prepínača koľaje {input_number}",
+        "state": {
+          "left": "Ľavá tryska",
+          "right": "Pravá tryska",
+          "empty": "Prázdny"
+        }
+      },
+      "connected_nozzle": {
+        "name": "Pripojená tryska",
+        "state": {
+          "left": "Vľavo",
+          "right": "Správne",
+          "track_switch": "Traťový spínač"
+        }
+      },
+      "part_fan_speed": {
+        "name": "Rýchlosť ventilátora časti"
+      },
+      "left_aux_fan_speed": {
+        "name": "Rýchlosť ľavého pomocného ventilátora"
+      },
+      "right_aux_fan_speed": {
+        "name": "Rýchlosť pravého pomocného ventilátora"
+      },
+      "exhaust_fan_speed": {
+        "name": "Rýchlosť výfukového ventilátora"
+      },
+      "external_storage_connection": {
+        "name": "Pripojenie externého úložiska",
+        "state": {
+          "connected": "Pripojené",
+          "disconnected": "Odpojené"
+        }
+      },
+      "external_storage_total": {
+        "name": "Externý ukladací priestor celkom"
+      },
+      "external_storage_used": {
+        "name": "Používa sa externé úložisko"
+      },
+      "external_storage_free": {
+        "name": "Externé úložisko zadarmo"
+      },
+      "zone_temperature": {
+        "name": "Teplota zóny {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Zóna"
+          },
+          "zone_id": {
+            "name": "ID zóny"
+          },
+          "slots": {
+            "name": "Sloty"
+          },
+          "dry_setting": {
+            "name": "Nastavenie sušenia"
+          }
+        }
+      },
+      "zone_humidity": {
+        "name": "Vlhkosť zóny {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Zóna"
+          },
+          "zone_id": {
+            "name": "ID zóny"
+          },
+          "slots": {
+            "name": "Sloty"
+          },
+          "dry_setting": {
+            "name": "Nastavenie sušenia"
+          }
+        }
+      },
+      "zone_remaining_drying_time": {
+        "name": "Zostávajúci čas sušenia zóny {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Zóna"
+          },
+          "zone_id": {
+            "name": "ID zóny"
+          },
+          "slots": {
+            "name": "Sloty"
+          },
+          "dry_setting": {
+            "name": "Nastavenie sušenia"
+          }
+        }
       }
     },
     "camera": {
@@ -916,6 +1137,10 @@
     "hybrid_mode_blocking": {
       "title": "Hybridné riadenie blokov pripojenia",
       "description": "{device} je pripojené ku cloudu, ale s lokálnym pripojením mqtt integráciou. Toto blokuje nastavenie teplôt a opätovnú tlač z histórie. Ak chcete získať plnú kontrolu, prepnite pripojenie na čistý cloud."
+    },
+    "access_code_rejected": {
+      "title": "Prístupový kód zamietnutý",
+      "description": "Tlačiareň odmietla nakonfigurovaný prístupový kód pre {device}. Zvyčajne to znamená, že kód bol vygenerovaný, napríklad obnovením továrenského nastavenia. Prečítajte si nový prístupový kód na obrazovke sieťových nastavení tlačiarne a prekonfigurujte s ním integráciu."
     }
   }
 }

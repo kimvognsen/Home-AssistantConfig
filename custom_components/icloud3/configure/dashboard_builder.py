@@ -7,13 +7,14 @@ from homeassistant.components.lovelace.const import (LOVELACE_DATA,
                                                     STORAGE_DASHBOARD_UPDATE_FIELDS)
 
 from ..global_variables     import GlobalVariables as Gb
-from ..const                import (IPHONE_FNAME, DEVICE_TYPES, IPHONE,
+from ..const                import (IPHONE_DN, DEVICE_TYPES, IPHONE,
                                     CONF_IC3_DEVICENAME, CONF_TRACKING_MODE, CONF_DEVICE_TYPE,
                                     TRACK, INACTIVE)
 
 from ..utils.utils          import (instr, is_number, is_empty, isnot_empty, list_to_str, str_to_list,
                                     list_add, list_del, dict_value_to_list, six_item_list, six_item_dict, )
-from ..utils.messaging      import (log_exception, log_debug_msg, log_info_msg, _log,  _evlog, )
+from ..utils.messaging      import (post_error_msg, post_alert,
+                                    log_exception, log_debug_msg, log_info_msg, _log, _evlog, )
 from ..utils                import file_io
 
 from .const_form_lists      import *
@@ -22,24 +23,27 @@ from .                      import selection_lists as lists
 
 #-------------------------------------------------------------------------------------------
 DASHBOARD_ICONS = [
-        'mdi:cloud-download-outline',
-        'mdi:cloud-upload-outline',
-        'mdi:cloud-check-variant-outline',
-        'mdi:cloud-refresh-variant-outline',
-        'mdi:cloud-alert-outline',
-        'mdi:cloud-percent-outline',
-        'mdi:cloud-question-outline',
-
-        'mdi:cloud-cog-outline',
-        'mdi:cloud-plus-outline',
-        'mdi:cloud-remove-outline',
-        'mdi:cloud-sync-outline',
-
+        'mdi:cloud',
+        'mdi:cloud-outline',
+        'mdi:cloud-arrow-up',
         'mdi:cloud-arrow-up-outline',
+        'mdi:cloud-arrow-down',
         'mdi:cloud-arrow-down-outline',
+        'mdi:cloud-arrow-left',
         'mdi:cloud-arrow-left-outline',
+        'mdi:cloud-arrow-right',
         'mdi:cloud-arrow-right-outline',
-]
+
+        'mdi:cloud-cog',
+        'mdi:cloud-cog-outline',
+        'mdi:cloud-plus',
+        'mdi:cloud-plus-outline',
+        'mdi:cloud-remove',
+        'mdi:cloud-remove-outline',
+        'mdi:cloud-sync',
+        'mdi:cloud-sync-outline',
+]        
+
 DASHBOARD_TEMPLATE_FILES = [
         'template',
         'master',
@@ -50,26 +54,6 @@ DASHBOARD_TEMPLATE_FILES = [
 MAIN_VIEW_STYLE_TEMPLATE = 'Main-View-Template-Style: '
 CONFIGURE_DASHBOARD_TEMPLATES_DIR = '/configure/dashboard_templates'
 
-#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-#
-#           BUILD INITIAL DASHBOARD WHEN ICLOUD3 INTEGRATION IS INSTALLED
-#
-#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-async def build_initial_icloud3_dashboard(self):
-    '''
-    This is run when iCloud3 is being installed
-    '''
-    try:
-        self.ui_selected_dbname = ADD
-
-        await build_existing_dashboards_selection_list(self)
-        await update_or_create_dashboard(self)
-        return True
-
-    except Exception as err:
-        log_exception(err)
-
-    return False
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #
@@ -86,38 +70,32 @@ async def update_ic3db_dashboards_new_deleted_devices(self):
     '''
 
     await build_existing_dashboards_selection_list(self)
+    self.dbf_dashboard_icons_msg = build_dashboard_icons_msg(self)
 
     if is_empty(self.ic3db_Dashboards_by_dbname):
-        return
+        return await create_dashboard(self)
 
-    try:
-        await _load_templates(self)
+    await _load_templates(self)
 
-        for dbname, Dashboard in self.ic3db_Dashboards_by_dbname.items():
-            self.dbname = dbname
-            self.ui_selected_dbname  = dbname
-            self.ui_main_view_style  = self.main_view_info_style_by_dbname[dbname]
-            self.ui_main_view_dnames = self.main_view_info_dnames_by_dbname[dbname]
+    for dbname, Dashboard in self.ic3db_Dashboards_by_dbname.items():
+        dbtitle = Dashboard.config[TITLE]
+        self.dbname = dbname
+        self.ui_selected_dbname  = dbname
 
-            updated_db_layout_str    = _build_updated_db_layout_all_views(self)
-            updated_db_layout_json   = file_io.str_to_json_str(self, updated_db_layout_str)
-            updated_db_layout_dict   = file_io.json_str_to_dict(updated_db_layout_json)
-            updated_db_views         = updated_db_layout_dict[DATA][CONFIG][VIEWS]
 
-            if file_io.is_valid_json_str(updated_db_layout_json) is False:
-                log_debug_msg(f"Error Preparing Initial Dashboard, Invalid Json string > {updated_db_layout_json}")
-                continue
+        self.ui_main_view_style  = self.main_view_info_style_by_dbname[dbname]
+        self.ui_main_view_dnames = self.main_view_info_dnames_by_dbname[dbname]
+        log_info_msg(  f"Dashboard Update > [{dbtitle}/{dbname}], "
+                        f"MainViewStyle-[{self.ui_main_view_style}], "
+                        f"Devices-{self.ui_main_view_dnames}")
 
-            # Update all of the ic3db's with the current devices
-            dashboard_dict = await _update_selected_views_from_master_dashboard(self, dbname, updated_db_views,
-                                                                                add_del_device_flag=True)
-            await _write_lovelace_dashboard_layout_file(self, dbname, dashboard_dict)
-            await _update_lovelace_dashboard_layout_ha_data(self, dbname, dashboard_dict)
-            log_debug_msg(f"Updated Dashboard with Added/Deleted Devices-{dbname}")
+        try:
+            await update_dashboard(self)
 
-    except Exception as err:
-        log_exception(err)
-        return False
+        except Exception as err:
+            post_alert( f"Dashboard Update Error > [{dbtitle}/{dbname}], "
+                        f"Layout format error, Manual update may be needed")
+            continue
 
     return True
 
@@ -125,59 +103,72 @@ async def update_ic3db_dashboards_new_deleted_devices(self):
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #
 #           BUILD DASHBOARD
-#
-#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-async def update_or_create_dashboard(self):
 
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+async def create_dashboard(self):
+
+    dbname = self.dbname = self.ui_selected_dbname = _get_next_dashboard_name(self)
+
+    updated_db_layout_json = await _build_db_layout_json_from_templates(self, dbname)
+    if updated_db_layout_json is None:
+        return
+
+    try:
+        await _add_dashboard_to_lovelace_dashboards(self, dbname)
+
+        await _write_lovelace_dashboard_layout_file(self, dbname, updated_db_layout_json)
+        await _update_lovelace_dashboard_layout_ha_data(self, dbname, updated_db_layout_json)
+
+        self.errors['base'] = 'dashboard_created'
+        log_debug_msg(f"Created Dashboard-{self.dbname}, Devices-{self.ui_main_view_dnames}")
+
+    except Exception as err:
+        log_exception(err)
+
+#-------------------------------------------------------------------------------------------
+async def update_dashboard(self):
+
+    dbname = self.dbname = self.ui_selected_dbname
+    updated_db_layout_json = await _build_db_layout_json_from_templates(self, dbname)
+    if updated_db_layout_json is None:
+        return
+
+    try:
+        current_db_layout_dict = file_io.json_str_to_dict(updated_db_layout_json)
+        updated_db_layout_dict = await _prepare_selected_from_master_dashboard(self,
+                                                    dbname, current_db_layout_dict)
+
+        await _write_lovelace_dashboard_layout_file(self, dbname, updated_db_layout_dict)
+        await _update_lovelace_dashboard_layout_ha_data(self, dbname, updated_db_layout_dict)
+
+        self.errors['base'] = 'dashboard_updated'
+        log_debug_msg(f"Updated Dashboard-{self.dbname}, Devices-{self.ui_main_view_dnames}")
+
+    except Exception as err:
+        log_exception(err)
+
+#............................................................................................
+async def _build_db_layout_json_from_templates(self, dbname):
+    '''
+    Build the dashboard template layout json string from all of the templates
+    '''
     if is_empty(self.db_templates):
         await _load_templates(self)
 
-    if self.ui_selected_dbname == ADD:
-        dbname = self.dbname = get_next_dashboard_name(self)
-    else:
-        dbname = self.dbname = self.ui_selected_dbname
-
     try:
         updated_db_layout_str  = _build_updated_db_layout_all_views(self)
+        updated_db_layout_str  = updated_db_layout_str.replace('ic3db_template_master', dbname)
         updated_db_layout_json = file_io.str_to_json_str(self, updated_db_layout_str)
         updated_db_layout_json = _replace_json_text_items(self, updated_db_layout_json)
 
     except Exception as err:
         log_exception(err)
-        return
+        updated_db_layout_json = None
 
-    if file_io.is_valid_json_str(updated_db_layout_json) is False:
-        self.errors['base'] = 'dashboard_json_error'
-        log_debug_msg(f"Error Preparing Dashboard, Invalid Json string > {updated_db_layout_json}")
-        return
-
-    try:
-        if self.ui_selected_dbname == ADD:
-            updated_db_layout_str = updated_db_layout_str.replace('ic3db_template_master', dbname)
-            await _add_dashboard_to_lovelace_dashboards(self, dbname)
-            await _write_lovelace_dashboard_layout_file(self, dbname, updated_db_layout_json)
-            await _update_lovelace_dashboard_layout_ha_data(self, dbname, updated_db_layout_json)
-            self.ui_selected_dbname = dbname
-            self.errors['base'] = 'dashboard_created'
-            log_debug_msg(f"Created Dashboard-{self.dbname}, Devices-{self.ui_main_view_dnames}")
-
-        else:
-            current_db_layout_dict = file_io.json_str_to_dict(updated_db_layout_json)
-            updated_db_layout_dict = await _prepare_selected_from_master_dashboard(self,
-                                                        dbname, current_db_layout_dict)
-
-            await _write_lovelace_dashboard_layout_file(self, dbname, updated_db_layout_dict)
-            await _update_lovelace_dashboard_layout_ha_data(self, dbname, updated_db_layout_dict)
-
-            self.errors['base'] = 'dashboard_updated'
-
-    except Exception as err:
-        log_exception(err)
-
-    return
+    return updated_db_layout_json
 
 #............................................................................................
-def get_next_dashboard_name(self):
+def _get_next_dashboard_name(self):
     number_suffix = len(self.AllDashboards_by_dbname)
     if number_suffix == 0:
         return 'ic3db-icloud3'
@@ -735,6 +726,8 @@ async def build_existing_dashboards_selection_list(self):
     load_ic3db_dashboards_from_ha_data(self)
 
     self.dbf_dashboard_key_text  = {}
+    self.dbf_dashboard_icons_msg = ''
+    # dashboard_icons_msg = []
     if is_empty(self.ic3db_Dashboards_by_dbname):
         self.dbf_dashboard_key_text[ADD] = (f"➤ CREATE A NEW ICLOUD3 DASHBOARD")
         return
@@ -771,7 +764,27 @@ async def build_existing_dashboards_selection_list(self):
 
         self.dbf_dashboard_key_text[_dbname] = dashboard_msg
 
+    self.dbf_dashboard_icons_msg = f"Dashboard Icons: {build_dashboard_icons_msg(self)}"
+
     self.dbf_dashboard_key_text[ADD] = (f"➤ CREATE A NEW ICLOUD3 DASHBOARD")
+
+#-------------------------------------------------------------------------------------------
+def build_dashboard_icons_msg(self):
+    '''
+    Build a db_name/icon reference line that is displayed in the screen's
+    description, which is rendered as markdown and does support <ha-icon>.
+
+    Dashboard Icons: <mdi:icon> iCloud3
+    '''
+    if is_empty(self.ic3db_Dashboards_by_dbname):
+        load_ic3db_dashboards_from_ha_data(self)
+
+    _dashboard_icons_msg = []
+    for _dbname, _Dashboard in self.ic3db_Dashboards_by_dbname.items():
+        _db_icon = _Dashboard.config.get('icon') or _icon(_dbname)
+        _dashboard_icons_msg.append(f'<ha-icon icon="{_db_icon}"></ha-icon> {_Dashboard.config[TITLE]}')
+
+    return list_to_str(_dashboard_icons_msg)
 
 #-------------------------------------------------------------------------------------------
 def select_available_dashboard(self):
@@ -843,18 +856,13 @@ def _build_main_view_dicts(self, dbname, devices_cards_str):
 def _strip_device_type(view_devices_msg):
     '''
     Cycle through the device names selection list and remove the device type text for each item.
-    From: ['Gary (iPhone)', 'Lillian (iPhone)', 'Gary-iPad (iPad)']
+    From: ['Gary (iPhone), Tracked', 'Lillian (iPhone), Monitored', 'Gary-iPad (iPad)']
     To:   ['Gary', 'Lillian', 'Gary-iPad']
     '''
     view_devices_fname = []
     for view_device_msg in view_devices_msg:
-        for device_type in DEVICE_TYPES:
-            device_type_text = f" ({device_type})"
-            found = instr(view_device_msg, device_type_text)
-            if found:
-                view_device_fname = view_device_msg.replace(device_type_text, "")
-                list_add(view_devices_fname, view_device_fname)
-                break
+        view_device_msg_parts = view_device_msg.split(' (')
+        list_add(view_devices_fname, view_device_msg_parts[0])
 
     return view_devices_fname
 
@@ -1021,11 +1029,11 @@ async def _add_dashboard_to_lovelace_dashboards(self, dbname):
 #............................................................................................
 def _icon(dbname):
     if dbname == 'ic3db-icloud3':
-        return "mdi:cloud-outline"
+        return "mdi:cloud"
 
     number_suffix = dbname.split('-')[-1]
     number_suffix = int(number_suffix) if is_number(number_suffix) else 0
-    number_suffix = number_suffix % 7
+    number_suffix = number_suffix % 18
 
     return DASHBOARD_ICONS[number_suffix]
 

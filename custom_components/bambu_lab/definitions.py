@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -24,12 +24,14 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfMass,
     UnitOfLength,
-    UnitOfTime
+    UnitOfTime,
+    UnitOfInformation,
 )
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.util import dt as dt_util
 
 from .const import (
+    FILAMENT_DATA,
     LOGGER,
     Options,
 )
@@ -38,9 +40,11 @@ from .pybambu.const import (
     PRINT_TYPE_OPTIONS,
     SPEED_PROFILE,
     CURRENT_STAGE_OPTIONS,
+    AMS_STATUS_OPTIONS,
     GCODE_STATE_OPTIONS,
     SDCARD_STATUS,
     AIRDUCT_MODES,
+    AMS_CONNECTED_NOZZLES,
     FansEnum,
     Features,
 )
@@ -49,6 +53,17 @@ from .pybambu.utils import get_filament_name
 def fan_to_percent(speed):
     percentage = (int(speed) / 15) * 100
     return math.ceil(percentage / 10) * 10
+
+X2D_TRANSLATION_KEYS = {
+    "cooling_fan": "part_fan",
+    "aux_fan": "left_aux_fan",
+    "secondary_aux_fan": "right_aux_fan",
+    "chamber_fan": "exhaust_fan",
+    "cooling_fan_speed": "part_fan_speed",
+    "aux_fan_speed": "left_aux_fan_speed",
+    "secondary_aux_fan_speed": "right_aux_fan_speed",
+    "chamber_fan_speed": "exhaust_fan_speed",
+}
 
 @dataclass
 class BambuLabUpdateEntityDescription(UpdateEntityDescription):
@@ -158,6 +173,18 @@ PRINTER_BINARY_SENSORS: tuple[BambuLabBinarySensorEntityDescription, ...] = (
         key="extruder_filament_state",
         translation_key="extruder_filament_state",
         is_on_fn=lambda self: self.coordinator.get_model().info.extruder_filament_state,
+    ),
+    BambuLabBinarySensorEntityDescription(
+        key="left_extruder_filament_state",
+        translation_key="left_extruder_filament_state",
+        is_on_fn=lambda self: self.coordinator.get_model().info.left_extruder_filament_state,
+        exists_fn=lambda coordinator: coordinator.get_model().supports_feature(Features.DUAL_NOZZLES),
+    ),
+    BambuLabBinarySensorEntityDescription(
+        key="right_extruder_filament_state",
+        translation_key="right_extruder_filament_state",
+        is_on_fn=lambda self: self.coordinator.get_model().info.right_extruder_filament_state,
+        exists_fn=lambda coordinator: coordinator.get_model().supports_feature(Features.DUAL_NOZZLES),
     ),
     BambuLabBinarySensorEntityDescription(
         key="hms",
@@ -396,6 +423,15 @@ PRINTER_SENSORS: tuple[BambuLabSensorEntityDescription, ...] = (
         value_fn=lambda self: self.coordinator.get_model().fans.get_fan_speed(FansEnum.HEATBREAK)
     ),
     BambuLabSensorEntityDescription(
+        key="secondary_aux_fan_speed",
+        translation_key="secondary_aux_fan_speed",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:fan",
+        value_fn=lambda self: self.coordinator.get_model().fans.get_fan_speed(FansEnum.SECONDARY_AUXILIARY),
+        exists_fn=lambda coordinator: coordinator.get_model().supports_feature(Features.SECONDARY_AUX_FAN),
+    ),
+    BambuLabSensorEntityDescription(
         key="model_download_percentage",
         translation_key="model_download_percentage",
         native_unit_of_measurement=PERCENTAGE,
@@ -426,6 +462,7 @@ PRINTER_SENSORS: tuple[BambuLabSensorEntityDescription, ...] = (
         translation_key="stage",
         icon="mdi:file-tree",
         value_fn=lambda self: "offline" if not self.coordinator.get_model().info.online else self.coordinator.get_model().stage.description,
+        extra_attributes=lambda self: self.coordinator.get_model().stage.attributes,
         device_class=SensorDeviceClass.ENUM,
         options=CURRENT_STAGE_OPTIONS + ["offline"]
     ),
@@ -462,7 +499,24 @@ PRINTER_SENSORS: tuple[BambuLabSensorEntityDescription, ...] = (
             self: self.coordinator.get_model().home_flag.sdcard_status,
         device_class=SensorDeviceClass.ENUM,
         entity_category=EntityCategory.DIAGNOSTIC,
+        extra_attributes=lambda self: (
+            {"reported_storage": self.coordinator.get_model().home_flag.reported_storage}
+            if self.coordinator.get_model().info.device_type == "H3C" else {}
+        ),
         options=SDCARD_STATUS
+    ),
+    BambuLabSensorEntityDescription(
+        key="external_storage_connection",
+        translation_key="external_storage_connection",
+        icon="mdi:usb-flash-drive",
+        device_class=SensorDeviceClass.ENUM,
+        options=["connected", "disconnected"],
+        exists_fn=lambda coordinator: coordinator.get_model().info.device_type == "H3C",
+        value_fn=lambda self: (
+            None if self.coordinator.get_model().home_flag.usb_connected is None
+            else "connected" if self.coordinator.get_model().home_flag.usb_connected
+            else "disconnected"
+        ),
     ),
     BambuLabSensorEntityDescription(
         key="skipped_objects",
@@ -477,7 +531,7 @@ PRINTER_SENSORS: tuple[BambuLabSensorEntityDescription, ...] = (
         translation_key="start_time",
         icon="mdi:clock",
         device_class=SensorDeviceClass.TIMESTAMP,
-        available_fn=lambda self: self._start_time_avail_fn(),
+        available_fn=lambda self: True,
         value_fn=lambda self: self._start_time_value_fn(),
         is_restoring=True,
     ),
@@ -496,8 +550,8 @@ PRINTER_SENSORS: tuple[BambuLabSensorEntityDescription, ...] = (
         translation_key="end_time",
         icon="mdi:clock",
         device_class=SensorDeviceClass.TIMESTAMP,
-        available_fn=lambda self: self.coordinator.get_model().print_job.end_time is not None,
-        value_fn=lambda self: dt_util.as_utc(self.coordinator.get_model().print_job.end_time),
+        available_fn=lambda self: True,
+        value_fn=lambda self: dt_util.as_utc(self.coordinator.get_model().print_job.end_time) if self.coordinator.get_model().print_job.end_time is not None else None,
     ),
     BambuLabSensorEntityDescription(
         key="total_usage_hours",
@@ -528,22 +582,23 @@ PRINTER_SENSORS: tuple[BambuLabSensorEntityDescription, ...] = (
     BambuLabSensorEntityDescription(
         key="gcode_file",
         translation_key="gcode_file",
-        available_fn=lambda self: self.coordinator.get_model().print_job.gcode_file != "",
-        value_fn=lambda self: self.coordinator.get_model().print_job.gcode_file,
+        available_fn=lambda self: True,
+        value_fn=lambda self: self.coordinator.get_model().print_job.gcode_file if self.coordinator.get_model().print_job.gcode_file != "" else None,
         icon_fn=lambda self: self.coordinator.get_model().print_job.file_type_icon
     ),
     BambuLabSensorEntityDescription(
         key="gcode_file_downloaded",
         translation_key="gcode_file_downloaded",
-        available_fn=lambda self: self.coordinator.get_model().print_job.gcode_file_downloaded != "",
-        value_fn=lambda self: self.coordinator.get_model().print_job.gcode_file_downloaded,
+        available_fn=lambda self: True,
+        value_fn=lambda self: self.coordinator.get_model().print_job.gcode_file_downloaded if self.coordinator.get_model().print_job.gcode_file_downloaded != "" else None,
         icon_fn=lambda self: self.coordinator.get_model().print_job.file_type_icon
     ),
     BambuLabSensorEntityDescription(
         key="subtask_name",
         translation_key="subtask_name",
         value_fn=lambda self: self.coordinator.get_model().print_job.subtask_name,
-        icon_fn=lambda self: self.coordinator.get_model().print_job.file_type_icon
+        icon_fn=lambda self: self.coordinator.get_model().print_job.file_type_icon,
+        extra_attributes=lambda self: {"ams_mapping": self.coordinator.get_model().print_job.get_ams_mapping},
     ),
     BambuLabSensorEntityDescription(
         key="print_type",
@@ -615,7 +670,10 @@ PRINTER_SENSORS: tuple[BambuLabSensorEntityDescription, ...] = (
             "tag_uid": self.coordinator.get_model().ams.active_tray.tag_uid,
             "tray_index": self.coordinator.get_model().ams.active_tray_index,
             "tray_uuid": self.coordinator.get_model().ams.active_tray.tray_uuid,
-            "type": self.coordinator.get_model().ams.active_tray.type,
+            "type": _get_display_filament_type(
+                self.coordinator.get_model().ams.active_tray.idx,
+                self.coordinator.get_model().ams.active_tray.type,
+            ),
         },
         exists_fn=lambda coordinator: coordinator.get_model().supports_feature(Features.AMS)
     ),
@@ -672,6 +730,15 @@ PRINTER_SENSORS: tuple[BambuLabSensorEntityDescription, ...] = (
         exists_fn=lambda coordinator: coordinator.get_model().supports_feature(Features.DUAL_NOZZLES),
     ),
     BambuLabSensorEntityDescription(
+        key="active_nozzle",
+        translation_key="active_nozzle",
+        icon="mdi:printer-3d-nozzle",
+        device_class=SensorDeviceClass.ENUM,
+        options=["left", "right"],
+        value_fn=lambda self: self.coordinator.get_model().extruder.active_nozzle,
+        exists_fn=lambda coordinator: coordinator.get_model().supports_feature(Features.DUAL_NOZZLES),
+    ),
+    BambuLabSensorEntityDescription(
         key="ip_address",
         translation_key="ip_address",
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -684,6 +751,57 @@ PRINTER_SENSORS: tuple[BambuLabSensorEntityDescription, ...] = (
         icon="mdi:identifier",
         value_fn=lambda self: self.coordinator.get_model().info.serial
     )
+)
+
+
+PRINTER_SENSORS += tuple(
+    BambuLabSensorEntityDescription(
+        key=f"external_storage_{metric}",
+        translation_key=f"external_storage_{metric}",
+        icon="mdi:usb-flash-drive",
+        device_class=SensorDeviceClass.DATA_SIZE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfInformation.KIBIBYTES,
+        suggested_unit_of_measurement=UnitOfInformation.GIBIBYTES,
+        suggested_display_precision=2,
+        exists_fn=lambda coordinator: coordinator.get_model().info.device_type == "H3C",
+        value_fn=lambda self, key=metric: self.coordinator.get_model().home_flag.usb_capacity_kib(key),
+        extra_attributes=lambda self: {"source": "device.cam.tl_external_*_kb"},
+    )
+    for metric in ("total", "used", "free")
+)
+
+
+def _track_switch_attributes(model, input_index: int) -> dict:
+    location = model.track_switch.input_tray(input_index)
+    if location is None:
+        return {}
+    ams_index, tray_index = location
+    attributes = {"ams_index": ams_index, "tray_index": tray_index}
+    ams = model.ams.data.get(ams_index)
+    if ams is not None and tray_index < len(ams.tray):
+        tray = ams.tray[tray_index]
+        attributes |= {"name": tray.name, "type": tray.type, "color": f"#{tray.color}"}
+    return attributes
+
+
+def _track_switch_sensor(input_index: int) -> BambuLabSensorEntityDescription:
+    return BambuLabSensorEntityDescription(
+        key=f"track_switch_input_{input_index + 1}",
+        translation_key="track_switch_input",
+        translation_placeholders={"input_number": str(input_index + 1)},
+        icon="mdi:source-branch",
+        device_class=SensorDeviceClass.ENUM,
+        options=["left", "right", "empty"],
+        value_fn=lambda self: self.coordinator.get_model().track_switch.input_nozzle(input_index),
+        extra_attributes=lambda self: _track_switch_attributes(self.coordinator.get_model(), input_index),
+        available_fn=lambda self: self.coordinator.get_model().track_switch.installed,
+        exists_fn=lambda coordinator: coordinator.get_model().track_switch.installed,
+    )
+
+
+PRINTER_SENSORS: tuple[BambuLabSensorEntityDescription, ...] = PRINTER_SENSORS + tuple(
+    _track_switch_sensor(input_index) for input_index in range(2)
 )
 
 VIRTUAL_TRAY_BINARY_SENSORS: tuple[BambuLabSensorEntityDescription, ...] = (
@@ -712,6 +830,8 @@ VIRTUAL_TRAY_SENSORS: tuple[BambuLabSensorEntityDescription, ...] = (
             "dry_temp": self.coordinator.get_model().external_spool[self.index].dry_temp,
             "dry_time": self.coordinator.get_model().external_spool[self.index].dry_time,
             "empty": self.coordinator.get_model().external_spool[self.index].empty,
+            "unknown": self.coordinator.get_model().external_spool[self.index].unknown,
+            "state": self.coordinator.get_model().external_spool[self.index].state,
             "filament_id": self.coordinator.get_model().external_spool[self.index].idx,
             **({"k_value": self.coordinator.get_model().external_spool[self.index].k} if self.coordinator.get_model().supports_feature(Features.K_VALUE) else {}),
             "tray_weight": self.coordinator.get_model().external_spool[self.index].tray_weight,
@@ -722,10 +842,26 @@ VIRTUAL_TRAY_SENSORS: tuple[BambuLabSensorEntityDescription, ...] = (
             "remain_enabled": self.coordinator.get_model().external_spool[self.index].remain_enabled,
             "tag_uid": self.coordinator.get_model().external_spool[self.index].tag_uid,
             "tray_uuid": self.coordinator.get_model().external_spool[self.index].tray_uuid,
-            "type": self.coordinator.get_model().external_spool[self.index].type,
+            "type": _get_display_filament_type(
+                self.coordinator.get_model().external_spool[self.index].idx,
+                self.coordinator.get_model().external_spool[self.index].type,
+            ),
         },
     ),
 )
+
+def _ams_connected_nozzle(model, index: int) -> str | None:
+    connected_nozzle = model.ams.data[index].connected_nozzle
+    if connected_nozzle != "track_switch":
+        return connected_nozzle
+    if not model.track_switch.installed:
+        return None
+    return model.track_switch.ams_nozzle(index) or connected_nozzle
+
+
+def _ams_uses_track_switch(model, index: int) -> bool:
+    return model.track_switch.installed and model.ams.data[index].connected_nozzle == "track_switch"
+
 
 AMS_SENSORS: tuple[BambuLabAMSSensorEntityDescription, ...] = (
     BambuLabAMSSensorEntityDescription(
@@ -735,6 +871,14 @@ AMS_SENSORS: tuple[BambuLabAMSSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda self: 6 - self.coordinator.get_model().ams.data[self.index].humidity_index
         # We subtract from 6 to match the new Bambu Handy/Studio presentation of 1 = dry, 5 = wet while the printer sends 1 = wet, 5 = dry
+    ),
+    BambuLabAMSSensorEntityDescription(
+        key="ams_status",
+        translation_key="ams_status",
+        icon="mdi:swap-horizontal",
+        device_class=SensorDeviceClass.ENUM,
+        options=AMS_STATUS_OPTIONS,
+        value_fn=lambda self: self.coordinator.get_model().ams.data[self.index].status
     ),
     BambuLabAMSSensorEntityDescription(
         key="humidity",
@@ -799,6 +943,16 @@ AMS_SENSORS: tuple[BambuLabAMSSensorEntityDescription, ...] = (
         exists_fn=lambda coordinator, index: coordinator.get_model().supports_feature(Features.AMS_DRYING_SETTINGS) and
                                              coordinator.get_model().ams.data[index].model in ["AMS 2 Pro", "AMS HT"],
     ),
+    BambuLabAMSSensorEntityDescription(
+        key="connected_nozzle",
+        translation_key="connected_nozzle",
+        icon="mdi:printer-3d-nozzle",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(AMS_CONNECTED_NOZZLES.values()),
+        value_fn=lambda self: _ams_connected_nozzle(self.coordinator.get_model(), self.index),
+        extra_attributes=lambda self: {"track_switch": _ams_uses_track_switch(self.coordinator.get_model(), self.index)},
+        exists_fn=lambda coordinator, index: coordinator.get_model().supports_feature(Features.DUAL_NOZZLES),
+    ),
 )
 
 
@@ -812,6 +966,8 @@ def _tray_sensor(tray_index: int, display_number: int) -> BambuLabAMSSensorEntit
         extra_attributes=lambda self, idx=tray_index, dnum=display_number:
         {
             "slot": dnum,
+            "filament_diameter": self.coordinator.get_model().ams.data[self.index].tray[idx].filament_diameter,
+            "remaining_weight_g": self.coordinator.get_model().ams.data[self.index].tray[idx].remaining_weight_g,
             "active": self.coordinator.get_model().ams.data[self.index].tray[idx].active,
             "bed_temp": self.coordinator.get_model().ams.data[self.index].tray[idx].bed_temp,
             "color": f"#{self.coordinator.get_model().ams.data[self.index].tray[idx].color}",
@@ -820,6 +976,8 @@ def _tray_sensor(tray_index: int, display_number: int) -> BambuLabAMSSensorEntit
             "dry_temp": self.coordinator.get_model().ams.data[self.index].tray[idx].dry_temp,
             "dry_time": self.coordinator.get_model().ams.data[self.index].tray[idx].dry_time,
             "empty": self.coordinator.get_model().ams.data[self.index].tray[idx].empty,
+            "unknown": self.coordinator.get_model().ams.data[self.index].tray[idx].unknown,
+            "state": self.coordinator.get_model().ams.data[self.index].tray[idx].state,
             "filament_id": self.coordinator.get_model().ams.data[self.index].tray[idx].idx,
             **({"k_value": self.coordinator.get_model().ams.data[self.index].tray[idx].k} if self.coordinator.get_model().supports_feature(Features.K_VALUE) else {}),
             "tray_weight": self.coordinator.get_model().ams.data[self.index].tray[idx].tray_weight,
@@ -830,15 +988,62 @@ def _tray_sensor(tray_index: int, display_number: int) -> BambuLabAMSSensorEntit
             "remain_enabled": self.coordinator.get_model().ams.data[self.index].tray[idx].remain_enabled,
             "tag_uid": self.coordinator.get_model().ams.data[self.index].tray[idx].tag_uid,
             "tray_uuid": self.coordinator.get_model().ams.data[self.index].tray[idx].tray_uuid,
-            "type": self.coordinator.get_model().ams.data[self.index].tray[idx].type,
+            "type": _get_display_filament_type(
+                self.coordinator.get_model().ams.data[self.index].tray[idx].idx,
+                self.coordinator.get_model().ams.data[self.index].tray[idx].type,
+            ),
         },
-        **({"exists_fn": lambda coordinator, index: coordinator.get_model().ams.data[index].model != "AMS HT"} if tray_index > 0 else {}),
+        exists_fn=lambda coordinator, index, idx=tray_index: idx < len(coordinator.get_model().ams.data[index].tray),
     )
 
 
 AMS_SENSORS: tuple[BambuLabAMSSensorEntityDescription, ...] = AMS_SENSORS + tuple(
-    _tray_sensor(tray_index, tray_index + 1) for tray_index in range(4)
+    _tray_sensor(tray_index, tray_index + 1) for tray_index in range(9)
 )
+
+
+# AMS 3H reports measurements per zone, never as one cabinet measurement.
+def _ams_zone_value(entity, zone_id, field, converter):
+    value = entity.coordinator.get_model().ams.data[entity.index].zones.get(zone_id, {}).get(field)
+    try:
+        return converter(value) if value is not None else None
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
+AMS_SENSORS = tuple(
+    replace(description, exists_fn=lambda coordinator, index, fn=description.exists_fn:
+            coordinator.get_model().ams.data[index].model != "AMS 3H" and fn(coordinator, index))
+    if description.key in ("humidity", "humidity_index", "temperature", "remaining_drying_time")
+    else description
+    for description in AMS_SENSORS
+)
+
+# The zone sensors use translation keys (with the zone as a placeholder) so they are named in
+# the user's language and the cards can find them without relying on entity ids. The keys stay
+# zone_<n>_<field> so existing entities keep their unique ids.
+for _zone in range(2):
+    for _field, _translation_key, _unit, _device_class, _converter in (
+        ("temp", "zone_temperature", UnitOfTemperature.CELSIUS, SensorDeviceClass.TEMPERATURE, float),
+        ("humidity_raw", "zone_humidity", PERCENTAGE, SensorDeviceClass.HUMIDITY, int),
+        ("dry_time", "zone_remaining_drying_time", UnitOfTime.MINUTES, SensorDeviceClass.DURATION, int),
+    ):
+        AMS_SENSORS += (BambuLabAMSSensorEntityDescription(
+            key=f"zone_{_zone + 1}_{_field}",
+            translation_key=_translation_key,
+            translation_placeholders={"zone_number": str(_zone + 1)},
+            native_unit_of_measurement=_unit,
+            device_class=_device_class,
+            value_fn=lambda self, z=_zone, f=_field, c=_converter: _ams_zone_value(self, z, f, c),
+            exists_fn=lambda coordinator, index: coordinator.get_model().ams.data[index].model == "AMS 3H",
+            extra_attributes=lambda self, z=_zone: {
+                "zone": z + 1,
+                "zone_id": z,
+                "slots": [slot + 1 for slot in self.coordinator.get_model().ams.data[self.index].zones.get(z, {}).get("zone_slots", [])],
+                "dry_setting": self.coordinator.get_model().ams.data[self.index].zones.get(z, {}).get("dry_setting", {}),
+            },
+        ),)
+
 
 HOTEND_RACK_SENSORS: tuple[BambuLabHotendRackSensorEntityDescription, ...] = (
     BambuLabHotendRackSensorEntityDescription(
@@ -918,6 +1123,308 @@ def _hotend_sensor(slot_id: int, display_id: int) -> BambuLabHotendRackSensorEnt
           self.coordinator.client.slicer_settings.custom_filaments),
     )
 
+def _hotend_used_time_sensor(
+    slot_id: int, display_id: int
+) -> BambuLabHotendRackSensorEntityDescription:
+    """Create a usage sensor for one H2C Vortek hotend slot."""
+    return BambuLabHotendRackSensorEntityDescription(
+        key=f"hotend_{slot_id}_used_time",
+        translation_key="hotend_rack_hotend_used_time",
+        translation_placeholders={"hotend_id": str(display_id)},
+        icon="mdi:timer-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=UnitOfTime.HOURS,
+        device_class=SensorDeviceClass.DURATION,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=1,
+        hotend_id=slot_id,
+        value_fn=lambda self: (
+            lambda rack, sid: (
+                round(rack.hotends[sid].print_time / 3600, 2)
+                if rack.is_slot_occupied(sid) or sid == rack.tar_id
+                else None
+            )
+        )(
+            self.coordinator.get_model().hotend_rack,
+            self.entity_description.hotend_id,
+        ),
+    )
+
+
 HOTEND_RACK_HOTEND_SENSORS: tuple[BambuLabHotendRackSensorEntityDescription, ...] = tuple(
-    _hotend_sensor(slot_id, slot_id - 15) for slot_id in range(16, 22)
+    sensor
+    for slot_id in range(16, 25)
+    for sensor in (
+        _hotend_sensor(slot_id, slot_id - 15),
+        _hotend_used_time_sensor(slot_id, slot_id - 15),
+    )
 )
+
+
+
+def _is_h3c(coordinator):
+    return coordinator.get_model().info.device_type == "H3C"
+
+
+HOTEND_RACK_SENSORS = tuple(
+    replace(description, exists_fn=lambda coordinator: not _is_h3c(coordinator))
+    for description in HOTEND_RACK_SENSORS
+) + tuple(
+    BambuLabHotendRackSensorEntityDescription(
+        key=key, name=name, icon="mdi:robot-industrial",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        exists_fn=_is_h3c,
+        value_fn=lambda self, attr=attribute: getattr(self.coordinator.get_model().hotend_rack, attr),
+    )
+    for key, name, attribute in (
+        ("holder_position", "Swaptek position (raw)", "holder_pos"),
+        ("holder_state", "Swaptek status (raw)", "holder_stat"),
+    )
+)
+
+HOTEND_RACK_HOTEND_SENSORS = tuple(
+    replace(description, exists_fn=lambda coordinator, sid=description.hotend_id:
+            not _is_h3c(coordinator) and sid < 22)
+    for description in HOTEND_RACK_HOTEND_SENSORS
+)
+
+for _slot in range(16, 25):
+    _number = _slot - 15
+    HOTEND_RACK_HOTEND_SENSORS += (
+        BambuLabHotendRackSensorEntityDescription(
+            key=f"printtool_{_number}", name=f"PrintTool {_number}",
+            hotend_id=_slot, device_class=SensorDeviceClass.ENUM,
+            options=["mounted", "docked", "empty"], icon="mdi:printer-3d-nozzle",
+            exists_fn=_is_h3c,
+            value_fn=lambda self, sid=_slot: (
+                "mounted" if self.coordinator.get_model().hotend_rack.mounted_slot_id == sid
+                else "docked" if self.coordinator.get_model().hotend_rack.is_slot_occupied(sid)
+                else "empty"
+            ),
+            extra_attributes=lambda self, sid=_slot: {
+                "tool": sid - 15,
+                **self.coordinator.get_model().hotend_rack.filament_attributes(sid),
+                "nozzle_diameter": self.coordinator.get_model().hotend_rack.hotends[sid].diameter,
+                "nozzle_type": self.coordinator.get_model().hotend_rack.hotends[sid].type_name,
+                "nozzle_type_code": self.coordinator.get_model().hotend_rack.hotends[sid].type_code,
+                "max_temperature": self.coordinator.get_model().hotend_rack.hotends[sid].tm,
+                "serial": self.coordinator.get_model().hotend_rack.hotends[sid].serial,
+                "filament_id": self.coordinator.get_model().hotend_rack.hotends[sid].fila_id,
+                "color": "#" + self.coordinator.get_model().hotend_rack.hotends[sid].color_m,
+                "wear": self.coordinator.get_model().hotend_rack.hotends[sid].wear,
+                "status_raw": self.coordinator.get_model().hotend_rack.hotends[sid].stat,
+            },
+        ),
+    )
+    for _suffix, _label, _attribute, _unit, _class in (
+        ("temperature", "Temperature", "temperature", UnitOfTemperature.CELSIUS, SensorDeviceClass.TEMPERATURE),
+        ("target_temperature", "Target temperature", "target_temperature", UnitOfTemperature.CELSIUS, SensorDeviceClass.TEMPERATURE),
+        ("used_time", "Print time", "print_time", UnitOfTime.HOURS, SensorDeviceClass.DURATION),
+    ):
+        HOTEND_RACK_HOTEND_SENSORS += (
+            BambuLabHotendRackSensorEntityDescription(
+                key=f"printtool_{_number}_{_suffix}", name=f"PrintTool {_number} {_label}",
+                hotend_id=_slot, native_unit_of_measurement=_unit, device_class=_class,
+                exists_fn=_is_h3c,
+                value_fn=lambda self, sid=_slot, attr=_attribute: (
+                    round(self.coordinator.get_model().hotend_rack.hotends[sid].print_time / 3600, 2)
+                    if attr == "print_time"
+                    else getattr(self.coordinator.get_model().hotend_rack.hotends[sid], attr)
+                ),
+            ),
+        )
+
+
+@dataclass
+class BambuLabMakerWorldSensorEntityDescription(
+    SensorEntityDescription, BambuLabSensorEntityDescriptionMixin
+):
+    """Sensor entity description for the account level MakerWorld stats."""
+
+    extra_attributes: Callable[..., dict] = lambda _: {}
+
+
+# Points and boost tokens come from the two authenticated endpoints and report
+# unavailable if those fail; everything else comes from the public profile.
+#
+# MakerWorld splits downloads and prints between designs (the model itself) and
+# instances (an individual print profile, which may sit on someone else's
+# model). The profile page counts only the design half, so that is what the
+# default sensors report - checked against a live profile, where a
+# myDesignDownloadCount of 4200 is the "4.2 k" the page prints. The instance half
+# and the combined total are available too, off by default.
+MAKERWORLD_SENSORS: tuple[BambuLabMakerWorldSensorEntityDescription, ...] = (
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_downloads",
+        translation_key="makerworld_downloads",
+        icon="mdi:download",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda self: self.profile.design_downloads,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_downloads_total",
+        translation_key="makerworld_downloads_total",
+        icon="mdi:download-multiple",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
+        value_fn=lambda self: self.profile.total_downloads,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_instance_downloads",
+        translation_key="makerworld_instance_downloads",
+        icon="mdi:download",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
+        value_fn=lambda self: self.profile.instance_downloads,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_prints",
+        translation_key="makerworld_prints",
+        icon="mdi:printer-3d",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda self: self.profile.design_prints,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_prints_total",
+        translation_key="makerworld_prints_total",
+        icon="mdi:printer-3d-nozzle",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
+        value_fn=lambda self: self.profile.total_prints,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_instance_prints",
+        translation_key="makerworld_instance_prints",
+        icon="mdi:printer-3d",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
+        value_fn=lambda self: self.profile.instance_prints,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_designs",
+        translation_key="makerworld_designs",
+        icon="mdi:cube-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda self: self.profile.designs,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_likes",
+        translation_key="makerworld_likes",
+        icon="mdi:thumb-up",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda self: self.profile.likes,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_collections",
+        translation_key="makerworld_collections",
+        icon="mdi:bookmark-multiple",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda self: self.profile.collections,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_followers",
+        translation_key="makerworld_followers",
+        icon="mdi:account-group",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda self: self.profile.followers,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_following",
+        translation_key="makerworld_following",
+        icon="mdi:account-multiple-plus",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_registry_enabled_default=False,
+        value_fn=lambda self: self.profile.following,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_points",
+        translation_key="makerworld_points",
+        icon="mdi:cash-multiple",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda self: self.profile.points,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_points_earned",
+        translation_key="makerworld_points_earned",
+        icon="mdi:cash-plus",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda self: self.profile.points_earned,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_points_spent",
+        translation_key="makerworld_points_spent",
+        icon="mdi:cash-minus",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
+        value_fn=lambda self: self.profile.points_spent,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_points_exclusive",
+        translation_key="makerworld_points_exclusive",
+        icon="mdi:cash-multiple",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_registry_enabled_default=False,
+        value_fn=lambda self: self.profile.points_exclusive,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_boosts_received",
+        translation_key="makerworld_boosts_received",
+        icon="mdi:rocket-launch-outline",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda self: self.profile.boosts_received,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_boost_tokens",
+        translation_key="makerworld_boost_tokens",
+        icon="mdi:rocket-launch",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda self: self.profile.boost_tokens,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_boosts_used",
+        translation_key="makerworld_boosts_used",
+        icon="mdi:rocket",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
+        value_fn=lambda self: self.profile.boosts_used,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_boosts_expired",
+        translation_key="makerworld_boosts_expired",
+        icon="mdi:rocket-outline",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
+        value_fn=lambda self: self.profile.boosts_expired,
+    ),
+    BambuLabMakerWorldSensorEntityDescription(
+        key="makerworld_level",
+        translation_key="makerworld_level",
+        icon="mdi:trophy-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda self: self.profile.level,
+        extra_attributes=lambda self: {
+            "profile_name": self.profile.name,
+            "profile_url": self.profile.profile_url,
+        },
+    ),
+)
+
+_MQTT_SUPPORT_TYPES = {
+    "PLA-S": "Sup.PLA",
+    "PA-S": "Sup.PA",
+    "ABS-S": "Sup.ABS",
+}
+_CHEMICAL_SUPPORT_TYPES = {
+    "PLA": "Sup.PLA",
+    "PA": "Sup.PA",
+    "ABS": "Sup.ABS",
+}
+
+def _get_display_filament_type(filament_id: str | None, tray_type: str | None) -> str:
+    """Map MQTT tray_type to Bambu Studio display names using FILAMENT_DATA."""
+    tray_type = tray_type or ""
+    if tray_type in _MQTT_SUPPORT_TYPES:
+        return _MQTT_SUPPORT_TYPES[tray_type]
+    if filament_id and FILAMENT_DATA.get(filament_id, {}).get("filament_is_support"):
+        return _CHEMICAL_SUPPORT_TYPES.get(tray_type, tray_type)
+    return tray_type

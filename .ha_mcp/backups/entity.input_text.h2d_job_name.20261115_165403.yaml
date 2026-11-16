@@ -1,0 +1,25 @@
+# ha_mcp_backup
+schema_version: 1
+domain: entity
+entity_id: input_text.h2d_job_name
+captured: '2026-11-15T16:54:03.534909+00:00'
+tool: ha_set_entity
+config:
+  id: 6f274da889c2a978491c6466eeeec82e
+  entity_id: input_text.h2d_job_name
+  name: null
+  icon: null
+  area_id: null
+  device_class: null
+  aliases:
+  - null
+  labels:
+  - 3d_printer
+  categories: {}
+  hidden_by: null
+  disabled_by: null
+  options:
+    conversation:
+      should_expose: false
+    collection:
+      hash: 40a5cd1bae6bce61352b4475156be99c

@@ -1,0 +1,16 @@
+# ha_mcp_backup
+schema_version: 1
+domain: helper_input_number
+entity_id: h2d_seneste_print_pris
+captured: '2026-11-15T16:47:06.437172+00:00'
+tool: ha_config_set_helper
+config:
+  id: h2d_seneste_print_pris
+  name: H2D Seneste print pris
+  icon: mdi:currency-usd
+  min: 0.0
+  max: 100000.0
+  step: 0.0001
+  mode: box
+  unit_of_measurement: kr
+  registry_icon: null

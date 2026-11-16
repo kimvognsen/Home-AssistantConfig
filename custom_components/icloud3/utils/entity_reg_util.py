@@ -1,15 +1,17 @@
 from ..global_variables import GlobalVariables as Gb
 from ..const            import (PLATFORMS, PLATFORM_DEVICE_TRACKER, PLATFORM_SENSOR,
-                                DOMAIN, SENSOR, ICLOUD3,
+                                DOMAIN, SENSOR, ICLOUD3, DEVICE_TRACKER_DOT,
                                 CONF_DEVICES, CONF_TRACKING_MODE, INACTIVE,
-                                BASE, CONF_EXCLUDED_SENSORS, )
+                                CONF_IC3_DEVICENAME,
+                                BASE, CONF_EXCLUDED_SENSORS, RARROW, )
 from ..const_sensor     import (ICLOUD3_INTERNAL_SENSORS_ID, SENSOR_DEFINITION, )
 from .utils             import (instr, is_empty, isnot_empty, dict_del,
                                 list_add, list_del, list_to_str, set_to_list, )
-from .messaging         import (log_info_msg, log_debug_msg, log_exception, log_debug_msg,
-                                log_error_msg, log_data,
+from .messaging         import (log_info_msg, log_debug_msg, log_exception,
+                                log_error_msg,
+                                _run_in_event_loop,
                                 _evlog, _log, )
-from .time_util         import (secs_to_time, time_now_secs, )
+from .time_util         import (secs_to_time, time_now_secs, secs_to_yymmdd_hhmm, )
 
 from ..startup          import config_file
 
@@ -31,62 +33,111 @@ def async_handle_update_device_registry(event: dr.EventDeviceRegistryUpdatedData
     Handle device registry updates:
 
     When a device is disabled on the integrations screen by the user:
-        entity_registry:
-        1.  All of the device's sensors are moved to the deleted_entity dict. This
-            fires the sensor handler below.
-        2.  The device_tracker entity dsabled_by is set to 'device' and moved to
-            the deleted_sensors dict.
-
         device_registry:
-        3.  The device_tracker disabled_by is set to 'user' and moved to the
-            deleted_devices dict.
+        1.  The device's disabled_by is set to 'user'. The device stays in the active
+            device registry, it is not moved to the deleted_devices dict.
 
-        iCloud3 configuration:
-        1.  The device is set to 'Inactive'.
-        2.  iCloud3 is restarted.
+        entity_registry (HA does this before this handler is called):
+        2.  The disabled_by of every one of the device's entities is set to 'device'.
+            That fires the sensor handler below, which removes them.
+
+        iCloud3:
+        3.  The iCloud3 configuration is not changed. The Tracking Mode is left alone.
+        4.  iCloud3 is restarted. `set_ha_device_id_x_devicename` rereads the device
+            registry, `Gb.ha_disabled_by_by_devicename` is rebuilt from it, and the
+            Device, it's device_tracker and it's sensors are not recreated.
+
+    Enabling the device is the same in reverse. Nothing is remembered between the two -
+    the device registry itself is the only record of who is disabled.
+
+    The device_entry `disabled_by` value is what identifies who requested the change.
+    This is the only reliable way to tell a user request from iCloud3 housekeeping - the
+    device_tracker entity's `_on_remove` callback fires for every removal (unload,
+    reload, shutdown, an entity_id rename) and carries no such information:
+        user .......... the user disabled the device on the Integrations screen
+        config_entry .. the config entry was disabled
+        integration ... iCloud3 or HA disabled it
+
+    A device deleted (not disabled) on the Integrations screen does not come through
+    here at all - HA calls __init__.async_remove_config_entry_device for that.
     '''
 
     try:
         action      = event.data['action']
         device_id   = event.data['device_id']
         device_data = get_device(device_id)
+        devicename  = Gb.ha_device_id_x_devicename.get(device_id)
 
-        if (device_data is None
-                or device_data.primary_config_entry != Gb.config_entry_id):
-            return
+        log_debug_msg(  f"Update Device Reg Handler > "
+                        f"Action-{action}, "
+                        f"DeviceId-{device_id[:8]}, "
+                        f"Device-{devicename}")
 
         # Being deleted by iCloud3 Config Flow, cancel listener handler
         if (Gb.OptionsFlowHandler and Gb.OptionsFlowHandler.is_deleting_device):
-            return
-        if Gb.was_icloud3_reloaded:
-            return
-
-        Device = Gb.Devices_by_ha_device_id.get(device_id)
-        if Device is None:
+            log_debug_msg('Update Device Reg Handler > Ignored, Config Flow is deleting the device')
             return
 
-        devicename = Device.devicename
+        # iCloud3 is adding it's own device_tracker entities, which updates the device
+        # registry. These are not user requests.
+        if Gb.is_icloud3_startup_inprocess:
+            log_debug_msg('Update Device Reg Handler > Ignored, iCloud3 startup is in process')
+            return
 
-        log_debug_msg(  f'Device Registry Update ({device_id[:8]}) > Action-{action}, Device-{devicename}, '
-                        f'Name-{device_data.name}, DisabledBy-{device_data.disabled_by}')
+        if devicename is None:
+            log_debug_msg('Update Device Reg Handler > Ignored, Not an iCloud3 device')
+            return
 
-        if action == "update":
-            # If disabled_by is now None, it was just enabled and HA will
-            # schedule an icloud3 reload
-            if (Gb.is_icloud3_startup_inprocess is False
-                    and device_data.disabled_by is None):
-                Gb.icloud3_reload_requested = True
-                Gb.icloud3_reload_requested_secs = time_now_secs() + 30
+        Device = Gb.Devices_by_devicename.get(devicename)
 
-            if device_data.disabled_by is not None:
-                if Device.DeviceTracker is None:
-                    remove_from_active_and_deleted_device_registry(device_id)
-                    clear_device_gb_dicts(device_id)
+        # The device registry entry is gone on a 'remove' so there is no device_data to
+        # check. Pause tracking and restart to rebuild everything without it.
+        if action == "remove":
+            log_info_msg(f'Device Registry Update > {devicename}, Action-{action}')
 
-        elif action == "remove":
-            Device.pause_tracking()
+            for _Device in Gb.Devices:
+                _Device.pause_tracking()
 
             Gb.was_icloud3_restart_requested = True
+            return
+
+        if (device_data is None
+                or device_reg_config_entry_id(device_data) != Gb.config_entry_id):
+            log_debug_msg('Update Device Reg Handler > Ignored, Not this iCloud3 config entry')
+            return
+
+        disabled_by = device_data.disabled_by
+
+        log_info_msg(  f'Device Registry Update > {devicename}, Action-{action}, '
+                        f'Name-{device_data.name}, DisabledBy-{disabled_by}')
+
+        if action != "update":
+            return
+
+        # Only a disabled_by change is of interest here. Any other update (name,
+        # area, identifiers, the entity_id repair, etc) is not.
+        if 'disabled_by' not in event.data.get('changes', {}):
+            log_debug_msg('Update Device Reg Handler > Ignored, disabled_by did not change')
+            return
+
+        # It was just enabled and HA will schedule an icloud3 reload. Setting
+        # icloud3_reload_requested keeps async_unload_entry from tearing down the
+        # DeviceTracker and Sensor objects when that reload runs.
+        if disabled_by is None:
+            Gb.icloud3_reload_requested      = True
+            Gb.was_icloud3_restart_requested = True
+
+        # The user disabled the device on the Integrations screen. This is the only
+        # disabled_by value that means the user asked for it. Restart iCloud3
+        # to detect the disabled device.
+        elif disabled_by == dr.DeviceEntryDisabler.USER:
+            Gb.was_icloud3_restart_requested = True
+
+        # CONFIG_ENTRY/INTEGRATION - iCloud3 or HA housekeeping, not a user request.
+        # Do not change the iCloud3 configuration and do not restart.
+        elif Device and Device.DeviceTracker is None:
+            remove_device(device_id)
+            clear_device_gb_dicts(device_id)
 
     except Exception as err:
         log_exception(err)
@@ -122,38 +173,40 @@ def async_handle_update_entity_registry(event: er.EventEntityRegistryUpdatedData
                 or entity_data.config_entry_id != Gb.config_entry_id):
             return
 
-        devicename_sensor = entity_id_base(entity_id)
-        devicename, sensor_base = get_devicename_sensor_base(devicename_sensor)
-        log_debug_msg(f'Sensor Entity Registry ({entity_id}) > Action-{action}')
-
-        Sensor = Gb.Sensors_by_devicename_sensor.get(devicename_sensor)
+        log_info_msg(f'Sensor Entity Registry ({entity_id}), {action.title()}')
 
         # Being deleted by iCloud3, ignore event
         if Gb.OptionsFlowHandler and Gb.OptionsFlowHandler.is_deleting_device:
             return
 
-        scan_entity_reg_for_icloud3_items()
-
         if action == "update":
+            # Only a disabled_by change is of interest here. Any other update (an
+            # entity_id rename by the `_2` suffix repair, name, icon, area, etc) is not.
+            if 'disabled_by' not in event.data.get('changes', {}):
+                return
+
+            scan_entity_reg_for_icloud3_items()
+            disabled_by = entity_data.disabled_by
+
             # If disabled_by is now None, it was just enabled and HA will schedule a restart
-            if entity_data.disabled_by is None:
+            if disabled_by is None:
                 Gb.icloud3_reload_requested = True
-                Gb.icloud3_reload_requested_secs = time_now_secs() + 30
                 _remove_disabled_entity_from_excluded_sensor_list(entity_data)
+                return
 
-            if entity_data.disabled_by is not None:
-                device_id = entity_data.device_id
+            # Only a USER disabling this one sensor on it's entity settings screen means
+            # it should not be recreated. DEVICE/CONFIG_ENTRY/INTEGRATION are cascades
+            # from the device being disabled - leave the excluded sensor list alone.
+            if entity_id.startswith(PLATFORM_DEVICE_TRACKER):
+                devicename = entity_id.replace(DEVICE_TRACKER_DOT, '')
 
-                # If deleting the device, it's Device.DeviceTracker variable
-                # is set to None. If deleting only a sensor from a device and the
-                #  device is still tracking other sensors, add this sensor to
-                # the excluded list so u will not be created on the next restart.
-                Device = Gb.Devices_by_devicename.get(devicename)
-                if Device and Device.DeviceTracker is not None:
-                    _add_disabled_entity_to_excluded_sensor_list(entity_data)
+            log_info_msg(f'Device Entity Registry ({entity_id}), '
+                                f'Disabled by {disabled_by}')
+            if disabled_by == er.RegistryEntryDisabler.USER:
+                _add_disabled_entity_to_excluded_sensor_list(entity_data)
 
-                remove_from_active_and_deleted_entity_registry(entity_id)
-                clear_sensor_gb_dicts(entity_id)
+            remove_from_active_and_deleted_entity_registry(entity_id)
+            clear_sensor_gb_dicts(entity_id)
 
         elif action == "remove":
             pass
@@ -161,6 +214,11 @@ def async_handle_update_entity_registry(event: er.EventEntityRegistryUpdatedData
     except Exception as err:
         log_exception(err)
 
+#................................................................................
+def get_devices_reg_devices():
+    extract_icloud3_device_registry_items(scan_active_items=True)
+
+    return
 #................................................................................
 def _add_disabled_entity_to_excluded_sensor_list(entity_data):
 
@@ -179,14 +237,21 @@ def _remove_disabled_entity_from_excluded_sensor_list(entity_data):
     entity_id = entity_data.entity_id
     devicename_sensor = entity_id_base(entity_id)
 
+    # Only write the configuration file if the sensor was really in the excluded list.
+    # HA reenables every sensor of a device when the device is reenabled and this is
+    # called for each one of them.
+    excluded_list_changed = False
     for excluded_item in Gb.conf_sensors[CONF_EXCLUDED_SENSORS].copy():
         if instr(excluded_item, devicename_sensor):
             list_del(Gb.conf_sensors[CONF_EXCLUDED_SENSORS], excluded_item)
+            excluded_list_changed = True
             break
 
     # list_del(Gb.conf_device_sensors[CONF_EXCLUDED_SENSORS], excluded_item)
 
-    config_file.write_icloud3_configuration_file()
+    if excluded_list_changed:
+        config_file.rebuild_excluded_sensors_fname_sensors_list()
+        config_file.write_icloud3_configuration_file()
 
 #-------------------------------------------------------------------------------------------
 def enable_disabled_device(device_id):
@@ -200,14 +265,38 @@ def enable_disabled_device(device_id):
     try:
         device_reg = dr.async_get(Gb.hass)
         device_data = device_reg.async_get(device_id)
+        devicename = Gb.ha_device_id_x_devicename.get(device_id, device_id[:8])
+
+        # async_update_device is an HA @callback, it must run in the event loop
         if device_data.disabled_by is not None:
-            device_reg.async_update_device(device_id, disabled_by=None)
+            _run_in_event_loop(device_reg.async_update_device, device_id, disabled_by=None)
+            log_info_msg(f"Device Tracker Entity ({devicename}), Enabled Device")
             return True
 
     except Exception as err:
+        log_exception(err)
         pass
 
     return False
+#-------------------------------------------------------------------------------------------
+def update_device_model(devicename, raw_model):
+    '''
+    Update the model in the HA device registry (Settings > Devices) when the Device
+    now tracks a newer Apple device. The device_tracker's device_info model is only
+    used when HA adds the device.
+    '''
+    ha_device_id = Gb.ha_device_id_x_devicename.get(devicename)
+    if ha_device_id is None:
+        return
+
+    try:
+        device_reg = dr.async_get(Gb.hass)
+        _run_in_event_loop(device_reg.async_update_device, ha_device_id, model=raw_model)
+        log_info_msg(f"Device Registry Update > {devicename}, Model-{raw_model}")
+
+    except Exception as err:
+        log_exception(err)
+
 #-------------------------------------------------------------------------------------------
 def enable_disabled_entity(entity_id):
     '''
@@ -220,8 +309,9 @@ def enable_disabled_entity(entity_id):
     try:
         entity_reg  = er.async_get(Gb.hass)
         entity_data = entity_reg.async_get(entity_id)
+        # async_update_entity is an HA @callback, it must run in the event loop
         if entity_data.disabled_by is not None:
-            entity_reg.async_update_entity(entity_id, disabled_by=None)
+            _run_in_event_loop(entity_reg.async_update_entity, entity_id, disabled_by=None)
             return True
 
     except Exception as err:
@@ -264,10 +354,7 @@ def async_delete_device_and_entities(device_id):
     for entity in entities:
         entity_reg.async_remove(entity.entity_id, force_remove=True)
 
-    # Optionally also remove the device completely
-    device_reg = dr.async_get(Gb.hass)
-    device_reg.async_remove_device(device_id)
-
+    dev_reg_remove_device_handler(device_id)
 
 
 #-------------------------------------------------------------------------------------------
@@ -296,13 +383,9 @@ async def async_cleanup_orphaned_entities():
         if is_orphaned:
             entity_reg.async_remove(entity.entity_id, force_remove=True)
 
-
-
-
-# Automatic Cleanup on Config Entry Removal
+#-------------------------------------------------------------------------------------------
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-# async def async_unload_entry(hass: HomeAssistant, entry) -> bool:
-    """Unload a config entry."""
+    """Unload a config entry. Automatic Cleanup on Config Entry Removal"""
 
     # Your normal unload logic...
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
@@ -320,7 +403,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # Remove all devices for this config entry
         devices = dr.async_entries_for_config_entry(device_reg, Gb.config_entry_id)
         for device in devices:
-            device_reg.async_remove_device(device.id)
+            dev_reg_remove_device_handler(device.id)
 
     return unload_ok
 
@@ -373,11 +456,16 @@ def remove_from_active_and_deleted_entity_registry(entity_id):
     '''
     Remove the entity registry active and deleted dict
     '''
-    log_debug_msg(f'Sensor Entity Registry Update ({entity_id}) > Remove from Active & Deleted List')
+    log_info_msg(f'Sensor Entity Registry ({entity_id}), Remove from Active & Deleted List')
 
     remove_sensor(entity_id)
     remove_deleted_entity(entity_id)
 
+
+#................................................................................
+def remove_Sensor_and_clear_dicts(entity_id):
+    remove_sensor(entity_id)
+    clear_sensor_gb_dicts(entity_id)
 
 #................................................................................
 def clear_sensor_gb_dicts(entity_id, force_clear=False):
@@ -460,8 +548,52 @@ def get_assigned_sensor_entity(unique_id):
         return None
 
 #................................................................................
+def repair_entity_id_before_add(platform, unique_id, entity_id_base):
+    '''
+    HA assigns a `_2` suffixed entity_id (or a device-name prefixed one) when the
+    entity_id iCloud3 wants is already taken in the entity registry. Rename the registry
+    entry to the wanted id BEFORE the entity is added to HA so HA creates it with the
+    correct id.
+
+    Renaming it after it has been added makes HA remove and re-add the entity, which
+    fires the entity's `_on_remove` callbacks for what is really iCloud3 housekeeping.
+
+    device_tracker.ipad_mini_2 --> device_tracker.ipad_mini
+
+    Returns True if the entity_id was repaired
+    '''
+    try:
+        entity_reg = er.async_get(Gb.hass)
+        current_entity_id = entity_reg.async_get_entity_id(platform, DOMAIN, unique_id)
+
+        if current_entity_id is None or current_entity_id == entity_id_base:
+            return False
+
+        # Free up the wanted entity_id. HA rejects the rename if it is taken by another
+        # entity in the registry or if it is still in hass.states. Both are cleared here
+        # rather than with `remove_sensor` - that clears hass.states with a
+        # fire-and-forget executor job that will not have finished before the rename.
+        if entity_reg.async_get(entity_id_base):
+            entity_reg.async_remove(entity_id_base)
+
+        if Gb.hass.states.async_available(entity_id_base) is False:
+            Gb.hass.states.async_remove(entity_id_base)
+
+        entity_reg.async_update_entity(current_entity_id, new_entity_id=entity_id_base)
+
+        extn = current_entity_id.replace(entity_id_base, '')
+        log_info_msg(   f'Entity Registry Repaired > {current_entity_id}'
+                        f'{RARROW}{entity_id_base} (×{extn})')
+        return True
+
+    except Exception as err:
+        log_exception(err)
+        return False
+
+#................................................................................
 def change_entity_id(from_entity_id, to_entity_id):
     try:
+
         entity_reg = er.async_get(Gb.hass)
         entity_reg.async_update_entity(from_entity_id, new_entity_id=to_entity_id)
     except KeyError:
@@ -495,6 +627,62 @@ def is_entity_available(entity_id):
 #   DEVICE REGISTRY MAINTENANCE FUNCTIONS
 #
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+def device_reg_devices(device_reg):
+    '''
+    Return a list with all of the active device registry items (DeviceEntry items).
+
+    HA-2026.9 deprecated using `device_reg.devices` as a dictionary (.items(), .keys(),
+    .values(), [device_id] and `device_id in devices`) and it is removed in HA-2027.9. It is
+    now a view that returns the DeviceEntry items when it is iterated. HA versions before
+    2026.9 return a dictionary that returns the device_id keys when it is iterated.
+    '''
+    devices = list(device_reg.devices)
+
+    # Before HA-2026.9, iterating the dictionary returns the device_id keys
+    if devices and isinstance(devices[0], str):
+        devices = [device_reg.async_get(device_id) for device_id in devices]
+
+    return [device_data for device_data in devices if device_data]
+
+#............................................................................................
+def device_reg_config_entry_id(device_data):
+    '''
+    Return the config entry id the device registry item (DeviceEntry or DeletedDeviceEntry)
+    belongs to, or None if it does not belong to one.
+
+    HA now limits a device to a single config entry, available as `config_entry_id`.
+    Accessing the `config_entries` set is deprecated and it is removed in HA-2027.10. Older
+    HA versions do not have `config_entry_id` and only have the `config_entries` set.
+    '''
+    # Reading `config_entry_id` does not log the deprecation message, only `config_entries`
+    if hasattr(device_data, 'config_entry_id'):
+        return device_data.config_entry_id
+
+    config_entries = set_to_list(device_data.config_entries)
+
+    return config_entries[0] if config_entries else None
+
+#............................................................................................
+def device_reg_deleted_devices(device_reg):
+    '''
+    Return the deleted device registry container (device_id --> DeletedDeviceEntry), or None
+    if HA no longer has one.
+
+    HA does not have a public interface for the deleted devices. HA-2026.9 deprecated the
+    `device_reg.deleted_devices` property (accessing it logs a message saying it is an
+    internal implementation detail) and it is removed in HA-2027.9. The internal
+    `_deleted_devices` container it returns is unchanged and is what HA itself uses. Use that
+    container when it is there so nothing is logged, fall back to the property for HA
+    versions before 2026.9 (where the container is named `deleted_devices` and logs nothing)
+    and return None if HA drops it completely.
+    '''
+    deleted_devices = getattr(device_reg, '_deleted_devices', None)
+    if deleted_devices is None:
+        deleted_devices = getattr(device_reg, 'deleted_devices', None)
+
+    return deleted_devices
+
+#............................................................................................
 def get_device(device_id):
     try:
         device_reg = dr.async_get(Gb.hass)
@@ -503,48 +691,97 @@ def get_device(device_id):
     except:
         return None
 
+#-------------------------------------------------------------------------------------------
+# def remove_from_active_and_deleted_device_registry(device_id):
+#     """ Remove entity/device from registry """
+
+#     remove_device(device_id)
+#     remove_deleted_device(device_id)
+
 #............................................................................................
 def remove_device(device_id):
+    '''
+    Remove the device from the device registry (HA moves it to the deleted devices list)
+    Then remove it from the deleted_device list
+
+    Change the identifiers before it is removed. HA copies the identifiers to the deleted
+    device item and matches on them (nothing else - not the name, model, area or device_id) to
+    decide if a device being added back is really this device. If they match, HA restores this
+    device instead of creating a new one. Changing them to a devicename iCloud3 will never
+    generate keeps the device from being reused if the same devicename is set up again.
+    '''
     try:
-        device_reg = dr.async_get(Gb.hass)
-        if device_id in device_reg.devices:
-            device_reg.async_remove_device(device_id)
+        device_reg  = dr.async_get(Gb.hass)
+        device_data = device_reg.async_get(device_id)
+        if device_data is None:
+            return
+
+        domain, devicename = _get_domain_devicename(device_data)
+        if domain == DOMAIN:
+            # Changing the identifiers is a nice-to-have, always remove the device even if
+            # HA rejects the change
+            try:
+                removed_devicename = f'{devicename}~removed~{secs_to_yymmdd_hhmm()}'
+                device_reg.async_update_device(device_id,
+                                        new_identifiers={(DOMAIN, removed_devicename)})
+
+                log_info_msg(f'Device Registry Update > {devicename}, '
+                                f'Change Identifier to prevent reuse, '
+                                f'{removed_devicename}')
+
+            except Exception as err:
+                log_exception(err)
+
+        log_info_msg(f'Device Registry Update > {devicename}, Remove from Active List')
+
+        dev_reg_remove_device_handler(device_id)
+
+        # Remove device from deleted list
+        remove_deleted_device(device_id, devicename)
 
     except Exception as err:
         log_exception(err)
 
 #................................................................................
-def remove_deleted_device(device_id):
+def dev_reg_remove_device_handler(device_id):
+    # All dr.async_remove_device calls routed through here
+
+    device_reg = dr.async_get(Gb.hass)
+    device_reg.async_remove_device(device_id)
+
+#................................................................................
+def remove_deleted_device(device_id, devicename=None):
     try:
-        device_reg = dr.async_get(Gb.hass)
-        if device_id in device_reg.deleted_devices:
-            deleted_entity = device_reg.deleted_devices.pop(device_id, None)
-            device_reg.async_schedule_save()
+        device_reg      = dr.async_get(Gb.hass)
+        deleted_devices = device_reg_deleted_devices(device_reg)
+
+        if deleted_devices is None or device_id not in deleted_devices:
+            return
+
+        devicename = devicename or device_id[:8]
+
+        log_info_msg(f'Device Registry Update > {devicename}, Remove from Deleted List')
+
+        deleted_devices.pop(device_id, None)
+        device_reg.async_schedule_save()
 
     except Exception as err:
         log_exception(err)
         pass
 
 #-------------------------------------------------------------------------------------------
-def remove_from_active_and_deleted_device_registry(device_id):
-    """ Remove entity/device from registry """
-
-    log_debug_msg(f'Device Registry Update ({device_id[:8]}) > Remove from Active & Deleted List')
-
-    remove_device(device_id)
-    remove_deleted_device(device_id)
-
-#-------------------------------------------------------------------------------------------
 def clear_device_gb_dicts(device_id):
-    update_ha_device_id_by_devicename()
+    # Get the devicename before rebuilding the dictionary. This is called after the device
+    # has been removed from the device registry, so the rebuild will not contain it.
+    devicename = Gb.ha_device_id_x_devicename.get(device_id)
 
-    if device_id not in Gb.devicename_by_ha_device_id:
+    set_ha_device_id_x_devicename()
+
+    if devicename is None:
         return
 
-    devicename = Gb.devicename_by_ha_device_id[device_id]
-
-    dict_del(Gb.devicename_by_ha_device_id, device_id)
-    dict_del(Gb.ha_device_id_by_devicename, devicename)
+    dict_del(Gb.ha_device_id_x_devicename, device_id)
+    dict_del(Gb.ha_device_id_x_devicename, devicename)
 
     if devicename in Gb.DeviceTrackers_by_devicename:
         DeviceTracker = Gb.DeviceTrackers_by_devicename[devicename]
@@ -559,15 +796,92 @@ def clear_device_gb_dicts(device_id):
 #    UPDATE VARIOUS DEVICE AND ENTITY REGISTRY INTERNAL DICTIONARIES
 #
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+def set_ha_device_id_x_devicename():
+    '''
+    Cycle thru the conf_devices and rebuild:
+        - Gb.ha_device_id_x_devicename ... devicename <--> device_id, both directions
+        - Gb.ha_disabled_by_by_devicename  devicename --> disabled_by, for the devices
+                                           that are disabled in the HA device registry
+
+    Both dictionaries are rebuilt from scratch every time. Updating them in place left
+    the device_id of a device that had been deleted and recreated, and the disabled_by
+    of a device that had been reenabled, in the dictionaries.
+    '''
+    ha_device_id_x_devicename       = {}
+    Gb.ha_disabled_by_by_devicename = {}
+    device_reg_data_by_devicename   = get_icloud3_device_registry_items()
+
+    for conf_device in Gb.conf_devices:
+        devicename = conf_device.get(CONF_IC3_DEVICENAME)
+        if devicename in [None, '']:
+            continue
+
+        # A device that is not in the device registry has not been added to HA yet. It is
+        # not disabled - it's device_tracker entity has not been created for the first time.
+        dev_reg_data = device_reg_data_by_devicename.get(devicename)
+        if dev_reg_data is None:
+            continue
+
+        device_id = dev_reg_data['device_id']
+        ha_device_id_x_devicename[devicename] = device_id
+        ha_device_id_x_devicename[device_id]  = devicename
+
+        dr_disabled_by = dev_reg_data['disabled_by']
+        if dr_disabled_by is not None:
+            Gb.ha_disabled_by_by_devicename[devicename] = dr_disabled_by
+
+    Gb.ha_device_id_x_devicename = ha_device_id_x_devicename
+
+    # log_debug_msg(f'Device Registry > DeviceIds-{Gb.ha_device_id_x_devicename}')
+    # log_debug_msg(f'Device Registry > Disabled-{Gb.ha_disabled_by_by_devicename}')
+
+#--------------------------------------------------------------------
+def get_icloud3_device_registry_items():
+    '''
+    Return the device_id and disabled_by value of every iCloud3 device in the active
+    device registry.
+
+        {devicename: {'device_id': device_id, 'disabled_by': None/user/config_entry/...}}
+
+    This reads the device registry itself rather than the Gb.entity_reg_items_by_status
+    dictionary. That dictionary is only added to, never cleaned up, so a device that
+    moved from one status to another (disabled --> active when the user reenables it)
+    was still in it's old status group and the stale item was returned instead of the
+    current one.
+
+    The deleted devices are not scanned. A deleted device is not disabled, it is gone,
+    and it will be recreated when the device_tracker entity is added back.
+    '''
+    dev_reg_by_devicename = {}
+
+    try:
+        device_reg = dr.async_get(Gb.hass)
+
+        for device_data in device_reg_devices(device_reg):
+            if _is_icloud3_device_recd(device_data) is False:
+                continue
+
+            # An orphan left over from an earlier iCloud3 config entry. HA will create a
+            # new device registry item for this device when it's device_tracker is added.
+            if device_reg_config_entry_id(device_data) != Gb.config_entry_id:
+                continue
+
+            domain, devicename = _get_domain_devicename(device_data)
+            disabled_by        = device_data.disabled_by
+
+            dev_reg_by_devicename[devicename] = {
+                        'device_id':   device_data.id,
+                        'disabled_by': disabled_by.value if disabled_by else None}
+
+    except Exception as err:
+        log_exception(err)
+
+    return dev_reg_by_devicename
 
 #-------------------------------------------------------------------------------------------
-def update_ha_device_id_by_devicename():
-    '''
-    Get the device_id by devicename from the device_registry
-    '''
-    extract_icloud3_device_registry_items(scan_active_items=True)
-    Gb.ha_device_id_by_devicename = \
-        extract_item_from_device_reg_items('active', 'device_id', PLATFORM_DEVICE_TRACKER)
+# `update_ha_device_id_x_devicename` was removed. It assigned the device registry data
+# dictionary returned by `get_icloud3_device_registry_items` to Gb.ha_device_id_x_devicename,
+# which holds devicename <--> device_id items. Use `set_ha_device_id_x_devicename` instead.
 
 #-------------------------------------------------------------------------------------------
 def update_ha_area_id_by_devicename():
@@ -586,7 +900,7 @@ def extract_item_from_device_reg_items(status, data_item, platform):
     for each devicename.
 
     status: active, disabled, etc
-    data_item: field to extract ()'device_id', 'entity_id', etc)
+    data_item: field to extract ('device_id', 'entity_id', etc)
     platform: device_tracker, sensor
     '''
     ic3_entity_items_dict = Gb.entity_reg_items_by_status
@@ -605,12 +919,12 @@ def device_sensors(devicename):
     Cycle the non-deleted statuses and get a list of all sensors belonging
     to a devicename.
     '''
-    if devicename not in Gb.ha_device_id_by_devicename:
+    if devicename not in Gb.ha_device_id_x_devicename:
         return []
 
     entity_reg_items = Gb.entity_reg_items_by_status
 
-    device_id = Gb.ha_device_id_by_devicename[devicename]
+    device_id = Gb.ha_device_id_x_devicename[devicename]
     device_sensors = [reg_data['entity_id']
                             for status, devicename_sensors in entity_reg_items.items()
                             if status.startswith('delete') is False
@@ -732,7 +1046,8 @@ def combine_device_tracker_deleted_device_and_sensor_items():
     del ['deleted_sensors'][devicename][*gary_iphone]
     '''
     ic3_entity_items_dict = Gb.entity_reg_items_by_status
-    if 'deleted_devices' not in  ic3_entity_items_dict:
+    if ('deleted_sensors' not in  ic3_entity_items_dict
+            or 'deleted_devices' not in ic3_entity_items_dict):
         return
 
     for devicename, device_sensors in ic3_entity_items_dict['deleted_sensors'].copy().items():
@@ -784,6 +1099,7 @@ def extract_icloud3_entity_registry_items(scan_active_items):
         status  = _get_entity_status(scan_active_items, RegData)
         RegData.status = status
 
+
         devicename     = RegData.devicename
 
         # The device_tracker entity in the sensor entity_registry is managed by the device_registry
@@ -827,10 +1143,10 @@ def _get_entity_status(scan_active_items, RegData):
     if RegData.devicename in Gb.inactive_fname_by_devicename:
         return 'inactive'
 
-    if (RegData.device_id in Gb.devicename_by_ha_device_id
-            or RegData.sensor_base in Gb.Sensors_by_devicename.get(RegData.devicename, {})
+    if (RegData.sensor_base in Gb.Sensors_by_devicename.get(RegData.devicename, {})
             or RegData.devicename in Gb.DeviceTrackers_by_devicename):
         return 'active'
+
 
     return 'other'
 
@@ -839,6 +1155,9 @@ def _set_entity_reg_data(entity_key, entity_data):
 
     platform, sensor_name   = entity_data.entity_id.split('.')
     devicename, sensor_base = get_devicename_sensor_base(sensor_name)
+
+    disabled_by_raw = entity_data.disabled_by
+    disabled_by = disabled_by_raw.value if disabled_by_raw else None
 
     # device_id is not specified for a deleted entity
     try:
@@ -856,7 +1175,7 @@ def _set_entity_reg_data(entity_key, entity_data):
     data_item['area_id']         = entity_data.area_id         # None
     data_item['entity_key']      = entity_key
     data_item['config_entry_id'] = entity_data.config_entry_id # 01JVRX6TFZRYRRMAHHE8MPYKB3
-    data_item['disabled_by']     = entity_data.disabled_by     # None, user
+    data_item['disabled_by']     = disabled_by                 # None, user
     data_item['status']          = None                        # active, disabled, deleted_device, ...
     data_item['domain']          = entity_data.platform        # icloud3
     data_item['platform']        = platform                    # device_tracker, sensor
@@ -936,11 +1255,12 @@ def extract_icloud3_device_registry_items(scan_active_items):
 
         device_reg = dr.async_get(Gb.hass)
         if scan_active_items:
-            devices = device_reg.devices
+            devices = device_reg_devices(device_reg)
         else:
-            devices = device_reg.deleted_devices
+            deleted_devices = device_reg_deleted_devices(device_reg)
+            devices = list(deleted_devices.values()) if deleted_devices else []
 
-        for device_id, device_data in list(devices.items()):
+        for device_data in devices:
             if _is_icloud3_device_recd(device_data) is False:
                 continue
 
@@ -967,6 +1287,8 @@ def extract_icloud3_device_registry_items(scan_active_items):
 def _set_device_reg_data(device_data):
 
     domain, devicename = _get_domain_devicename(device_data)
+    disabled_by_raw = device_data.disabled_by
+    disabled_by = disabled_by_raw.value if disabled_by_raw else None
 
     data_item = {}
     data_item['entity_id']       = f'{PLATFORM_DEVICE_TRACKER}.{devicename}'
@@ -977,8 +1299,8 @@ def _set_device_reg_data(device_data):
     data_item['device_id']       = device_data.id
     data_item['area_id']         = device_data.area_id
     data_item['entity_key']      = None
-    data_item['config_entry_id'] = set_item(device_data.config_entries)
-    data_item['disabled_by']     = device_data.disabled_by
+    data_item['config_entry_id'] = device_reg_config_entry_id(device_data)
+    data_item['disabled_by']     = disabled_by
     data_item['status']          = None
     data_item['domain']          = domain
     data_item['platform']        = PLATFORM_DEVICE_TRACKER

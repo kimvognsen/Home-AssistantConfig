@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 from homeassistant.core import HomeAssistant
 from homeassistant.components.recorder.history import get_significant_states
@@ -7,9 +7,51 @@ from homeassistant.components.recorder import get_instance
 
 _LOGGER = logging.getLogger(__name__)
 
+# Attributes the replay actually uses to rebuild a state (see entity_controller).
+# Two consecutive history rows are considered redundant when the state and all
+# of these attributes are unchanged, even if other attributes (e.g. linkquality)
+# differ. This removes the noise rows that caused the flicker in issue #125.
+SIGNIFICANT_ATTRIBUTES = {
+    "brightness",
+    "color_mode",
+    "color_temp",
+    "color_temp_kelvin",
+    "rgb_color",
+    "hs_color",
+    "xy_color",
+    "current_position",
+    "current_tilt_position",
+}
+
 
 class HistoryManager:
     """Handles history fetching and filtering."""
+
+    @staticmethod
+    def remove_redundant_states(
+        history: Dict[str, List[Any]],
+    ) -> Dict[str, List[Any]]:
+        """Drop consecutive states with same state and same significant attributes."""
+        filtered: Dict[str, List[Any]] = {}
+        for entity_id, states in history.items():
+            kept: List[Any] = []
+            for state in states:
+                if kept:
+                    prev = kept[-1]
+                    if state.state == prev.state and all(
+                        state.attributes.get(attr) == prev.attributes.get(attr)
+                        for attr in SIGNIFICANT_ATTRIBUTES
+                    ):
+                        continue
+                kept.append(state)
+            if kept:
+                filtered[entity_id] = kept
+                removed = len(states) - len(kept)
+                if removed:
+                    _LOGGER.debug(
+                        "Removed %d redundant states for %s", removed, entity_id
+                    )
+        return filtered
 
     @staticmethod
     def filter_out_undefined(
@@ -36,12 +78,14 @@ class HistoryManager:
         hass: HomeAssistant,
         start_time: datetime,
         entity_ids: List[str],
+        end_time: Optional[datetime] = None,
     ) -> Dict[str, List[Any]]:
         """Fetch significant states for the given entities and time range."""
-        _LOGGER.debug("Getting history from %s for %s", start_time, entity_ids)
+        _LOGGER.debug("Getting history from %s to %s for %s", start_time, end_time, entity_ids)
         history = get_significant_states(
             hass=hass,
             start_time=start_time,
+            end_time=end_time,
             entity_ids=entity_ids,
             include_start_time_state=True,
             significant_changes_only=False,

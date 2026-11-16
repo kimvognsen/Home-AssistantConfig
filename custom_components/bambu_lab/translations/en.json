@@ -8,7 +8,8 @@
       "event_print_error": "Print error",
       "event_print_error_cleared": "Print error cleared",
       "event_printer_error": "HMS error",
-      "event_printer_error_cleared": "HMS error cleared"
+      "event_printer_error_cleared": "HMS error cleared",
+      "event_printer_missing_sdcard": "Missing SD card"
     }
   },
   "config": {
@@ -37,7 +38,8 @@
       "verifyCode": "Verification code is required. Check your email or phone.",
       "code_expired": "Verification code expired. New code requested. Check your email or phone.",
       "code_incorrect": "Verification code was incorrect. Please re-enter.",
-      "tfaCode": "2FA code is required. Please enter it now."
+      "tfaCode": "2FA code is required. Please enter it now.",
+      "tfa_csrf_fallback": "Bambu Lab's two factor authentication endpoint is currently rejecting requests. A verification code has been sent to your email or phone instead - please enter it below."
     },
     "step": {
       "user": {
@@ -135,7 +137,8 @@
       "verifyCode": "Verification code is required. Check your email or phone.",
       "code_expired": "Verification code expired. New code requested. Check your email or phone.",
       "code_incorrect": "Verification code was incorrect. Please re-enter.",
-      "tfaCode": "2FA code is required. Please enter it now."
+      "tfaCode": "2FA code is required. Please enter it now.",
+      "tfa_csrf_fallback": "Bambu Lab's two factor authentication endpoint is currently rejecting requests. A verification code has been sent to your email or phone instead - please enter it below."
     },
     "step": {
       "init": {
@@ -241,6 +244,12 @@
       },
       "extruder_filament_state": {
         "name": "Extruder filament"
+      },
+      "left_extruder_filament_state": {
+        "name": "Left extruder filament"
+      },
+      "right_extruder_filament_state": {
+        "name": "Right extruder filament"
       }
     },
     "button": {
@@ -281,6 +290,18 @@
       },
       "secondary_aux_fan": {
         "name": "Secondary aux fan"
+      },
+      "part_fan": {
+        "name": "Part fan"
+      },
+      "left_aux_fan": {
+        "name": "Left aux fan"
+      },
+      "right_aux_fan": {
+        "name": "Right aux fan"
+      },
+      "exhaust_fan": {
+        "name": "Exhaust fan"
       }
     },
     "image": {
@@ -335,6 +356,66 @@
       }
     },
     "sensor": {
+      "makerworld_boosts_received": {
+        "name": "Boosts received"
+      },
+      "makerworld_prints_total": {
+        "name": "Prints incl. print profiles"
+      },
+      "makerworld_downloads_total": {
+        "name": "Downloads incl. print profiles"
+      },
+      "makerworld_points": {
+        "name": "Points"
+      },
+      "makerworld_points_earned": {
+        "name": "Points earned"
+      },
+      "makerworld_points_spent": {
+        "name": "Points spent"
+      },
+      "makerworld_points_exclusive": {
+        "name": "Exclusive points"
+      },
+      "makerworld_boost_tokens": {
+        "name": "Boost tokens"
+      },
+      "makerworld_boosts_used": {
+        "name": "Boosts used"
+      },
+      "makerworld_boosts_expired": {
+        "name": "Boosts expired"
+      },
+      "makerworld_downloads": {
+        "name": "Downloads"
+      },
+      "makerworld_instance_downloads": {
+        "name": "Print profile downloads"
+      },
+      "makerworld_prints": {
+        "name": "Prints"
+      },
+      "makerworld_instance_prints": {
+        "name": "Print profile prints"
+      },
+      "makerworld_designs": {
+        "name": "Published models"
+      },
+      "makerworld_likes": {
+        "name": "Likes"
+      },
+      "makerworld_collections": {
+        "name": "Collects"
+      },
+      "makerworld_followers": {
+        "name": "Followers"
+      },
+      "makerworld_following": {
+        "name": "Following"
+      },
+      "makerworld_level": {
+        "name": "Level"
+      },
       "airduct_mode": {
         "name": "Airduct mode",
         "state": {
@@ -350,6 +431,22 @@
           "laser10": "Laser (10W)",
           "laser40": "Laser (40W)",
           "cutter": "Cutter"
+        }
+      },
+      "track_switch_input": {
+        "name": "Track switch input {input_number}",
+        "state": {
+          "left": "Left nozzle",
+          "right": "Right nozzle",
+          "empty": "Empty"
+        }
+      },
+      "connected_nozzle": {
+        "name": "Connected nozzle",
+        "state": {
+          "left": "Left",
+          "right": "Right",
+          "track_switch": "Track switch"
         }
       },
       "wifi_signal": {
@@ -397,6 +494,21 @@
       "heatbreak_fan_speed": {
         "name": "Heatbreak fan speed"
       },
+      "secondary_aux_fan_speed": {
+        "name": "Secondary aux fan speed"
+      },
+      "part_fan_speed": {
+        "name": "Part fan speed"
+      },
+      "left_aux_fan_speed": {
+        "name": "Left aux fan speed"
+      },
+      "right_aux_fan_speed": {
+        "name": "Right aux fan speed"
+      },
+      "exhaust_fan_speed": {
+        "name": "Exhaust fan speed"
+      },
       "model_download_percentage": {
         "name": "Model download"
       },
@@ -424,6 +536,7 @@
           "printing": "Printing",
           "auto_bed_leveling": "Auto bed leveling",
           "heatbed_preheating": "Heatbed preheating",
+          "heatbed_stabilizing": "Stabilizing heatbed",
           "sweeping_xy_mech_mode": "Sweeping XY mech mode",
           "changing_filament": "Changing filament",
           "m400_pause": "M400 pause",
@@ -501,13 +614,30 @@
           "idle": "Idle"
         }
       },
+      "external_storage_connection": {
+        "name": "External Storage connection",
+        "state": {
+          "connected": "Connected",
+          "disconnected": "Disconnected"
+        }
+      },
+      "external_storage_total": {
+        "name": "External Storage total"
+      },
+      "external_storage_used": {
+        "name": "External Storage used"
+      },
+      "external_storage_free": {
+        "name": "External Storage free"
+      },
       "sdcard_status": {
         "name": "SD card status",
         "state": {
           "missing": "Missing",
           "normal": "Normal",
           "abnormal": "Abnormal",
-          "readonly": "Read only"
+          "readonly": "Read only",
+          "not_applicable": "Not applicable"
         }
       },
       "print_progress": {
@@ -548,6 +678,33 @@
       },
       "remaining_drying_time": {
         "name": "Remaining drying time"
+      },
+      "zone_temperature": {
+        "name": "Zone {zone_number} temperature",
+        "state_attributes": {
+          "zone": { "name": "Zone" },
+          "zone_id": { "name": "Zone ID" },
+          "slots": { "name": "Slots" },
+          "dry_setting": { "name": "Drying setting" }
+        }
+      },
+      "zone_humidity": {
+        "name": "Zone {zone_number} humidity",
+        "state_attributes": {
+          "zone": { "name": "Zone" },
+          "zone_id": { "name": "Zone ID" },
+          "slots": { "name": "Slots" },
+          "dry_setting": { "name": "Drying setting" }
+        }
+      },
+      "zone_remaining_drying_time": {
+        "name": "Zone {zone_number} remaining drying time",
+        "state_attributes": {
+          "zone": { "name": "Zone" },
+          "zone_id": { "name": "Zone ID" },
+          "slots": { "name": "Slots" },
+          "dry_setting": { "name": "Drying setting" }
+        }
       },
       "drying_temperature": {
         "name": "Drying temperature"
@@ -628,6 +785,7 @@
           "high_flow_hardened_steel": "High flow hardened steel",
           "high_flow_stainless_steel": "High flow stainless steel",
           "high_flow_tungsten_carbide": "High flow tungsten carbide",
+          "tpu_high_flow": "TPU High-Flow",
           "unknown": "Unknown"
         }
       },
@@ -659,6 +817,13 @@
           "high_flow_tungsten_carbide": "High flow tungsten carbide"
         }
       },
+      "active_nozzle": {
+        "name": "Active nozzle",
+        "state": {
+          "left": "Left",
+          "right": "Right"
+        }
+      },
       "ip_address": {
         "name": "IP address"
       },
@@ -667,6 +832,26 @@
       },
       "humidity_index": {
         "name": "Humidity index"
+      },
+      "ams_status": {
+        "name": "Status",
+        "state": {
+          "idle": "Idle",
+          "changing_filament": "Changing filament",
+          "heating_nozzle": "Heating nozzle",
+          "cutting_filament": "Cutting filament",
+          "pulling_back_filament": "Pulling back current filament",
+          "pushing_new_filament": "Pushing new filament",
+          "purging_old_filament": "Purging old filament",
+          "checking_position": "Checking filament position",
+          "rfid_identifying": "Identifying RFID",
+          "filament_loaded": "Filament loaded",
+          "calibration": "Calibration",
+          "cold_pull": "Cold pull",
+          "self_check": "Self check",
+          "debug": "Debug",
+          "unknown": "Unknown"
+        }
       },
       "external_spool": {
         "name": "External spool",
@@ -854,6 +1039,9 @@
           "filament_id": { "name": "Filament ID" },
           "filament_name": { "name": "Filament name" }
         }
+      },
+      "hotend_rack_hotend_used_time": {
+        "name": "Hotend {hotend_id} used time"
       }
     },
     "camera": {
@@ -894,6 +1082,10 @@
       "title": "Authentication Failed",
       "description": "Attempting to connect to Bambu Lab failed for {device}. Please reconfigure the integration and provide fresh credentials."
     },
+    "access_code_rejected": {
+      "title": "Access Code Rejected",
+      "description": "The printer rejected the configured access code for {device}. This usually means the code was regenerated, for example by a factory reset. Read the new access code from the printer's network settings screen and reconfigure the integration with it."
+    },
     "no_external_storage": {
       "title": "No USB or SD Card Detected",
       "description": "{device} does not have an USB or SD card connected. This is needed for all features that depend on ftp to the printer such as the cover image, skipping objects and print history."
@@ -904,7 +1096,7 @@
     },
     "mqtt_encryption_enabled": {
       "title": "MQTT Encryption Enabled",
-      "description": "{device} is cloud connected with mqtt encryption enabled. Only the light can be controlled by this integration. All other controls are unavailable. The printer must be set to developer lan mode in order to allow control from home assistant."
+      "description": "{device} has mqtt encryption enabled. Only the light can be controlled by this integration. All other controls are unavailable. The printer must be set to developer lan mode in order to allow control from home assistant."
     },
     "hybrid_mode_blocking": {
       "title": "Hybrid Connection Blocks Control",

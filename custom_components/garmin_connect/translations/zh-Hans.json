@@ -2,10 +2,13 @@
   "config": {
     "abort": {
       "already_configured": "账户已配置",
+      "wrong_account": "这些凭据属于与此条目不同的 Garmin 账户",
       "reauth_successful": "重新认证成功",
       "reconfigure_successful": "重新配置成功"
     },
     "error": {
+      "profile_unavailable": "无法确认这些凭据属于哪个 Garmin 账户。请重试。",
+      "cannot_connect": "无法连接到 Garmin Connect。请检查网络后重试。",
       "invalid_auth": "凭据无效",
       "invalid_mfa": "验证码无效",
       "rate_limit": "登录尝试次数过多 — Garmin 已限流。请几分钟后重试。",
@@ -51,6 +54,7 @@
         "title": "重新配置集成"
       },
       "user": {
+        "title": "Garmin Connect",
         "data": {
           "password": "密码",
           "username": "邮箱",
@@ -69,12 +73,10 @@
     "step": {
       "init": {
         "data": {
-          "scan_interval": "更新间隔(秒)",
-          "is_cn": "使用 Garmin Connect 中国版 (cn.garmin.com)"
+          "scan_interval": "更新间隔(秒)"
         },
         "data_description": {
-          "scan_interval": "从 Garmin Connect 获取数据的频率(60–3600 秒)",
-          "is_cn": "为在中国 Garmin Connect 平台注册的账户启用"
+          "scan_interval": "从 Garmin Connect 获取数据的频率(60–3600 秒)"
         },
         "description": "配置您的 Garmin Connect 集成。",
         "title": "Garmin Connect 选项"
@@ -82,6 +84,9 @@
     }
   },
   "entity": {
+    "calendar": {
+      "scheduled_workouts": { "name": "计划训练" }
+    },
     "sensor": {
       "abnormal_hr_alerts": { "name": "异常心率警报" },
       "achievable_fitness_age": { "name": "可达健身年龄" },
@@ -118,6 +123,8 @@
       "devices": { "name": "设备" },
       "endurance_score": { "name": "耐力得分" },
       "fitness_age": { "name": "健身年龄" },
+      "vigorous_days_avg": { "name": "每周高强度天数" },
+      "vigorous_minutes_avg": { "name": "每周高强度分钟数" },
       "floors_ascended": { "name": "上升楼层" },
       "floors_ascended_distance": { "name": "上升楼层距离" },
       "floors_ascended_goal": { "name": "上升楼层目标" },
@@ -133,7 +140,10 @@
       "hrv_baseline": { "name": "HRV 基准线" },
       "hrv_last_night_5min_high": { "name": "昨晚 HRV 5 分钟最高值" },
       "hrv_last_night_avg": { "name": "昨晚 HRV 平均值" },
-      "hrv_status": { "name": "HRV 状态" },
+      "hrv_status": {
+        "name": "HRV 状态",
+        "state": { "balanced": "平衡", "unbalanced": "不平衡", "low": "低", "poor": "差" }
+      },
       "hrv_weekly_avg": { "name": "HRV 周平均值" },
       "hydration": { "name": "饮水量" },
       "hydration_activity_intake": { "name": "活动饮水量" },
@@ -146,6 +156,13 @@
       "last_7_days_avg_resting_heart_rate": { "name": "过去 7 天平均静息心率" },
       "last_activities": { "name": "最近活动" },
       "last_activity": { "name": "最近活动" },
+      "last_activity_route": { "name": "最近活动路线" },
+      "skin_temp_change": { "name": "皮肤温度变化" },
+      "avg_sleep_stress": { "name": "睡眠平均压力" },
+      "sleep_awakenings": { "name": "睡眠醒来次数" },
+      "sleep_restless_moments": { "name": "睡眠不安次数" },
+      "avg_sleep_heart_rate": { "name": "睡眠平均心率" },
+      "sleep_body_battery_change": { "name": "睡眠身体电量变化" },
       "last_synced": { "name": "最近同步" },
       "last_workout": { "name": "最近训练" },
       "last_workouts": { "name": "最近训练" },
@@ -164,7 +181,10 @@
       "medium_stress_duration": { "name": "中度压力时长" },
       "medium_stress_percentage": { "name": "中度压力百分比" },
       "menstrual_cycle_day": { "name": "月经周期日" },
-      "menstrual_cycle_phase": { "name": "月经周期阶段" },
+      "menstrual_cycle_phase": {
+        "name": "月经周期阶段",
+        "state": { "menstruation": "月经期", "follicular": "卵泡期", "ovulation": "排卵期", "luteal": "黄体期" }
+      },
       "menstrual_cycle_start": { "name": "本次月经开始日" },
       "menstrual_cycle_type": { "name": "月经周期类型" },
       "menstrual_days_until_next_phase": { "name": "距离下一阶段天数" },
@@ -187,6 +207,7 @@
       "rest_stress_duration": { "name": "休息时压力时长" },
       "rest_stress_percentage": { "name": "休息时压力百分比" },
       "resting_heart_rate": { "name": "静息心率" },
+      "latest_heart_rate": { "name": "最新心率" },
       "sedentary_time": { "name": "久坐时间" },
       "sleep_need": { "name": "所需睡眠" },
       "bedtime": { "name": "就寝时间" },
@@ -198,24 +219,58 @@
       "sleeping_time": { "name": "睡眠时间" },
       "solar_intensity": { "name": "太阳能强度" },
       "stress_percentage": { "name": "压力百分比" },
-      "stress_qualifier": { "name": "压力级别" },
+      "stress_qualifier": {
+        "name": "压力级别",
+        "state": { "calm": "平静", "balanced": "平衡", "stressful": "有压力", "very_stressful": "压力很大" }
+      },
       "total_calories": { "name": "总卡路里" },
       "total_distance": { "name": "总距离" },
-      "total_intensity_minutes": { "name": "高强度运动时间" },
+      "total_intensity_minutes": { "name": "强度分钟数" },
       "total_sleep_duration": { "name": "总睡眠时长" },
       "total_steps": { "name": "总步数" },
       "total_stress_duration": { "name": "压力总时长" },
       "recovery_time": { "name": "恢复时间" },
       "training_readiness": { "name": "训练准备情况" },
-      "training_status": { "name": "训练状态" },
+      "training_status": {
+        "name": "训练状态",
+        "state": { "peaking": "巅峰", "productive": "有效", "maintaining": "保持", "recovery": "恢复", "unproductive": "无效", "detraining": "退步", "overreaching": "过量", "strained": "疲劳", "paused": "暂停", "no_status": "无状态" }
+      },
       "uncategorized_stress_duration": { "name": "未分类压力时长" },
       "uncategorized_stress_percentage": { "name": "未分类压力百分比" },
       "unmeasurable_sleep": { "name": "无法测量的睡眠" },
+      "avg_sleep_respiration": { "name": "睡眠平均呼吸频率" },
+      "avg_solar_intensity": { "name": "平均太阳能强度" },
+      "connected_sensors": { "name": "已连接传感器" },
+      "next_scheduled_workout": { "name": "下一个计划训练" },
+      "today_scheduled_workout": { "name": "今日计划训练" },
+      "training_plan_goal_event": { "name": "训练计划目标赛事" },
+      "upcoming_events": { "name": "即将到来的赛事" },
+      "solar_time_gained": { "name": "太阳能增加时间" },
+      "power_to_weight": { "name": "功率体重比 {sport}" },
+      "functional_threshold_power": { "name": "FTP {sport}" },
+      "nutrition_calorie_goal": { "name": "营养卡路里目标" },
+      "nutrition_carbs_goal": { "name": "营养碳水化合物目标" },
+      "nutrition_consumed_calories": { "name": "营养已摄入卡路里" },
+      "nutrition_consumed_carbs": { "name": "营养已摄入碳水化合物" },
+      "nutrition_consumed_fat": { "name": "营养已摄入脂肪" },
+      "nutrition_consumed_protein": { "name": "营养已摄入蛋白质" },
+      "nutrition_fat_goal": { "name": "营养脂肪目标" },
+      "nutrition_last_logged": { "name": "营养最后记录时间" },
+      "nutrition_logged_entries": { "name": "营养记录条目数" },
+      "nutrition_protein_goal": { "name": "营养蛋白质目标" },
+      "nutrition_remaining_calories": { "name": "营养剩余卡路里" },
       "user_level": { "name": "用户等级" },
+      "lifetime_steps": { "name": "累计步数" },
+      "lifetime_distance": { "name": "累计距离" },
+      "lifetime_calories": { "name": "累计卡路里" },
+      "lifetime_active_days": { "name": "累计活跃天数" },
       "user_points": { "name": "积分" },
       "vigorous_intensity": { "name": "剧烈强度运动时间" },
       "visceral_fat": { "name": "内脏脂肪" },
       "vo2_max": { "name": "最大摄氧量" },
+      "vo2_max_cycling": { "name": "骑行最大摄氧量" },
+      "heat_acclimation": { "name": "热适应" },
+      "altitude_acclimation": { "name": "海拔适应" },
       "weekly_distance_avg": { "name": "每周平均距离" },
       "weekly_step_avg": { "name": "每周平均步数" },
       "weight": { "name": "体重" },
@@ -225,10 +280,78 @@
       "wellness_end_time": { "name": "健康监测结束时间" },
       "wellness_start_time": { "name": "健康监测开始时间" },
       "yesterday_distance": { "name": "昨日距离" },
-      "yesterday_steps": { "name": "昨日步数" }
+      "yesterday_steps": { "name": "昨日步数" },
+      "yesterday_active_calories": { "name": "昨日活动卡路里" },
+      "yesterday_avg_stress_level": { "name": "昨日平均压力等级" },
+      "yesterday_max_stress_level": { "name": "昨日最高压力等级" },
+      "yesterday_stress_duration": { "name": "昨日压力时长" },
+      "yesterday_high_stress_duration": { "name": "昨日高度压力时长" },
+      "yesterday_rest_stress_duration": { "name": "昨日休息时压力时长" },
+      "yesterday_body_battery_highest": { "name": "昨日身体电量最高值" },
+      "yesterday_body_battery_lowest": { "name": "昨日身体电量最低值" },
+      "yesterday_body_battery_charged": { "name": "昨日身体电量充电" },
+      "yesterday_body_battery_drained": { "name": "昨日身体电量耗电" },
+      "yesterday_resting_heart_rate": { "name": "昨日静息心率" },
+      "yesterday_intensity_minutes": { "name": "昨日强度分钟数" }
     }
   },
   "services": {
+    "add_nutrition_log": {
+      "name": "添加营养记录",
+      "description": "向 Garmin Connect 记录一条快速添加的营养条目。需要 Connect+ 订阅，并已在 Garmin Connect 应用中完成营养初始设置。",
+      "fields": {
+        "entity_id": { "name": "Garmin Connect 实体", "description": "可选的 Garmin Connect 实体，用于指定接收该条目的账户。" },
+        "calories": { "name": "热量（千卡）", "description": "要记录的热量。" },
+        "carbs": { "name": "碳水化合物（克）", "description": "碳水化合物克数。" },
+        "protein": { "name": "蛋白质（克）", "description": "蛋白质克数。" },
+        "fat": { "name": "脂肪（克）", "description": "脂肪克数。" },
+        "name": { "name": "名称", "description": "记录条目的名称（默认为“Quick Add”）。" },
+        "timestamp": { "name": "时间戳", "description": "记录时间（ISO 8601）。默认为当前时间。" }
+      }
+    },
+    "create_workout": {
+      "name": "创建训练",
+      "description": "在 Garmin Connect 训练库中创建训练，可选择安排到某个日期。返回 workout_id（以及 schedule_id）。",
+      "fields": {
+        "entity_id": { "name": "Garmin Connect 实体", "description": "可选的 Garmin Connect 实体，用于指定训练所属的账户。" },
+        "workout": { "name": "训练", "description": "Garmin 训练 JSON（workoutName、sportType、workoutSegments），对象或 JSON 字符串均可。" },
+        "date": { "name": "日期", "description": "可选：将训练放入训练日历的日期。" }
+      }
+    },
+    "update_workout": {
+      "name": "更新训练",
+      "description": "原地替换现有训练。其 ID 和日历安排保持不变。",
+      "fields": {
+        "entity_id": { "name": "Garmin Connect 实体", "description": "可选的 Garmin Connect 实体，用于指定训练所属的账户。" },
+        "workout_id": { "name": "训练 ID", "description": "Garmin 训练 ID。" },
+        "workout": { "name": "训练", "description": "完整的 Garmin 训练 JSON，对象或 JSON 字符串均可。" }
+      }
+    },
+    "delete_workout": {
+      "name": "删除训练",
+      "description": "从 Garmin Connect 训练库中删除训练，包括其日历条目。",
+      "fields": {
+        "entity_id": { "name": "Garmin Connect 实体", "description": "可选的 Garmin Connect 实体，用于指定训练所属的账户。" },
+        "workout_id": { "name": "训练 ID", "description": "Garmin 训练 ID。" }
+      }
+    },
+    "schedule_workout": {
+      "name": "安排训练",
+      "description": "将训练库中的训练放入 Garmin 训练日历。返回 schedule_id。",
+      "fields": {
+        "entity_id": { "name": "Garmin Connect 实体", "description": "可选的 Garmin Connect 实体，用于指定训练所属的账户。" },
+        "workout_id": { "name": "训练 ID", "description": "Garmin 训练 ID。" },
+        "date": { "name": "日期", "description": "训练的日历日期。" }
+      }
+    },
+    "unschedule_workout": {
+      "name": "取消安排训练",
+      "description": "将训练从 Garmin 训练日历中移除，但不删除训练。",
+      "fields": {
+        "entity_id": { "name": "Garmin Connect 实体", "description": "可选的 Garmin Connect 实体，用于指定训练所属的账户。" },
+        "schedule_id": { "name": "安排 ID", "description": "日历条目 ID（schedule_workout 返回的 schedule_id，或计划训练的 id）。" }
+      }
+    },
     "set_active_gear": {
       "name": "设置默认装备",
       "description": "将装备设置为某活动类型的默认装备。",
@@ -243,6 +366,7 @@
       "name": "添加饮水记录",
       "description": "向 Garmin Connect 记录一次饮水。",
       "fields": {
+        "entity_id": { "name": "Garmin Connect 实体", "description": "可选的 Garmin Connect 实体,用于指定接收测量数据的账户。" },
         "value_in_ml": { "name": "饮水量(毫升)", "description": "饮水量(毫升)。负值会从今日饮水量中扣除。" },
         "timestamp": { "name": "时间戳", "description": "测量时间(ISO 8601,默认为当前时间)。" }
       }
@@ -271,6 +395,7 @@
       "name": "添加血压记录",
       "description": "向 Garmin Connect 添加一次血压测量。",
       "fields": {
+        "entity_id": { "name": "Garmin Connect 实体", "description": "可选的 Garmin Connect 实体,用于指定接收测量数据的账户。" },
         "systolic": { "name": "收缩压", "description": "收缩压数值。" },
         "diastolic": { "name": "舒张压", "description": "舒张压数值。" },
         "pulse": { "name": "脉率", "description": "脉搏速率。" },
@@ -282,6 +407,7 @@
       "name": "创建活动",
       "description": "在 Garmin Connect 中创建一项手动活动。",
       "fields": {
+        "entity_id": { "name": "Garmin Connect 实体", "description": "可选的 Garmin Connect 实体,用于指定接收测量数据的账户。" },
         "activity_name": { "name": "活动名称", "description": "活动的名称。" },
         "activity_type": { "name": "活动类型", "description": "活动类型(如 running、cycling)。" },
         "start_datetime": { "name": "开始时间", "description": "活动开始时间(ISO 格式)。" },
@@ -297,13 +423,14 @@
         "entity_id": { "name": "Garmin Connect 实体", "description": "可选：拥有该活动的 Garmin Connect 实体。" },
         "activity_id": { "name": "活动 ID", "description": "Garmin 活动 ID（见 last_activity 传感器属性）。" },
         "file_format": { "name": "文件格式", "description": "fit（从原始 zip 提取）、original（原始 zip）、tcx、gpx、kml 或 csv。" },
-        "file_path": { "name": "文件路径", "description": "目标文件或目录。自定义路径必须在 allowlist_external_dirs 中。默认为 [config]/garmin_activities/。" }
+        "file_path": { "name": "文件路径", "description": "目标文件或目录，位于配置目录内或 allowlist_external_dirs 中。相对路径以配置目录为起点。默认为 [config]/garmin_activities/。" }
       }
     },
     "upload_activity": {
       "name": "上传活动",
       "description": "向 Garmin Connect 上传活动文件(FIT、GPX、TCX)。",
       "fields": {
+        "entity_id": { "name": "Garmin Connect 实体", "description": "可选的 Garmin Connect 实体,用于指定接收测量数据的账户。" },
         "file_path": { "name": "文件路径", "description": "Home Assistant 系统上活动文件的路径。" }
       }
     },
@@ -315,15 +442,35 @@
         "gear_uuid": { "name": "装备 UUID", "description": "要添加的装备的 UUID。" },
         "entity_id": { "name": "装备传感器实体", "description": "gear_uuid 的替代项 — 选择一个装备传感器实体。" }
       }
+    },
+    "get_day_summary": {
+      "name": "获取每日摘要",
+      "description": "从 Garmin Connect 获取任意日期的每日摘要（步数、压力、身体电量、静息心率、强度分钟数）并返回。",
+      "fields": {
+        "date": { "name": "日期", "description": "要获取的日期。" },
+        "entity_id": { "name": "Garmin Connect 实体", "description": "可选，指定要读取其账户的 Garmin Connect 实体。" }
+      }
     }
   },
   "exceptions": {
+    "create_workout_failed": { "message": "创建训练失败：{error}" },
+    "create_workout_schedule_failed": { "message": "训练 {workout_id} 已创建，但无法安排：{error}" },
+    "update_workout_failed": { "message": "更新训练失败：{error}" },
+    "delete_workout_failed": { "message": "删除训练失败：{error}" },
+    "schedule_workout_failed": { "message": "安排训练失败：{error}" },
+    "unschedule_workout_failed": { "message": "取消安排训练失败：{error}" },
+    "ambiguous_account": { "message": "已配置多个 Garmin Connect 账户。请提供 entity_id 以选择要使用的账户。" },
+    "auth_failed": { "message": "Garmin Connect 身份验证失败：{error}" },
+    "reauth_required": { "message": "{account} 的 Garmin Connect 凭据需要重新验证" },
+    "update_failed": { "message": "获取 Garmin Connect {data} 数据出错：{error}" },
+    "update_timeout": { "message": "Garmin Connect {data} 数据刷新超过 {seconds} 秒" },
     "add_blood_pressure_failed": { "message": "添加血压失败:{error}" },
     "add_hydration_failed": { "message": "记录饮水失败:{error}" },
     "add_body_composition_failed": { "message": "添加身体成分失败:{error}" },
     "add_gear_to_activity_failed": { "message": "为活动添加装备失败:{error}" },
     "create_activity_failed": { "message": "创建活动失败:{error}" },
     "download_activity_failed": { "message": "下载活动失败：{error}" },
+    "download_activity_write_failed": { "message": "无法将活动文件保存到 {file_path}：{error}" },
     "path_not_allowed": { "message": "路径不允许：{file_path}。请将目录添加到 allowlist_external_dirs。" },
     "entity_not_found": { "message": "未找到实体:{entity_id}" },
     "file_not_found": { "message": "未找到文件:{file_path}" },
@@ -333,7 +480,19 @@
     "no_gear_specified": { "message": "未指定装备。请提供装备传感器实体或 gear_uuid。" },
     "no_integration_configured": { "message": "Garmin Connect 集成未配置。" },
     "set_active_gear_failed": { "message": "设置默认装备失败:{error}" },
+    "unsupported_file_format": { "message": "不支持的活动文件 {file_path}。支持的格式:{formats}" },
     "upload_activity_failed": { "message": "上传活动失败:{error}" },
-    "add_nutrition_failed": { "message": "记录营养失败:{error}" }
+    "add_nutrition_failed": { "message": "记录营养失败:{error}" },
+    "get_day_summary_failed": { "message": "获取每日摘要失败：{error}" }
+  },
+  "issues": {
+    "connect_plus_required": {
+      "title": "营养数据需要 Garmin Connect+",
+      "description": "{title} 的营养传感器不可用，因为你的 Garmin 账户没有有效的 Connect+ 订阅。请在 Garmin Connect 应用中订阅 Connect+ 以启用营养记录，或禁用此集成的营养传感器。"
+    },
+    "lifetime_totals_hidden": {
+      "title": "Garmin 隐藏了你的累计数据",
+      "description": "Garmin Connect 拒绝提供 {title} 的累计数据，因此累计步数、距离、卡路里和活跃天数传感器不可用。只有在你的个人资料中显示累计数据时，Garmin 才会提供：在网页版 Garmin Connect 中打开“账户设置 → 公开个人资料”，在“在个人资料中显示”下启用累计数据。个人资料可以保持“仅自己可见”，不会公开任何内容。传感器将在下次刷新时更新。如果你不需要这些传感器，请将其禁用。"
+    }
   }
 }

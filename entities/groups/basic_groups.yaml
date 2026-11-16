@@ -49,5 +49,5 @@ security_smoke_alarm_status:
   entities:
     - binary_sensor.smoke_detector_vaerksted_smoke
     - binary_sensor.smoke_detector_hall_smoke_detected
-    - binary_sensor.smoke_detector_smoke_detected_bryggers
-    - binary_sensor.smoke_detector_smoke_detected_stuen
+    - binary_sensor.smoke_detector_bryggers_smoke_detected
+    - binary_sensor.smoke_detector_stuen_smoke_detected

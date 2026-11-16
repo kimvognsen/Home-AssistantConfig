@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from typing import Any
 
 import voluptuous as vol
@@ -69,7 +68,7 @@ async def _validate_input(user_input: dict[str, Any]) -> dict[str, Any]:
 
     try:
         await cloud.authenticate()
-        connected = await asyncio.wait_for(cloud.connect(), timeout=30)
+        connected = await cloud.connect()
         if not connected:
             return {"title": user_input[CONF_EMAIL], "device_count": 0}
 
@@ -105,9 +104,17 @@ class LandroidCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "invalid_auth"
             except TooManyRequestsError:
                 errors["base"] = "too_many_requests"
-            except NoConnectionError, ServiceUnavailableError:
+            except (
+                NoConnectionError,
+                ServiceUnavailableError,
+            ):
                 errors["base"] = "cannot_connect"
-            except RequestError, ForbiddenError, NotFoundError, InternalServerError:
+            except (
+                RequestError,
+                ForbiddenError,
+                NotFoundError,
+                InternalServerError,
+            ):
                 errors["base"] = "api_error"
             except APIException:
                 errors["base"] = "unknown"
@@ -158,9 +165,17 @@ class LandroidCloudOptionsFlow(OptionsFlow):
                     errors["base"] = "invalid_auth"
                 except TooManyRequestsError:
                     errors["base"] = "too_many_requests"
-                except NoConnectionError, ServiceUnavailableError:
+                except (
+                    NoConnectionError,
+                    ServiceUnavailableError,
+                ):
                     errors["base"] = "cannot_connect"
-                except RequestError, ForbiddenError, NotFoundError, InternalServerError:
+                except (
+                    RequestError,
+                    ForbiddenError,
+                    NotFoundError,
+                    InternalServerError,
+                ):
                     errors["base"] = "api_error"
                 except APIException:
                     errors["base"] = "unknown"

@@ -1,0 +1,23 @@
+# ha_mcp_backup
+schema_version: 1
+domain: entity
+entity_id: input_number.h2d_akkumuleret_printpris
+captured: '2026-11-15T16:54:00.178091+00:00'
+tool: ha_set_entity
+config:
+  id: 48c5223e019b8be25507cff715fa82b0
+  entity_id: input_number.h2d_akkumuleret_printpris
+  name: null
+  icon: null
+  area_id: null
+  device_class: null
+  aliases:
+  - null
+  labels:
+  - 3d_printer
+  categories: {}
+  hidden_by: null
+  disabled_by: null
+  options:
+    conversation:
+      should_expose: false

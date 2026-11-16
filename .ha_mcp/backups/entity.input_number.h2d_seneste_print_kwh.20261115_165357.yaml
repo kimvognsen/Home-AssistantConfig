@@ -1,0 +1,25 @@
+# ha_mcp_backup
+schema_version: 1
+domain: entity
+entity_id: input_number.h2d_seneste_print_kwh
+captured: '2026-11-15T16:53:57.714680+00:00'
+tool: ha_set_entity
+config:
+  id: 313a22bfd143b6ba442de0faffd2f546
+  entity_id: input_number.h2d_seneste_print_kwh
+  name: null
+  icon: null
+  area_id: null
+  device_class: null
+  aliases:
+  - null
+  labels:
+  - 3d_printer
+  categories: {}
+  hidden_by: null
+  disabled_by: null
+  options:
+    conversation:
+      should_expose: false
+    collection:
+      hash: 3210da25447f6616aba2e6ee97fad741

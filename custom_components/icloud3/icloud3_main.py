@@ -19,20 +19,21 @@ Thanks to all
 #--------------------------------------------------------------------
 
 from .global_variables  import GlobalVariables as Gb
-from .const             import (VERSION, VERSION_BETA, ICLOUD3_VERSION_MSG,
-                                HOME, NOT_HOME, NOT_SET, HIGH_INTEGER, RARROW, LT, NBSP3, CLOCK_FACE, LINK,
-                                CRLF, DOT, LDOT2, CRLF_DOT, CRLF_LDOT, CRLF_LBDOT, CRLF_LHDOT, CRLF_HDOT2, CRLF_LX, CRLF_LRED_ALERT, CRLF_LDIAMOND, CRLF_LASTERISK, NBSP,
-                                EVLOG_IC3_STAGE_HDR, RED_ALERT,
+from .const             import (HOME, NOT_HOME, HOME_FNAME,
+                                NOT_SET, HIGH_INTEGER, RARROW, LT, NBSP3, CLOCK_FACE, LINK,
+                                CRLF, DOT, LDOT2, CRLF_DOT, CRLF_LDOT, CRLF_LBDOT, CRLF_LHDOT, CRLF_HDOT2, CRLF_LX,
+                                CRLF_LRED_ALERT, CRLF_LDIAMOND, CRLF_LASTERISK, NBSP,
+                                EVLOG_IC3_STAGE_HDR, RED_ALERT, GB_ALERT, GB_ITEM,
                                 EVLOG_GREEN, EVLOG_VIOLET, EVLOG_ORANGE, EVLOG_PINK, EVLOG_RED, EVLOG_BLUE,
                                 ALERT_CRITICAL, ALERT_APPLE_ACCT, ALERT_DEVICE, ALERT_STARTUP, ALERT_OTHER,
-                                EVLOG_ATTENTION, ICLOUD3_ATTENTION_MSG,
+                                EVLOG_ATTENTION,
                                 ICLOUD, TRACKING_NORMAL, FNAME,
                                 CONF_USERNAME, CONF_PASSWORD,
-                                IPHONE, IPAD, WATCH, AIRPODS, IPOD, ALERT,
+                                IPHONE, IPAD, WATCH, AIRPODS, IPOD, ALERT, UNKNOWN,
                                 CMD_RESET_PYICLOUD_SESSION, NEAR_DEVICE_DISTANCE,
                                 DISTANCE_TO_OTHER_DEVICES, DISTANCE_TO_OTHER_DEVICES_DATETIME,
                                 OLD_LOCATION_CNT, AUTH_ERROR_CNT, DEVICE_TYPES_CELL_SVC,
-                                MOBAPP_UPDATE, ICLOUD_UPDATE, ARRIVAL_TIME, TOWARDS, AWAY_FROM,
+                                MOBAPP_UPDATE, ICLOUD_UPDATE, ARRIVAL_TIME, TOWARDS, AWAY_FROM, AWAY, INZONE_STATZONE,
                                 EVLOG_UPDATE_START, EVLOG_UPDATE_END, EVLOG_ERROR, EVLOG_ALERT, EVLOG_NOTICE,
                                 ICLOUD, MOBAPP, TRUST_TOKEN_EXPIRE_WARNING_DAYS,
                                 ENTER_ZONE, EXIT_ZONE, INTERVAL, NEXT_UPDATE, NOTIFY,
@@ -50,11 +51,12 @@ from .startup           import restore_state
 from .startup           import start_ic3
 from .startup           import start_ic3_control
 from .support           import service_handler
+from .support           import analytics
 from .tracking          import stationary_zone as statzone
 from .tracking          import zone_handler
 from .tracking          import determine_interval as det_interval
 from .utils.utils       import (instr, is_empty, isnot_empty, is_zone, is_statzone, isnot_statzone, yes_no,
-                                list_to_str, isbetween, username_id, zone_dname, is_running_in_event_loop, )
+                                list_to_str, is_between, username_id, zone_dname, is_running_in_event_loop, )
 from .utils.file_io     import (file_exists, directory_exists, make_directory, extract_filename, )
 from .utils.messaging   import (broadcast_info_msg,
                                 post_event, post_alert, post_error_msg, post_monitor_msg, post_internal_error,
@@ -89,8 +91,6 @@ class iCloud3:
 
         Gb.started_secs                    = time_now_secs()
         Gb.hass_configurator_request_id    = {}
-        Gb.version                         = f"{VERSION}{VERSION_BETA}"
-        Gb.version_beta                    = VERSION_BETA
 
         Gb.polling_5_sec_loop_running      = False
         self.pyicloud_refresh_time         = {}     # Last time Pyicloud was refreshed for the trk method
@@ -104,7 +104,7 @@ class iCloud3:
         Gb.is_evlog_trk_monitors_displayed = False
         Gb.any_device_was_updated_reason   = ''
         Gb.is_icloud3_startup_inprocess    = False
-        Gb.was_icloud3_restart_requested    = False
+        Gb.was_icloud3_restart_requested   = False
         Gb.restart_requested_by            = ''
 
         # Gb.InternetError        = InternetConnection_ErrorHandler()
@@ -165,7 +165,7 @@ class iCloud3:
         service_handler.issue_ha_notification()
 
         self.startup_secs = time_now_secs()
-        self.initial_locate_complete_flag = False
+        Gb.is_initial_locate_complete = False
         self.startup_log_msgs           = ''
         self.startup_log_msgs_prefix    = ''
         Gb.is_icloud3_startup_inprocess = True
@@ -175,20 +175,26 @@ class iCloud3:
         Gb.was_icloud3_restart_requested = False
 
         if Gb.was_icloud3_reloaded:
-            post_event( f"{ICLOUD3_ATTENTION_MSG} > Restarting")
+            post_event( f"{Gb.icloud3_attention_msg} > Restarting")
 
-        start_ic3_control.stage_1_setup_variables()
-        start_ic3_control.stage_2_prepare_configuration()
-        start_ic3_control.stage_3_setup_configured_devices()
+        # On a cold start, stages 4-6 are not run until HA has finished starting, so
+        # nothing else will clear is_icloud3_startup_inprocess if a stage fails here.
+        try:
+            start_ic3_control.stage_1_setup_variables()
+            start_ic3_control.stage_2_prepare_configuration()
+            start_ic3_control.stage_3_setup_configured_devices()
+
+        except Exception as err:
+            log_exception(err)
+            Gb.is_icloud3_startup_inprocess = False
+            return False
+
+        return True
 
 #--------------------------------------------------------------------
     def start_icloud3_stage_4_5_6_load_aa_device_to_locate(self):
         try:
             # Terminate startup process if internet is down
-            # Gb.InternetError.is_internet_available()
-            # event_msg = f"Internet Connection Test > Connected-{yes_no(not Gb.internet_error)}"
-            # log_data(event_msg, Gb.InternetError.data)
-            # post_alert(event_msg)
             if Gb.internet_error:
                 start_ic3_control.stage_6_initialization_complete()
                 Gb.InternetError.start_internet_error_handler()
@@ -201,10 +207,14 @@ class iCloud3:
                 start_ic3_control.stage_6_initialization_complete()
 
                 if Gb.was_icloud3_reloaded:
-                    post_event( f"{ICLOUD3_ATTENTION_MSG} > Restart Complete")
-                    # log_info_msg(f"{'🔶'*5} ICLOUD3 WAS RELOADED {'🔶'*5}")
+                    event_msg = "Restart Complete"
                 else:
-                    post_event( f"{ICLOUD3_ATTENTION_MSG} > Initial Start-up Complete")
+                    event_msg = "Initial Start-up is Complete"
+                    if is_empty(Gb.conf_apple_accounts) and is_empty(Gb.conf_devices):
+                        event_msg +=(   ". Set up Apple Accounts and Devices on the iCloud3 "
+                                        "Configure Settings screens. Click the `Gear` "
+                                        "Icon (⚙️) above the Actions item.")
+                post_event(f"{Gb.icloud3_attention_msg} > {event_msg}")
 
                 start_ic3_control.stage_7_initial_locate()
 
@@ -212,8 +222,6 @@ class iCloud3:
             Gb.EvLog.display_user_message('', clear_greenbar_msg=True)
 
             Gb.EvLog.startup_event_save_recd_flag = False
-            Gb.is_icloud3_initial_startup = False
-            Gb.is_icloud3_startup_inprocess = False
             Gb.startup_stage_status_controls = []
             Gb.broadcast_info_msg = None
 
@@ -230,6 +238,14 @@ class iCloud3:
 
         except Exception as err:
             log_exception(err)
+
+        finally:
+            # Always clear the startup flags, even if a stage failed. The 5-sec polling
+            # loop, the device registry handler and several other functions do nothing
+            # while is_icloud3_startup_inprocess is set, so leaving it set on an error
+            # stopped iCloud3 until HA was restarted.
+            Gb.is_icloud3_initial_startup   = False
+            Gb.is_icloud3_startup_inprocess = False
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #
@@ -324,7 +340,7 @@ class iCloud3:
 
             if Gb.is_all_tracking_paused:
                 post_greenbar_msg(f"All Devices > Tracking Paused at "
-                                        f"{format_time_age(Gb.all_tracking_paused_secs)}")
+                                    f"{format_time_age(Gb.all_tracking_paused_secs)}")
                 return
 
             #<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>
@@ -403,7 +419,7 @@ class iCloud3:
         Gb.any_device_was_updated_reason = ''
         self.initialize_5_sec_loop_control_flags()
         #self._display_clear_authentication_needed_msg()
-        self.initial_locate_complete_flag  = True
+        Gb.is_initial_locate_complete  = True
 
         Gb.trace_prefix = 'WRAPUP'
 
@@ -506,7 +522,7 @@ class iCloud3:
             if Gb.is_passthru_zone_used:
                 if instr(Device.mobapp_data_change_reason, ENTER_ZONE):
                     if Device.set_passthru_zone_delay(MOBAPP,
-                                Device.mobapp_zone_enter_zone, Device.mobapp_data_secs):
+                                Device.zone_enter_name, Device.mobapp_data_secs):
                         return
 
                 elif instr(Device.mobapp_data_change_reason, EXIT_ZONE):
@@ -518,13 +534,13 @@ class iCloud3:
             # stop monitoring the zone for this device but other devices seem to
             # be ok
             if (instr(Device.mobapp_data_change_reason, EXIT_ZONE)
-                    and is_statzone(Device.mobapp_zone_exit_zone)
+                    and is_statzone(Device.zone_exit_name)
                     and Device.StatZone
-                    and Device.mobapp_zone_exit_dist_m < Device.StatZone.radius_m):
+                    and Device.zone_exit_dist_m < Device.StatZone.radius_m):
 
                 event_msg =(f"{EVLOG_ALERT}MobApp Trigger Changed > {Device.mobapp_data_change_reason}, "
                             f"Distance less than zone size "
-                            f"{Device.StatZone.dname} {Device.mobapp_zone_exit_dist_m} < {Device.StatZone.radius_m}")
+                            f"{Device.StatZone.dname} {Device.zone_exit_dist_m} < {Device.StatZone.radius_m}")
                 post_event(devicename, event_msg)
 
                 statzone.kill_and_recreate_unuseable_statzone(Device)
@@ -581,7 +597,7 @@ class iCloud3:
             Device.is_icloud_acct_error = True
 
         if Device.is_icloud_devdata_useable:
-            Device.display_info_msg(Device.icloud_update_reason)
+
             event_msg = f"Trigger > {Device.icloud_update_reason}"
             post_event(devicename, event_msg)
 
@@ -612,7 +628,7 @@ class iCloud3:
         self.location_updated_by_Device[Device] = ICLOUD
 
         # Refresh the EvLog if this is an initial locate
-        if self.initial_locate_complete_flag == False:
+        if Gb.is_initial_locate_complete == False:
             if devicename == Gb.Devices[0].devicename:
                 Gb.EvLog.update_event_log_display(devicename)
 
@@ -1028,8 +1044,8 @@ class iCloud3:
             zone_handler.log_zone_enter_exit_activity(Device)
 
             # Refresh the EvLog if this is an initial locate or the devicename is displayed
-            if (devicename == Gb.EvLog.evlog_attrs["devicename"]
-                    or (self.initial_locate_complete_flag == False
+            if (devicename == Gb.EvLog.evlog_attrs['selected_dname']
+                    or (Gb.is_initial_locate_complete == False
                         and devicename == Gb.Devices[0].devicename)):
                 Gb.EvLog.update_event_log_display(devicename)
 
@@ -1108,15 +1124,14 @@ class iCloud3:
 
             self._post_before_update_monitor_msg(Device)
 
-            if self._determine_interval_and_next_update(Device):
-                Device.update_sensor_values_from_data_fields()
+            self._determine_interval_and_next_update(Device)
 
             update_requested_by = 'Tracking' if Device.is_tracked else 'Monitor'
             from_zone = Device.FromZone_TrackFrom.from_zone
 
-            post_event(devicename, (
-                        f"{EVLOG_UPDATE_END}{Device.dev_data_source} Results > "
-                        f"{self._results_special_msg(Device)}"))
+            self.post_tracking_results_header_bar(Device)
+
+        self._post_after_update_monitor_msg(Device)
 
         if Device.dev_data_source == ICLOUD and Device.AppleAcct:
             acct_name = Device.AppleAcct.account_owner_link
@@ -1126,40 +1141,109 @@ class iCloud3:
                                         Device.dev_data_source,
                                         f"CurrZone-{Device.sensor_zone}")
 
-        self._post_after_update_monitor_msg(Device)
         det_interval.post_near_devices_msg(Device)
 
 #...............................................................................
-    def _results_special_msg(self, Device):
+    def post_tracking_results_header_bar(self, Device):
+
+        battery_level    = f"{Device.dev_data_battery_level}%"
+        next_update_secs = Device.FromZone_TrackFrom.next_update_secs
+        home_dist_str    = Device.FromZone_Home.zone_distance_str
+        in_zone_name     = zone_dname(Device.loc_data_zone)[:8]
+        tf_zone_name     = Device.FromZone_TrackFrom.from_zone_dname[:8]
+        tf_zone_dist_str = Device.FromZone_TrackFrom.zone_distance_str
+        dir_of_travel    = Device.FromZone_TrackFrom.dir_of_travel
+        update_at_str    = f"Update-{secs_to_hhmm(next_update_secs)}"
+        update_in_str    = f"Update-{format_timer(secs_to(next_update_secs))}"
+        update_at_in_str = (f"Update-{secs_to_hhmm(next_update_secs)} "
+                            f"({format_timer(secs_to(next_update_secs))})")
+        arrival_time     = Device.sensors[ARRIVAL_TIME]
+        in_zone_time     = f"{secs_to_hhmm(Device.zone_enter_secs)}"
+
+        from datetime import datetime
+        event_date = datetime.fromtimestamp(Device.zone_enter_secs).date()
+        today = datetime.now().date()
+        days = (event_date - today).days
+
+        left_zone_time_str = (  f"Left {zone_dname(Device.zone_exit_name)[:8]}-"
+                                f"{format_time_age(Device.zone_exit_secs, hhmm=True)}, ")
+        left_time_str    = secs_to_hhmm(Device.zone_exit_secs)
+
+
+        if tf_zone_name == HOME_FNAME:
+            update_at_str = update_at_in_str
+
+        if tf_zone_name == in_zone_name:
+            tfz_name_dist_str = ""
+        else:
+            tfz_name_dist_str = f"{tf_zone_name}-{tf_zone_dist_str}, "
+
+        if Device.FromZone_TrackFrom.zone_dist_km > 1000:
+            update_at_in_str = update_in_str
+
+        arrive_in_at_str = arrive_at_str = arrive_at_in_str = ''
+        if arrival_time == '±5 min':
+            arrive_in_at_str = arrive_at_str = arrive_at_in_str = "Arrive-±5 min, "
+        elif arrival_time.startswith('@'):
+            in_zone_time = arrival_time[1:]
+        elif Device.FromZone_TrackFrom.waze_time > 0:
+            arrive_secs = Device.FromZone_TrackFrom.waze_time * 60 + time_now_secs()
+            arrive_at_in_str = (f"Arrive-{secs_to_hhmm(arrive_secs)} ({format_timer(secs_to(arrive_secs))}), ")
+            arrive_in_at_str = (f"in {format_timer(secs_to(arrive_secs))} at {secs_to_hhmm(arrive_secs)}, ")
+            arrive_at_str    = (f"at {secs_to_hhmm(arrive_secs)}, ")
+
         if Device.is_offline:
-            return 'Offline'
+            header_bar_msg = 'Offline'
 
-        if is_empty(Device.sensors[ARRIVAL_TIME]):
-            # return (f"Update in {format_timer(Device.FromZone_TrackFrom.interval_secs)} "
-            return (f"Update in {Device.interval_str} "
-                    f"at {Device.FromZone_TrackFrom.next_update_time}")
+        elif Device.isin_zone_home:
+            header_bar_msg = (  f"Home since {in_zone_time} > "
+                                f"{update_at_in_str}")
 
-        if (Device.isin_zone
-                and Device.loc_data_zone == Device.FromZone_TrackFrom.from_zone):
-            special_msg = (f"{Device.FromZone_TrackFrom.from_zone_dname[:8]} "
-                    f"Since {Device.sensors[ARRIVAL_TIME].replace('@', '')}, "
-                    f"Update at {secs_to_hhmm(Device.FromZone_TrackFrom.next_update_secs)}")
-            return special_msg
+        elif Device.isin_tf_zone:
+            header_bar_msg = (  f"{in_zone_name} since {in_zone_time} > "
+                                f"Home-{home_dist_str}, "
+                                f"{update_at_in_str}")
 
-        if Device.FromZone_TrackFrom.dir_of_travel != AWAY_FROM:
-            if Device.FromZone_TrackFrom.waze_time > 0:
-                arrival_secs = Device.FromZone_TrackFrom.waze_time * 60 + time_now_secs()
-                arrival_time = (f"in {format_timer(secs_to(arrival_secs))} "
-                                f"at {secs_to_hhmm(arrival_secs)}")
-            else:
-                arrival_time = (f"~{Device.sensors[ARRIVAL_TIME]}, "
-                                f"Update {format_timer(secs_to(Device.FromZone_TrackFrom.next_update_secs))}")
-            return (f"Arrive {Device.FromZone_TrackFrom.from_zone_dname[:8]} "
-                    f"{arrival_time}")
+        elif Device.isin_statzone:
+            header_bar_msg = (  f"{in_zone_name} since {in_zone_time} > "
+                                f"{tfz_name_dist_str}"
+                                f"{update_in_str}")
+
+        elif Device.isin_zone:
+            header_bar_msg = (  f"{in_zone_name} since {in_zone_time} > "
+                                f"{tfz_name_dist_str}"
+                                f"{update_at_str}")
+
+        elif dir_of_travel == TOWARDS:
+            header_bar_msg = (  f"Towards {tf_zone_name} > "
+                                f"{arrive_at_in_str}"
+                                f"{tf_zone_dist_str} away")
+
+        elif (Device.zone_exit_name != ''
+                and is_between(mins_since(Device.zone_exit_secs), 3, 6)):
+            header_bar_msg = (  f"Away > "
+                                f"{left_zone_time_str}"
+                                f"{tfz_name_dist_str}")
+
+        elif dir_of_travel == AWAY_FROM:
+            header_bar_msg = (  f"Away > "
+                                f"{tfz_name_dist_str}"
+                                f"{update_at_in_str}")
+
+        elif is_empty(Device.sensors[ARRIVAL_TIME]):
+            header_bar_msg = (  f"Away > "
+                                f"{tfz_name_dist_str}"
+                                f"{update_at_in_str}")
+
+        else:
+            header_bar_msg = (  f"{in_zone_name} since {left_time_str} > "
+                                f"Arrive-{tf_zone_name} {arrive_at_str}, "
+                                f"{tf_zone_dist_str} away")
 
 
-        return (f"Arrive {Device.FromZone_TrackFrom.from_zone_dname[:8]} "
-                f"around {Device.sensors[ARRIVAL_TIME]}")
+        post_event(Device, f"{EVLOG_UPDATE_END}{header_bar_msg}")
+
+        Device.display_info_msg(header_bar_msg)
 
 #-------------------------------------------------------------------------------
     def _determine_interval_and_next_update(self, Device):
@@ -1200,11 +1284,14 @@ class iCloud3:
             # Cycle thru each Track From Zone get the interval and all other data
             devicename = Device.devicename
 
-            for from_zone, FromZone in Device.FromZones_by_zone.items():
-                det_interval.determine_interval(Device, FromZone)
+            det_interval.determine_interval_from_zones(Device)
 
             # Determine zone to be tracked from now that all of the zone distances have been determined
             det_interval.determine_TrackFrom_zone(Device)
+
+            Device.update_sensor_values_from_data_fields()
+
+            det_interval.post_tracking_results_info(Device)
 
             # Save the source/time summary of the update for the next update msg
             Device.last_loc_data_time_gps = f"{Device.dev_data_source}-{Device.loc_data_time_gps} "
@@ -1262,7 +1349,7 @@ class iCloud3:
         Tracked device screen displayed - Show  all alert messages
         Monitored device screen displayed - Show only that devices alerts
         '''
-        if (Gb.EvLog.evlog_attrs['fname'] == 'Startup Events'
+        if (Gb.EvLog.evlog_attrs['selected_fname'] == 'Startup Events'
                 or Gb.EvLog.greenbar_alert_msg.startswith('Start up log')
                 or Gb.WazeHist.wazehist_recalculate_time_dist_running_flag):
             return
@@ -1274,31 +1361,15 @@ class iCloud3:
                 or Gb.InternetError.internet_error_secs > 0):
             return
 
-        # if Gb.icloud3_reload_requested_secs > 0:
-        #     general_alert_msg += (  f"{CRLF_LHDOT}iCloud3 will Reload in about "
-        #                             f"{secs_to(Gb.icloud3_reload_requested_secs)} secs")
-        #     if secs_since(Gb.icloud3_reload_requested_secs) > 60:
-        #         Gb.icloud3_reload_requested_secs = 0
-        # elif Gb.icloud3_reload_requested_secs < -10:
-        #     Gb.icloud3_reload_requested_secs = 0
-
         if Gb.version_hacs:
-            general_alert_msg += (  f"{CRLF_LHDOT}iCloud3 {Gb.version_hacs} is available on HACS, "
+            general_alert_msg += (  f"{GB_ALERT}iCloud3 {Gb.version_hacs} is on HACS, "
                                     f"you are running v{Gb.version}")
-
-        for AppleAcct in Gb.AppleAcct_by_username.values():
-            if (AppleAcct.is_auth_code_needed is False
-                    and AppleAcct.trust_token_expire_in_days > 0
-                    and AppleAcct.trust_token_expire_in_days <= TRUST_TOKEN_EXPIRE_WARNING_DAYS):
-                alert_msg = f"Trust Token Expires in {AppleAcct.trust_token_expire_in_days} days"
-                general_alert_msg += (  f"{CRLF_LHDOT}AppleAcct > {AppleAcct.account_owner}, "
-                                        f"{alert_msg}")
         if Gb.disable_upw_filter:
             general_alert_msg += f"{RED_ALERT}PASSWORD LOG FILTER DISABLED (Gb.disable_upw_filter)"
 
         if Gb.alerts_sensor_attrs:
             for source, msg in Gb.alerts_sensor_attrs.items():
-                general_alert_msg += f"{CRLF_LDIAMOND}{source} > {msg}"
+                general_alert_msg += f"{GB_ALERT}{source} > {msg}"
 
         verified_msg = poor_location_msg = offline_msg =''
         paused_msg = mobapp_unavailable_msg = ''
@@ -1322,26 +1393,26 @@ class iCloud3:
                 elif mins_since(Device.loc_data_secs) > 300:
                     age_hrs = int(mins_since(Device.loc_data_secs)/60)
                     poor_location_msg += f"{Device.fname} (> {age_hrs} hrs ago), "
-            if isbetween(Device.dev_data_battery_level, 1, 19):
+            if is_between(Device.dev_data_battery_level, 1, 19):
                 device_alert_msg = f"{Device.fname} > Low Battery ({Device.dev_data_battery_level}%)"
 
             if device_alert_msg:
-                general_alert_msg += f"{CRLF_LBDOT}{device_alert_msg}"
+                general_alert_msg += f"{GB_ITEM}{device_alert_msg}"
 
             if device_alert_msg != Device.alert:
                 Device.alert = Device.sensors[ALERT] = device_alert_msg
                 Device.write_ha_device_tracker_state()
 
         if paused_msg:
-            general_alert_msg += f"{CRLF_LBDOT}Paused-{paused_msg[:-2]}"
+            general_alert_msg += f"{GB_ITEM}Paused-{paused_msg[:-2]}"
         if verified_msg:
-            general_alert_msg += f"{CRLF_LBDOT}Not Tracked-{verified_msg[:-2]}"
+            general_alert_msg += f"{GB_ITEM}Not Tracked-{verified_msg[:-2]}"
         if poor_location_msg:
-            general_alert_msg += f"{CRLF_LBDOT}Poor Location-{poor_location_msg[:-2]}"
+            general_alert_msg += f"{GB_ITEM}Poor Location-{poor_location_msg[:-2]}"
         if offline_msg:
-            general_alert_msg += f"{CRLF_LBDOT}Offline-{offline_msg[:-2]}"
+            general_alert_msg += f"{GB_ITEM}Offline-{offline_msg[:-2]}"
         if mobapp_unavailable_msg:
-            general_alert_msg += f"{CRLF_LBDOT}MobApp Device Unavailable-{mobapp_unavailable_msg[:-2]}"
+            general_alert_msg += f"{GB_ITEM}MobApp Device Unavailable-{mobapp_unavailable_msg[:-2]}"
 
         if (Gb.test_internet_error
                 or Gb.test_internet_error_after_startup):
@@ -1366,7 +1437,7 @@ class iCloud3:
 
         msg = ""
         for username, AppleAcct in Gb.AppleAcct_by_username.items():
-            if AppleAcct.is_auth_code_needed:
+            if AppleAcct.is_reauth_needed:
                 msg += (f"Apple Acct > {AppleAcct.account_owner}, "
                         f"Auth Code Needed")
 
@@ -1437,8 +1508,6 @@ class iCloud3:
         Check to see if the MobApp's location needs to be refreshed
         '''
         for Device in Gb.Devices_by_devicename.values():
-            Device.display_info_msg(Device.format_info_msg, new_base_msg=True)
-
             if (Device.is_mobapp_monitored
                     and Device.mobapp_request_loc_first_secs == 0
                     and Device.mobapp_data_state != Device.loc_data_zone
@@ -1459,14 +1528,14 @@ class iCloud3:
             start_ic3.set_log_level('info')
             start_ic3.update_conf_file_log_level('info')
 
-        for username, AppleAcct in Gb.AppleAcct_by_username.items():
-            AppleAcct.auth_cnt = 0
-            AppleAcct.set_trust_token_expire_in_days()
+        aas.issue_reauth_in_days_alert_msg(evlog_msg=True)
 
         if (Gb.WazeHist
                 and Gb.WazeHist.is_historydb_USED
                 and Gb.internet_error is False):
             Gb.WazeHist.end_of_day_maintenance()
+
+        analytics.schedule_send_analytics_data()
 
         log_start_finish_update_banner('finish', 'End-of-Day Maintenance', 'Complete', '')
         post_event( f"{EVLOG_IC3_STAGE_HDR}End-of-Day Maintenance > "

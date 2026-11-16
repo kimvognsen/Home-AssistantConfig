@@ -22,16 +22,26 @@
 #    name: "Number of Lines of Code (YAML)"
 #    command: " find /config/ -name '*.yaml' | xargs cat | wc -l"
 
+# old
+#- sensor:
+#    name: "Number of Lines of Code (YAML)"
+#    command: >
+#      sh -c "find /config -type f -name '*.yaml' -print0 |
+#             xargs -0 wc -l 2>/dev/null |
+#             tail -n1 | awk '{print $1}'"
+#    scan_interval: 3600        # én gang i timen er rigeligt
+#    command_timeout: 10
+#    value_template: "{{ (value | int(0)) }}"
+
+#new AI
 - sensor:
     name: "Number of Lines of Code (YAML)"
-    command: >
-      sh -c "find /config -type f -name '*.yaml' -print0 |
-             xargs -0 wc -l 2>/dev/null |
-             tail -n1 | awk '{print $1}'"
-    scan_interval: 3600        # én gang i timen er rigeligt
-    command_timeout: 10
-    value_template: "{{ (value | int(0)) }}"
-
+    unique_id: number_of_lines_of_code_yaml
+    command: >-
+      python3 -c "from pathlib import Path; print(sum(sum(1 for _ in p.open(errors='replace')) for p in Path('/config').rglob('*.yaml') if p.is_file()))"
+    scan_interval: 3600
+    command_timeout: 30
+    value_template: "{{ value | int(0) }}"
 
 # NUC CPU Temp
 #- sensor:

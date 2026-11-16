@@ -8,7 +8,8 @@
       "event_print_error": "Erreur d'impression",
       "event_print_error_cleared": "Erreur d'impression effacée",
       "event_printer_error": "Erreur HMS",
-      "event_printer_error_cleared": "Erreur HMS effacée"
+      "event_printer_error_cleared": "Erreur HMS effacée",
+      "event_printer_missing_sdcard": "Carte SD manquante"
     }
   },
   "config": {
@@ -37,7 +38,8 @@
       "cannot_connect_cloud_connection_refused": "Connexion refusée par le cloud Bambu Lab.",
       "cannot_connect_cloud_address_unreachable": "Adresse cloud de Bambu Lab inaccessible.",
       "cannot_connect_cloud_unknown": "Erreur inconnue lors de la connexion au cloud Bambu Lab.",
-      "cannot_connect_local_unknown": "Échec de la connexion. Vérifiez les paramètres fournis."
+      "cannot_connect_local_unknown": "Échec de la connexion. Vérifiez les paramètres fournis.",
+      "tfa_csrf_fallback": "Le point de terminaison d'authentification à deux facteurs de Bambu Lab rejette actuellement les demandes. Un code de vérification a été envoyé à votre adresse e-mail ou par téléphone - veuillez le saisir ci-dessous."
     },
     "step": {
       "user": {
@@ -135,7 +137,8 @@
       "cannot_connect_cloud_connection_refused": "Connexion refusée par le cloud Bambu Lab.",
       "cannot_connect_cloud_address_unreachable": "Adresse cloud de Bambu Lab inaccessible.",
       "cannot_connect_cloud_unknown": "Erreur inconnue lors de la connexion au cloud Bambu Lab.",
-      "cannot_connect_local_unknown": "Échec de la connexion. Vérifiez les paramètres fournis."
+      "cannot_connect_local_unknown": "Échec de la connexion. Vérifiez les paramètres fournis.",
+      "tfa_csrf_fallback": "Le point de terminaison d'authentification à deux facteurs de Bambu Lab rejette actuellement les demandes. Un code de vérification a été envoyé à votre adresse e-mail ou par téléphone - veuillez le saisir ci-dessous."
     },
     "step": {
       "init": {
@@ -241,6 +244,12 @@
       },
       "hybrid_mode_blocks_control": {
         "name": "Contrôle MQTT hybride bloqué"
+      },
+      "left_extruder_filament_state": {
+        "name": "Filament d'extrudeuse gauche"
+      },
+      "right_extruder_filament_state": {
+        "name": "Filament extrudeur droit"
       }
     },
     "button": {
@@ -281,6 +290,18 @@
       },
       "secondary_aux_fan": {
         "name": "Ventilateur auxiliaire secondaire"
+      },
+      "part_fan": {
+        "name": "Ventilateur partiel"
+      },
+      "left_aux_fan": {
+        "name": "Ventilateur auxiliaire gauche"
+      },
+      "right_aux_fan": {
+        "name": "Ventilateur auxiliaire droit"
+      },
+      "exhaust_fan": {
+        "name": "Ventilateur d'extraction"
       }
     },
     "image": {
@@ -480,7 +501,8 @@
           "build_plate_alignment_detection": "Détection de l'alignement des plaques de construction",
           "heatbed_surface_foreign_object_detection": "Détection de corps étrangers à la surface du lit chauffant",
           "heatbed_underside_foreign_object_detection": "Détection de corps étrangers sous le lit chauffant",
-          "pre_extrusion_before_printing": "Pré-extrusion avant impression"
+          "pre_extrusion_before_printing": "Pré-extrusion avant impression",
+          "heatbed_stabilizing": "Lit chauffant stabilisant"
         }
       },
       "print_progress": {
@@ -574,11 +596,32 @@
           "high_flow_hardened_steel": "Haut débit acier trempé",
           "high_flow_stainless_steel": "Haut débit acier inoxydable",
           "high_flow_tungsten_carbide": "Haut débit carbure de tungstène",
-          "unknown": "Inconnu"
+          "unknown": "Inconnu",
+          "tpu_high_flow": "TPU haut débit"
         }
       },
       "humidity_index": {
         "name": "Indice d'humidité"
+      },
+      "ams_status": {
+        "name": "Statut",
+        "state": {
+          "idle": "Inactif",
+          "changing_filament": "Changement de filament",
+          "heating_nozzle": "Chauffe de la buse",
+          "cutting_filament": "Coupe du filament",
+          "pulling_back_filament": "Retrait du filament actuel",
+          "pushing_new_filament": "Poussée du nouveau filament",
+          "purging_old_filament": "Purge de l'ancien filament",
+          "checking_position": "Vérification de la position du filament",
+          "rfid_identifying": "Identification RFID",
+          "filament_loaded": "Filament chargé",
+          "calibration": "Calibration",
+          "cold_pull": "Cold pull",
+          "self_check": "Auto-vérification",
+          "debug": "Débogage",
+          "unknown": "Inconnu"
+        }
       },
       "external_spool": {
         "name": "Bobine externe",
@@ -831,7 +874,8 @@
           "missing": "Manquant",
           "normal": "Normal",
           "abnormal": "Anormal",
-          "readonly": "Lecture seule"
+          "readonly": "Lecture seule",
+          "not_applicable": "Sans objet"
         }
       },
       "left_nozzle_diameter": {
@@ -870,6 +914,174 @@
       },
       "target_chamber_temp": {
         "name": "Température cible de la chambre"
+      },
+      "secondary_aux_fan_speed": {
+        "name": "Vitesse du ventilateur auxiliaire secondaire"
+      },
+      "hotend_rack_hotend_used_time": {
+        "name": "Hotend {hotend_id} temps utilisé"
+      },
+      "makerworld_boosts_received": {
+        "name": "Boosts reçus"
+      },
+      "makerworld_prints_total": {
+        "name": "Impressions incl. profils d'impression"
+      },
+      "makerworld_downloads_total": {
+        "name": "Téléchargements inclus. profils d'impression"
+      },
+      "makerworld_points": {
+        "name": "Points"
+      },
+      "makerworld_points_earned": {
+        "name": "Points gagnés"
+      },
+      "makerworld_points_spent": {
+        "name": "Points dépensés"
+      },
+      "makerworld_points_exclusive": {
+        "name": "Points exclusifs"
+      },
+      "makerworld_boost_tokens": {
+        "name": "Jetons de boost"
+      },
+      "makerworld_boosts_used": {
+        "name": "Boosts utilisés"
+      },
+      "makerworld_boosts_expired": {
+        "name": "Boosts expirés"
+      },
+      "makerworld_downloads": {
+        "name": "Téléchargements"
+      },
+      "makerworld_instance_downloads": {
+        "name": "Imprimer les téléchargements de profils"
+      },
+      "makerworld_prints": {
+        "name": "Impressions"
+      },
+      "makerworld_instance_prints": {
+        "name": "Imprimer les impressions de profil"
+      },
+      "makerworld_designs": {
+        "name": "Modèles publiés"
+      },
+      "makerworld_likes": {
+        "name": "Goûts"
+      },
+      "makerworld_collections": {
+        "name": "Collecte"
+      },
+      "makerworld_followers": {
+        "name": "Abonnés"
+      },
+      "makerworld_following": {
+        "name": "Suivant"
+      },
+      "makerworld_level": {
+        "name": "Niveau"
+      },
+      "active_nozzle": {
+        "name": "Buse active",
+        "state": {
+          "left": "Gauche",
+          "right": "Droite"
+        }
+      },
+      "track_switch_input": {
+        "name": "Entrée du commutateur de piste {input_number}",
+        "state": {
+          "left": "Buse gauche",
+          "right": "Buse droite",
+          "empty": "Vide"
+        }
+      },
+      "connected_nozzle": {
+        "name": "Buse connectée",
+        "state": {
+          "left": "Gauche",
+          "right": "Droite",
+          "track_switch": "Commutateur de piste"
+        }
+      },
+      "part_fan_speed": {
+        "name": "Vitesse du ventilateur partiel"
+      },
+      "left_aux_fan_speed": {
+        "name": "Vitesse du ventilateur auxiliaire gauche"
+      },
+      "right_aux_fan_speed": {
+        "name": "Vitesse du ventilateur auxiliaire droit"
+      },
+      "exhaust_fan_speed": {
+        "name": "Vitesse du ventilateur d'extraction"
+      },
+      "external_storage_connection": {
+        "name": "Connexion au stockage externe",
+        "state": {
+          "connected": "Connecté",
+          "disconnected": "Déconnecté"
+        }
+      },
+      "external_storage_total": {
+        "name": "Total du stockage externe"
+      },
+      "external_storage_used": {
+        "name": "Stockage externe utilisé"
+      },
+      "external_storage_free": {
+        "name": "Stockage externe gratuit"
+      },
+      "zone_temperature": {
+        "name": "Température de la zone {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Zone"
+          },
+          "zone_id": {
+            "name": "ID de zone"
+          },
+          "slots": {
+            "name": "Machines à sous"
+          },
+          "dry_setting": {
+            "name": "Réglage de séchage"
+          }
+        }
+      },
+      "zone_humidity": {
+        "name": "Humidité de la zone {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Zone"
+          },
+          "zone_id": {
+            "name": "ID de zone"
+          },
+          "slots": {
+            "name": "Machines à sous"
+          },
+          "dry_setting": {
+            "name": "Réglage de séchage"
+          }
+        }
+      },
+      "zone_remaining_drying_time": {
+        "name": "Temps de séchage restant dans la zone {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Zone"
+          },
+          "zone_id": {
+            "name": "ID de zone"
+          },
+          "slots": {
+            "name": "Machines à sous"
+          },
+          "dry_setting": {
+            "name": "Réglage de séchage"
+          }
+        }
       }
     },
     "camera": {
@@ -925,6 +1137,10 @@
     "hybrid_mode_blocking": {
       "title": "La connexion hybride bloque le contrôle",
       "description": "{device} est connecté au cloud mais avec une connexion mqtt locale par l'intégration. Cela bloque le réglage des températures et la réimpression de l'historique. Basculez la connexion vers le cloud pur pour permettre un contrôle total."
+    },
+    "access_code_rejected": {
+      "title": "Code d'accès rejeté",
+      "description": "L'imprimante a rejeté le code d'accès configuré pour {device}. Cela signifie généralement que le code a été régénéré, par exemple par une réinitialisation d'usine. Lisez le nouveau code d'accès sur l'écran des paramètres réseau de l'imprimante et reconfigurez l'intégration avec celui-ci."
     }
   }
 }

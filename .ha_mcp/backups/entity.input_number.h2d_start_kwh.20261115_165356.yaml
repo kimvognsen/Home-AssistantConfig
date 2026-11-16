@@ -1,0 +1,25 @@
+# ha_mcp_backup
+schema_version: 1
+domain: entity
+entity_id: input_number.h2d_start_kwh
+captured: '2026-11-15T16:53:56.316440+00:00'
+tool: ha_set_entity
+config:
+  id: 66c3f5cc9b1fe054ea0b51ab34560fca
+  entity_id: input_number.h2d_start_kwh
+  name: null
+  icon: null
+  area_id: null
+  device_class: null
+  aliases:
+  - null
+  labels:
+  - 3d_printer
+  categories: {}
+  hidden_by: null
+  disabled_by: null
+  options:
+    conversation:
+      should_expose: false
+    collection:
+      hash: 27f430a7a7ab9954fd1bfbd35d21bb19

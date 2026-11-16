@@ -1,7 +1,7 @@
 
 
 from ..global_variables  import GlobalVariables as Gb
-from ..const             import (DEVICE_TYPE_FNAME, CONF_FAMSHR_DEVICENAME, CONF_MOBILE_APP_DEVICE,
+from ..const             import (DEVICE_TYPE_DN, CONF_AADEV_NAME, CONF_MOBILE_APP_DEVICE,
                                 CONF_PARAMETER_TIME_STR, CONF_PARAMETER_FLOAT,
                                 CF_PROFILE, CF_TRACKING, CF_GENERAL,
                                 )
@@ -9,10 +9,10 @@ from ..const             import (DEVICE_TYPE_FNAME, CONF_FAMSHR_DEVICENAME, CONF
 from ..utils.utils     import (instr, is_number, is_empty, isnot_empty,
                                 encode_password, decode_password, )
 from ..utils.messaging import (log_exception, log_debug_msg, log_info_msg, add_log_file_filter,
-                                _log, _evlog, )
+                                _log, _evlog, log_stack, )
 
-from .const_form_lists   import (MENU_KEY_TEXT, ACTION_LIST_ITEMS_KEY_BY_TEXT,
-                                ACTION_LIST_ITEM_KEYS, ACTION_LIST_OPTIONS,
+from .const_form_lists   import (MENU_0_ITEMS, MENU_1_ITEMS,
+                                ACTION_LIST_ITEMS_KEY_BY_TEXT, ACTION_LIST_OPTIONS,
                                 UNKNOWN_DEVICE_TEXT, DATA_ENTRY_ALERT, DATA_ENTRY_ALERT_CHAR, )
 
 VALID_ERROR_MSG = [ 'conf_updated',
@@ -47,11 +47,30 @@ def menu_text_to_item(self, user_input, selection_list):
     if selection_list in user_input:
         selected_text = user_input[selection_list]
         selected_text_len = 35 if len(selected_text) > 35 else len(selected_text)
-        menu_item = [k for k, v in MENU_KEY_TEXT.items() if v.startswith(selected_text[:selected_text_len])][0]
+
+        # selected_text contains the 'exit_xxx key', not the displayed menu text
+        if selected_text.startswith('exit_'):
+            user_input['menu_items'] = selected_text
+            return user_input, selected_text
+
+        # selected_text contains the displayed menu text
+        elif selected_text.startswith('EXIT'):
+            user_input['menu_items'] = 'exit'
+            return user_input, 'exit'
+
+        elif selected_text.startswith('MENU'):
+            user_input['menu_items'] = 'menu'
+            return user_input, 'menu'
+
+        menu_items = MENU_0_ITEMS if self.menu_page_no == 0 else MENU_1_ITEMS
+        menu_item = [k  for k, v in menu_items.items()
+                        if v.startswith(selected_text[:selected_text_len])][0]
 
         user_input.pop(selection_list)
     else:
         menu_item = self.menu_item_selected
+
+    user_input['menu_items'] = menu_item
 
     return user_input, menu_item
 
@@ -62,8 +81,12 @@ def set_header_msg(self):
     '''
     if self.header_msg:
         if self.errors is None: self.errors = {}
-        self.errors['base'] = self.header_msg
+        self.errors = {'base': self.header_msg}
         self.header_msg = None
+
+        return self.errors
+
+    return {}
 
 #--------------------------------------------------------------------
 def strip_spaces(user_input, parm_list=[]):
@@ -225,7 +248,7 @@ def parm_or_device(self, pname, suggested_value=''):
                             or suggested_value
 
         if pname == 'device_type':
-            parm_displayed = DEVICE_TYPE_FNAME(parm_displayed)
+            parm_displayed = DEVICE_TYPE_DN(parm_displayed)
         parm_displayed = ' ' if parm_displayed == '' else parm_displayed
 
     except Exception as err:
@@ -288,7 +311,7 @@ def option_parm_to_text(self, pname, option_list_key_text, conf_device=False):
         log_exception(err)
         # If the parameter value is already the key to the items dict, it is ok.
         if pvalue_key not in option_list_key_text:
-            if pname == CONF_FAMSHR_DEVICENAME:
+            if pname == CONF_AADEV_NAME:
                 self.errors[pname] = 'unknown_icloud'
             elif pname == CONF_MOBILE_APP_DEVICE:
                 self.errors[pname] = 'unknown_mobapp'
@@ -322,13 +345,13 @@ def option_text_to_parm(user_input, pname, option_list_key_text):
 
         # if pvalue_text in ['', '.']:
         #     self.errors[pname] = 'required_field'
-
         pvalue_key = [k for  k, v in option_list_key_text.items() if v == pvalue_text]
         pvalue_key = pvalue_key[0] if pvalue_key else pvalue_text
 
         user_input[pname] = pvalue_key
 
-    except:
+    except Exception as err:
+        log_exception(err)
         pass
         # If the parameter value is already the key to the items dict, it is ok.
         # if pvalue_text not in option_list_key_text:
@@ -450,7 +473,44 @@ def discard_changes(user_input):
         return False
 
 #--------------------------------------------------------------------
-def log_step_info(self, user_input, action_item=None):
+def log_step_info(self, user_input, action_item=None, subtitle=''):
 
-    log_info_msg(  f"🔸{self.step_id.upper()} ({action_item}) > "
-                    f"UserInput-{user_input}, Errors-{self.errors}")
+
+    log_stack_pgm, log_stack_fct = _get_log_stack_info()
+
+    info_msg =( f"⭐ {self.step_id.upper()} {subtitle.upper()} "
+                f"({action_item}/{self.menu_item}) {log_stack_fct}> "
+                f"UserInput-{user_input}, Errors-{self.errors}")
+
+    if Gb.is_log_level_debug:
+        log_debug_msg(info_msg, log_stack_pgm=log_stack_pgm)
+    else:
+        log_info_msg(info_msg)
+
+#.................................................................................
+def _get_log_stack_info():
+    '''
+    Review the log_stack and return the calling program and function:line
+    '''
+
+    if Gb.is_log_level_debug is False:
+        return '', ''
+
+    # log_stack_data=configure/screens/step_icloud3_device.py, 98, async_step_device_list'
+    log_stack_data = log_stack(return_cnt=1)
+    log_stack_data = log_stack_data.replace(' ', '')
+
+    filename, line_no, fct = log_stack_data.split(',')
+    line_no = int(line_no)
+    filename = filename.split('/')[-1][:-3]
+    filename = filename.replace('step_', 'cf:')
+    filename = filename.replace('form_', 'cf:')
+    filename = filename.replace('icloud3', 'ic3')
+    # filename = filename.replace('apple_acct', 'aa')
+    if len(filename) < 14: filename += '…'*14
+    log_stack_pgm = f"[{filename[:14]}:{line_no:04d}] "
+
+    fct      = fct.replace('async_step_', '')
+    log_stack_fct = f"[{fct[:12]}:{line_no:04d}] "
+
+    return log_stack_pgm, log_stack_fct

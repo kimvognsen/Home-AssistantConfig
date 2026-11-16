@@ -1,13 +1,18 @@
+import asyncio
+import copy
 import functools
 import gzip
 import json
 import logging
 import math
+import os
 import requests
 import socket
 import re
+import time
 
 from datetime import datetime, timedelta, timezone
+from urllib.parse import quote, urlparse, urlunparse
 from urllib3.exceptions import ReadTimeoutError
 from bs4 import BeautifulSoup
 from pathlib import Path
@@ -22,9 +27,12 @@ from .const import (
     BAMBU_URL,
     FansEnum,
     Printers,
-    TempEnum
+    TempEnum,
+    AMSTrayStateFlags,
+    AMS_TRAY_STATE_LEGACY_MAX,
+    LEGACY_SDCARD_PRINTERS,
 )
-from .commands import SEND_GCODE_TEMPLATE, UPGRADE_CONFIRM_TEMPLATE
+from .commands import PRINT_PROJECT_FILE_TEMPLATE, SEND_GCODE_TEMPLATE, UPGRADE_CONFIRM_TEMPLATE
 
 def search(lst, predicate, default={}):
     """Search an array for a string"""
@@ -36,12 +44,116 @@ def search(lst, predicate, default={}):
     return default
 
 
+def normalize_service_target(data) -> dict:
+    """Return a copy of service call data with a single device_id/entity_id as a string.
+
+    A script's `target:` is validated with ensure_list, so these arrive as lists from YAML
+    but as plain strings from the UI. Raises ValueError unless there is a target, and for more
+    than one, because a service call acts on a single printer.
+    """
+    normalized = dict(data)
+    for key in ("device_id", "entity_id"):
+        value = normalized.get(key)
+        if not isinstance(value, (list, tuple)):
+            continue
+        if len(value) > 1:
+            raise ValueError(f"only one {key} can be targeted at a time, got {len(value)}")
+        if value:
+            normalized[key] = value[0]
+        else:
+            del normalized[key]
+    if "device_id" not in normalized and "entity_id" not in normalized:
+        raise ValueError("no device_id or entity_id provided")
+    return normalized
+
+
+def build_print_project_file_command(device_type: Printers | str, data: dict) -> dict:
+    """Build the MQTT project_file command for the print_project_file service.
+
+    A filepath that already contains '//' is sent as-is. Otherwise the legacy printers
+    take file:///sdcard/<path> and every other printer takes ftp:///<path>.
+
+    Besides the bed_leveling / flow_cali booleans, the integer auto_bed_leveling and
+    extrude_cali_flag fields are sent the way Bambu Studio does: newer printers such
+    as the P2S decide from those and calibrate anyway when they are missing.
+    """
+    command = copy.deepcopy(PRINT_PROJECT_FILE_TEMPLATE)
+    filepath = data.get("filepath")
+    plate = data.get("plate", 1)
+    bed_leveling = data.get("bed_leveling", False)
+    flow_cali = data.get("flow_cali", False)
+    use_ams = data.get("use_ams", False)
+
+    if "//" in filepath:
+        url = filepath
+    elif device_type in LEGACY_SDCARD_PRINTERS:
+        url = f"file:///sdcard/{filepath}"
+    else:
+        url = f"ftp:///{filepath}"
+
+    command["print"]["param"] = f"Metadata/plate_{plate}.gcode"
+    command["print"]["url"] = url
+    command["print"]["timelapse"] = data.get("timelapse", False)
+    command["print"]["bed_leveling"] = bed_leveling
+    command["print"]["auto_bed_leveling"] = 1 if bed_leveling else 0
+    command["print"]["flow_cali"] = flow_cali
+    command["print"]["extrude_cali_flag"] = 1 if flow_cali else 0
+    command["print"]["vibration_cali"] = data.get("vibration_cali", False)
+    command["print"]["layer_inspect"] = data.get("layer_inspect", False)
+    command["print"]["use_ams"] = use_ams
+    if use_ams:
+        command["print"]["ams_mapping"] = [int(x) for x in data.get("ams_mapping").split(',')]
+    command["print"]["subtask_name"] = os.path.basename(filepath)
+    return command
+
+
+def get_authenticated_rtsp_url(
+    reported_url: str | bytes | bytearray | None,
+    configured_host: str,
+    access_code: str,
+) -> str | None:
+    """Build an authenticated RTSP URL, or None when LiveView is disabled."""
+    if isinstance(reported_url, (bytes, bytearray)):
+        # urlparse on bytes yields a bytes netloc, which the str handling below can't use.
+        try:
+            reported_url = bytes(reported_url).decode()
+        except UnicodeDecodeError:
+            return None
+    if not reported_url or reported_url == "disable" or not access_code:
+        return None
+
+    parsed_url = urlparse(reported_url)
+    if parsed_url.scheme not in ("rtsp", "rtsps") or not parsed_url.hostname:
+        return None
+
+    host = configured_host or parsed_url.hostname
+    if ":" in host and not host.startswith("["):
+        host = f"[{host}]"
+
+    try:
+        port = parsed_url.port or 322
+    except ValueError:
+        return None
+
+    credentials = f"bblp:{quote(access_code, safe='')}@"
+    return urlunparse(parsed_url._replace(netloc=f"{credentials}{host}:{port}"))
+
+
 def fan_percentage(speed):
-    """Converts a fan speed to percentage"""
+    """Converts a fan speed to percentage.
+
+    Bambu fans report a raw 0-15 PWM-step value. The user-facing
+    setting moves in 10% increments, but the printer's reported
+    instantaneous value naturally oscillates between adjacent raw
+    integers when delivering an effective duty cycle (e.g. raw 2 and
+    raw 3 both serve a target around 20%). math.ceil keeps the
+    reported value pinned to the upper bucket so HA fan entities
+    don't flip 10% <-> 20% on every push.
+    """
     if not speed:
         return 0
     percentage = (int(speed) / 15) * 100
-    return round(percentage / 10) * 10
+    return math.ceil(percentage / 10) * 10
 
 
 def fan_percentage_to_gcode(fan: FansEnum, percentage: int):
@@ -57,7 +169,8 @@ def fan_percentage_to_gcode(fan: FansEnum, percentage: int):
 
     percentage = round(percentage / 10) * 10
     speed = math.ceil(255 * percentage / 100)
-    command = SEND_GCODE_TEMPLATE
+    # Deep copy the template - mutating the shared global corrupts concurrent callers.
+    command = copy.deepcopy(SEND_GCODE_TEMPLATE)
     command['print']['param'] = f"M106 {fanString} S{speed}\n"
     return command
 
@@ -69,7 +182,7 @@ def set_temperature_to_gcode(temp: TempEnum, temperature: int, device_type: Prin
     elif temp == TempEnum.HEATBED:
         tempCommand = "M140"
     elif temp == TempEnum.CHAMBER:
-        command = SEND_GCODE_TEMPLATE
+        command = copy.deepcopy(SEND_GCODE_TEMPLATE)
         if device_type == Printers.X1E:
             # X1E has no airduct; M141 alone controls the chamber heater.
             command['print']['param'] = f"M141 S{temperature}\n"
@@ -79,7 +192,7 @@ def set_temperature_to_gcode(temp: TempEnum, temperature: int, device_type: Prin
             command['print']['param'] = f"M141 S{temperature}\nM145 P0\n"
         return command
 
-    command = SEND_GCODE_TEMPLATE
+    command = copy.deepcopy(SEND_GCODE_TEMPLATE)
     command['print']['param'] = f"{tempCommand} S{temperature}\n"
     return command
 
@@ -269,36 +382,32 @@ def get_printer_type(modules, default):
     # }
     # X1E = AP02
 
-    if len(search(modules, lambda x: x.get('product_name', "") == "Bambu Lab X2D")):
-      return 'X2D'
+    # Data-driven mapping of reported product_name -> internal printer type code.
+    product_map = {
+            "Bambu Lab A1": "A1",
+            "Bambu Lab A1 mini": "A1MINI",
+            "Bambu Lab A2L": "A2L",
+            "Bambu Lab P1P": "P1P",
+            "Bambu Lab P1S": "P1S",
+            "Bambu Lab P2S": "P2S",
+            "Bambu Lab H2C": "H2C",
+            "Bambu Lab H3C": "H3C",
+            "Bambu Lab H2D": "H2D",
+            "Bambu Lab H2D Pro": "H2DPRO",
+            "Bambu Lab H2S": "H2S",
+            "Bambu Lab X2D": "X2D",
+    }
 
-    if len(search(modules, lambda x: x.get('product_name', "") == "Bambu Lab A1")):
-      return 'A1'
+    for product_name, code in product_map.items():
+            if search(modules, lambda x: x.get('product_name', "") == product_name):
+                    return code
 
-    if len(search(modules, lambda x: x.get('product_name', "") == "Bambu Lab A1 mini")):
-      return 'A1MINI'
+    # Keep a known H3C identity when a partial reply omits product_name.
+    # Its AP05 board would otherwise be mistaken for an X1C.
+    if default == "H3C":
+        return default
 
-    if len(search(modules, lambda x: x.get('product_name', "") == "Bambu Lab P1S")):
-      return 'P1S'
-
-    if len(search(modules, lambda x: x.get('product_name', "") == "Bambu Lab P2S")):
-      return 'P2S'
-
-    if len(search(modules, lambda x: x.get('product_name', "") == "Bambu Lab P1P")):
-      return 'P1P'
-
-    if len(search(modules, lambda x: x.get('product_name', "") == "Bambu Lab H2C")):
-      return 'H2C'
-
-    if len(search(modules, lambda x: x.get('product_name', "") == "Bambu Lab H2D")):
-      return 'H2D'
-
-    if len(search(modules, lambda x: x.get('product_name', "") == "Bambu Lab H2D Pro")):
-      return 'H2DPRO'
-
-    if len(search(modules, lambda x: x.get('product_name', "") == "Bambu Lab H2S")):
-      return 'H2S'
-
+    # Legacy identification logic that became unreliable as they started to re-use hw_ver for different models.
     apNode = search(modules, lambda x: x.get('hw_ver', "").find("AP0") == 0)
     if len(apNode.keys()) > 1:
         hw_ver = apNode['hw_ver']
@@ -317,7 +426,8 @@ def get_printer_type(modules, default):
                 return 'A1'
             if project_name == '':
                 return 'X1C'
-        LOGGER.debug(f"UNKNOWN DEVICE: hw_ver='{hw_ver}' / project_name='{project_name}'")
+        
+    LOGGER.debug(f"UNKNOWN DEVICE: {modules}'")
     return default
 
 
@@ -402,13 +512,15 @@ def upgrade_template(url: str) -> dict:
         r"offline\/([\w-]+)\/([\d\.]+)\/([\w]+)\/"
         r"offline-([\w\-\.]+)\.zip"
     )
-    info = re.search(pattern, url).groups()
-    if not info:
+    match = re.search(pattern, url)
+    if match is None:
         LOGGER.warning(f"Could not parse firmware url: {url}")
         return None
-    
-    model, version, hash, stamp = info
-    template = UPGRADE_CONFIRM_TEMPLATE.copy()
+
+    model, version, hash, stamp = match.groups()
+    # Deep copy the template - a shallow copy shares the nested 'upgrade' dict, so the
+    # first call would bake its URL into the global and later calls would resend it.
+    template = copy.deepcopy(UPGRADE_CONFIRM_TEMPLATE)
     template["upgrade"]["url"] = template["upgrade"]["url"].format(
         model=model, version=version, hash=hash, stamp=stamp
     )
@@ -450,3 +562,21 @@ def get_wiki_url_for_hms_error(hms_code: str, device_type: Printers):
 
     return default_url
 
+
+def ams_tray_spool_loaded(state):
+    """Return True when a spool is in the slot and the tray is not loading / scanning."""
+    if not (state & AMSTrayStateFlags.SPOOL):
+        return False
+    if state <= AMS_TRAY_STATE_LEGACY_MAX:
+        return state == AMS_TRAY_STATE_LEGACY_MAX
+    return bool(state & AMSTrayStateFlags.STEADY)
+
+
+async def async_wait_until(condition, timeout: float, interval: float = 0.1) -> bool:
+    """Poll condition until it is true. Returns False if timeout seconds pass first."""
+    deadline = time.monotonic() + timeout
+    while not condition():
+        if time.monotonic() >= deadline:
+            return False
+        await asyncio.sleep(interval)
+    return True

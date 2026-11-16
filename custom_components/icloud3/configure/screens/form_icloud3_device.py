@@ -2,13 +2,13 @@
 
 from ...global_variables    import GlobalVariables as Gb
 from ...const               import (RED_ALERT, LINK, RARROW, HOME, NONE, INACTIVE_SYMB, MONITOR_SYMB,
-                                    DEVICE_TYPE_FNAME, DEVICE_TYPE_FNAMES, INACTIVE,
+                                    DEVICE_TYPE_DN, DEVICE_TYPE_DNS, DEVICE_TYPES_TRACK_MONITOR, INACTIVE,
                                     PICTURE_WWW_STANDARD_DIRS, CONF_PICTURE_WWW_DIRS,
-                                    CONF_APPLE_ACCOUNT,
+                                    CONF_APPLE_ACCOUNT, CONF_USERNAME,
                                     CONF_TRACK_FROM_ZONES, CONF_LOG_ZONES,
                                     CONF_TRACK_FROM_BASE_ZONE,
                                     CONF_PICTURE, CONF_ICON, CONF_DEVICE_TYPE,
-                                    CONF_IC3_DEVICENAME, CONF_FNAME, CONF_FAMSHR_DEVICENAME, CONF_MOBILE_APP_DEVICE,
+                                    CONF_IC3_DEVICENAME, CONF_FNAME, CONF_AADEV_NAME, CONF_MOBILE_APP_DEVICE,
                                     CONF_TRACKING_MODE, CONF_INZONE_INTERVAL, CONF_FIXED_INTERVAL,
                                     )
 
@@ -21,9 +21,11 @@ from ...utils.time_util     import (format_timer, )
 
 from ..const_form_lists     import *
 
+from ...startup             import config_file
 from ..                     import utils_cf
 from ..                     import selection_lists as lists
 
+from homeassistant.util     import slugify
 from homeassistant.helpers  import selector
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -40,6 +42,7 @@ import voluptuous as vol
 #           - form_change_device_order
 #           - form_picture_dir_filter
 #           - form_review_inactive_devices
+#           - form_import_apple_devices
 #
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -49,7 +52,15 @@ import voluptuous as vol
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def form_device_list(self):
     default_action = 'update_device'
-    self.actions_list = DEVICE_LIST_ACTIONS.copy()
+
+    self.actions_list = []
+    device_cnt, inactive_device_cnt, inactive_pct = config_file.device_cnts()
+
+    if inactive_pct > .5:
+        self.actions_list.append(ACTION_LIST_OPTIONS['review_inactive_devices'])
+        default_action = 'review_inactive_devices'
+
+    self.actions_list.extend(DEVICE_LIST_ACTIONS)
 
     # Build list of all devices
     self.device_items_list = [device_item
@@ -61,6 +72,10 @@ def form_device_list(self):
         self.device_items_displayed = self.device_items_list
     else:
         _build_device_items_displayed_over_6(self)
+
+    if device_cnt == 0:
+        if Gb.use_data_source_ICLOUD:
+            list_add(self.device_items_displayed, '➤ IMPORT APPLE ACCOUNT DEVICES')
     list_add(self.device_items_displayed, '➤ ADD A NEW DEVICE')
 
     default_key  = self.dev_page_last_selected_devicename[self.dev_page_no]
@@ -109,79 +124,8 @@ def _build_device_items_displayed_over_6(self):
 
     other_item_fnames =(f"➤ OTHER DEVICES{RARROW}"
                         f"{list_to_str(device_fnames[other_from_idx:other_to_idx])}")
-    # device_fnames = [device_item.split(' (')[0]
-    #                             f"{list_to_str(device_fnames[other_from_idx:other_to_idx])}")
-    # Set other devices item fnames (either the main page items (#1-#6) or the second page (#7 to the end))
     list_add(self.device_items_displayed, other_item_fnames)
 
-
-#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-#            ADD DEVICE
-#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def form_add_device(self):
-    self.actions_list = DEVICE_ADD_ACTIONS.copy()
-
-    devicename    = utils_cf.parm_or_device(self, CONF_IC3_DEVICENAME) or ' '
-    icloud3_fname = utils_cf.parm_or_device(self, CONF_FNAME) or ' '
-
-    # iCloud Devices list default item
-    apple_acct    = utils_cf.parm_or_device(self, CONF_APPLE_ACCOUNT)
-    icloud_dname  = utils_cf.parm_or_device(self, CONF_FAMSHR_DEVICENAME)
-    if icloud_dname == 'None'  or devicename == '':
-        device_list_item_key = 'None'
-    else:
-        device_list_item_key = f"{icloud_dname}{LINK}{apple_acct}"
-
-    device_list_item_text = self.icloud_list_text_by_fname.get(device_list_item_key)
-    if device_list_item_text is None:
-        device_list_item_text = self.icloud_list_text_by_fname['None']
-
-    # Mobile App Devices list setup
-    mobapp_device = utils_cf.parm_or_device(self, CONF_MOBILE_APP_DEVICE)
-    mobapp_list_text_by_entity_id = self.mobapp_list_text_by_entity_id.copy()
-    if '.unknown' in mobapp_list_text_by_entity_id:
-        default_mobile_app_device = mobapp_list_text_by_entity_id['.unknown']
-    else:
-        default_mobile_app_device = mobapp_list_text_by_entity_id[mobapp_device]
-
-    # Picture list setup
-    picture_filename = utils_cf.parm_or_device(self, CONF_PICTURE)
-    default_picture_filename = self.picture_by_filename.get(picture_filename)
-    if default_picture_filename is None:
-        picture_filename = 'None'
-        default_picture_filename = self.picture_by_filename['None']
-
-    return vol.Schema({
-        vol.Required(CONF_IC3_DEVICENAME,
-                    default=devicename):
-                    selector.TextSelector(),
-        vol.Required(CONF_FNAME,
-                    default=icloud3_fname):
-                    selector.TextSelector(),
-        vol.Required(CONF_FAMSHR_DEVICENAME,
-                    default=device_list_item_text):
-                    selector.SelectSelector(selector.SelectSelectorConfig(
-                        options=dict_value_to_list(self.icloud_list_text_by_fname), mode='dropdown')),
-        vol.Required(CONF_MOBILE_APP_DEVICE,
-                    default=default_mobile_app_device):
-                    selector.SelectSelector(selector.SelectSelectorConfig(
-                        options=dict_value_to_list(mobapp_list_text_by_entity_id), mode='dropdown')),
-        vol.Required(CONF_PICTURE,
-                    default=default_picture_filename):
-                    selector.SelectSelector(selector.SelectSelectorConfig(
-                        options=dict_value_to_list(self.picture_by_filename), mode='dropdown')),
-        vol.Required(CONF_ICON,
-                    default=utils_cf.parm_or_device(self, CONF_ICON)):
-                    selector.IconSelector(),
-        vol.Optional(CONF_TRACKING_MODE,
-                    default=utils_cf.option_parm_to_text(self, CONF_TRACKING_MODE, TRACKING_MODE_OPTIONS)):
-                    selector.SelectSelector(selector.SelectSelectorConfig(
-                        options=dict_value_to_list(TRACKING_MODE_OPTIONS), mode='dropdown')),
-        vol.Required('action_items',
-                default=utils_cf.default_action_text('add_device')):
-                selector.SelectSelector(selector.SelectSelectorConfig(
-                    options=self.actions_list, mode='list')),
-        })
 
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -192,7 +136,7 @@ def form_update_device(self):
     # Build Other Tracking Parameters values text
     log_zones_fnames = [zone_dname(zone) for zone in self.conf_device[CONF_LOG_ZONES] if zone.startswith('name') is False]
     tfz_fnames = [zone_dname(zone) for zone in self.conf_device[CONF_TRACK_FROM_ZONES]]
-    device_type_fname = DEVICE_TYPE_FNAME(utils_cf.parm_or_device(self, CONF_DEVICE_TYPE))
+    device_type_fname = DEVICE_TYPE_DN(utils_cf.parm_or_device(self, CONF_DEVICE_TYPE))
     otp_msg =  (f"Type ({device_type_fname}), "
                 f"inZoneInterval ({format_timer(self.conf_device[CONF_INZONE_INTERVAL]*60)})")
     otp_msg += ", FixedInterval"
@@ -214,17 +158,13 @@ def form_update_device(self):
     self.errors = self.errors or {}
     self.actions_list = []
     self.actions_list.append(otp_action_item)
-    self.actions_list.append(ACTION_LIST_OPTIONS['save'])
-    self.actions_list.append(ACTION_LIST_OPTIONS['cancel_goto_menu'])
-    self.actions_list.append(ACTION_LIST_OPTIONS['cancel_goto_select_device'])
-
+    self.actions_list.extend(DEVICE_UPDATE_ACTIONS)
 
     devicename    = utils_cf.parm_or_device(self, CONF_IC3_DEVICENAME)
-    icloud3_fname = utils_cf.parm_or_device(self, CONF_FNAME) or ' '
 
     # iCloud Devices list default item
     apple_acct    = utils_cf.parm_or_device(self, CONF_APPLE_ACCOUNT)
-    icloud_dname  = utils_cf.parm_or_device(self, CONF_FAMSHR_DEVICENAME)
+    icloud_dname  = utils_cf.parm_or_device(self, CONF_AADEV_NAME)
     if icloud_dname == 'None' or devicename == '':
         device_list_item_key = 'None'
     else:
@@ -268,31 +208,35 @@ def form_update_device(self):
     elif self.errors != {}:
         self.errors['base'] = 'unknown_value'
 
-    if utils_cf.parm_or_device(self, CONF_TRACKING_MODE) == INACTIVE:
+    if devicename in Gb.ha_disabled_by_by_devicename:
+        self.errors['base'] = 'disabled_in_ha'
+        self.errors[CONF_TRACKING_MODE] = 'disabled_in_ha'
+
+    elif utils_cf.parm_or_device(self, CONF_TRACKING_MODE) == INACTIVE:
         self.errors[CONF_TRACKING_MODE] = 'inactive_device'
 
-    log_zones_key_text = {'none': 'None'}
-    zone_name_key_text = {k: v  for k, v in self.zone_name_key_text.items()
-                                if k.startswith('.') is False}
-    log_zones_key_text.update(zone_name_key_text)
-    log_zones_key_text.update(LOG_ZONES_KEY_TEXT)
+    # log_zones_key_text = {'none': 'None'}
+    # zone_name_key_text = {k: v  for k, v in self.zone_name_key_text.items()
+    #                             if k.startswith('.') is False}
+    # log_zones_key_text.update(zone_name_key_text)
+    # log_zones_key_text.update(LOG_ZONES_KEY_TEXT)
 
     schema = {
-        vol.Required(CONF_IC3_DEVICENAME,
+        vol.Optional(CONF_IC3_DEVICENAME,
                     default=utils_cf.parm_or_device(self, CONF_IC3_DEVICENAME)):
                     selector.TextSelector(),
-        vol.Required(CONF_FNAME,
+        vol.Optional(CONF_FNAME,
                     default=utils_cf.parm_or_device(self, CONF_FNAME)):
                     selector.TextSelector(),
-        vol.Required(CONF_FAMSHR_DEVICENAME,
+        vol.Optional(CONF_AADEV_NAME,
                     default=device_list_item_text):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=dict_value_to_list(self.icloud_list_text_by_fname), mode='dropdown')),
-        vol.Required(CONF_MOBILE_APP_DEVICE,
+        vol.Optional(CONF_MOBILE_APP_DEVICE,
                     default=default_mobile_app_device):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=dict_value_to_list(mobapp_list_text_by_entity_id), mode='dropdown')),
-        vol.Required(CONF_PICTURE,
+        vol.Optional(CONF_PICTURE,
                     default=default_picture_filename):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=dict_value_to_list(_picture_by_filename), mode='dropdown')),
@@ -327,7 +271,7 @@ def form_update_other_device_parameters(self):
 
     self.actions_list = []
     self.actions_list.append(ACTION_LIST_OPTIONS['save'])
-    self.actions_list.append(ACTION_LIST_OPTIONS['cancel_goto_previous'])
+    self.actions_list.append(ACTION_LIST_OPTIONS['rtn_update_device'])
 
     log_zones_key_text = {'none': 'None'}
     zone_name_key_text = {k: v  for k, v in self.zone_name_key_text.items()
@@ -335,12 +279,15 @@ def form_update_other_device_parameters(self):
     log_zones_key_text.update(zone_name_key_text)
     log_zones_key_text.update(LOG_ZONES_KEY_TEXT)
 
-    device_type_fname = DEVICE_TYPE_FNAME(utils_cf.parm_or_device(self, CONF_DEVICE_TYPE))
+    device_type_fname = DEVICE_TYPE_DN(utils_cf.parm_or_device(self, CONF_DEVICE_TYPE))
     return vol.Schema({
+            vol.Optional(CONF_FNAME,
+                    default=utils_cf.parm_or_device(self, CONF_FNAME)):
+                    selector.TextSelector(),
             vol.Optional(CONF_DEVICE_TYPE,
-                    default=utils_cf.option_parm_to_text(self, CONF_DEVICE_TYPE, DEVICE_TYPE_FNAMES)):
+                    default=utils_cf.option_parm_to_text(self, CONF_DEVICE_TYPE, DEVICE_TYPE_DNS)):
                     selector.SelectSelector(selector.SelectSelectorConfig(
-                        options=dict_value_to_list(DEVICE_TYPE_FNAMES), mode='dropdown')),
+                        options=dict_value_to_list(DEVICE_TYPE_DNS), mode='dropdown')),
             vol.Required(CONF_INZONE_INTERVAL,
                     default=self.conf_device[CONF_INZONE_INTERVAL]):
                     selector.NumberSelector(selector.NumberSelectorConfig(
@@ -450,10 +397,7 @@ def form_picture_dir_filter(self):
 #           CHANGE DEVICE ORDER
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def form_change_device_order(self):
-    self.actions_list = [
-            ACTION_LIST_OPTIONS['move_up'],
-            ACTION_LIST_OPTIONS['move_down']]
-    self.actions_list.extend(ACTION_LIST_ITEMS_BASE)
+    self.actions_list = CHANGE_DEVICE_ORDER.copy()
 
     return vol.Schema({
         vol.Required('device_desc',
@@ -472,19 +416,32 @@ def form_change_device_order(self):
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def form_review_inactive_devices(self, start_cnt=None):
 
-    self.actions_list = REVIEW_INACTIVES.copy()
+    self.actions_list = REVIEW_INACTIVE_DEVICES.copy()
+    if self.menu_item == 'device_list':
+        self.actions_list.append(ACTION_LIST_OPTIONS['rtn_device_list'])
+        default_action = 'update_tracking_mode'
+    else:
+        self.actions_list.append(ACTION_LIST_OPTIONS['menu'])
+        self.actions_list.append(ACTION_LIST_OPTIONS['exit'])
+        default_action = 'exit'
 
-    self.inactive_devices_key_text = {
+    self.inactive_devices_key_text = {  'none': 'Do not Track any Devices, leave them Inactive',
+                                        'all': 'All Devices should be Tracked or Monitored'}
+    self.inactive_devices_key_text.update({
         conf_device[CONF_IC3_DEVICENAME]: lists.format_device_list_item(self, conf_device)
                                 for conf_device in Gb.conf_devices
-                                if conf_device[CONF_TRACKING_MODE] == INACTIVE}
+                                if (conf_device[CONF_TRACKING_MODE] == INACTIVE
+                                        and conf_device[CONF_DEVICE_TYPE] in DEVICE_TYPES_TRACK_MONITOR)})
+
+
+
     return vol.Schema({
         vol.Required('inactive_devices',
-                    default=[]):
-                    cv.multi_select(self.inactive_devices_key_text),
+                    default=['none']):
+                    cv.multi_select(six_item_dict(self.inactive_devices_key_text)),
 
         vol.Required('action_items',
-                    default=utils_cf.default_action_text('goto_previous')):
+                    default=utils_cf.default_action_text(default_action)):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })

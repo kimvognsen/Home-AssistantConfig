@@ -19,6 +19,7 @@ from homeassistant.const import (
     STATE_ON,
     STATE_UNAVAILABLE,
     STATE_UNKNOWN,
+    EntityCategory,
     UnitOfPower,
 )
 from homeassistant.core import (
@@ -30,9 +31,8 @@ from homeassistant.core import (
     callback,
 )
 from homeassistant.exceptions import ServiceValidationError
-from homeassistant.helpers import issue_registry as ir, start
+from homeassistant.helpers import start
 from homeassistant.helpers.dispatcher import async_dispatcher_send
-from homeassistant.helpers.entity import EntityCategory
 import homeassistant.helpers.entity_registry as er
 from homeassistant.helpers.event import (
     EventStateChangedData,
@@ -88,12 +88,14 @@ from custom_components.powercalc.const import (
     CalculationStrategy,
     PowerProfileSource,
 )
+from custom_components.powercalc.device_naming import DeviceName
 from custom_components.powercalc.discovery import get_discovery_manager
 from custom_components.powercalc.errors import (
     ModelNotSupportedError,
     StrategyConfigurationError,
     UnsupportedStrategyError,
 )
+from custom_components.powercalc.issues import async_create_config_entry_issue
 from custom_components.powercalc.power_profile.factory import get_power_profile
 from custom_components.powercalc.power_profile.power_profile import PowerProfile
 from custom_components.powercalc.power_profile.sub_profile_selector import SubProfileSelectConfig, SubProfileSelector
@@ -153,15 +155,12 @@ async def create_virtual_power_sensor(
                 and await power_profile.requires_manual_sub_profile_selection
                 and "/" not in sensor_config.get(CONF_MODEL, "")
             ):
-                ir.async_create_issue(
+                async_create_config_entry_issue(
                     hass,
-                    DOMAIN,
+                    config_entry,
                     f"sub_profile_{config_entry.entry_id}",
-                    is_fixable=True,
-                    severity=ir.IssueSeverity.WARNING,
                     translation_key="sub_profile",
                     translation_placeholders={"entry": config_entry.title},
-                    data={"config_entry_id": config_entry.entry_id},
                 )
 
         name = generate_power_sensor_name(
@@ -242,7 +241,7 @@ async def _get_power_profile(
 
     power_profile = None
     try:
-        model_info = await discovery_manager.extract_model_info_from_device_info(source_entity.entity_entry)
+        model_info = discovery_manager.extract_model_info(source_entity)
         power_profile = await get_power_profile(
             hass,
             sensor_config,
@@ -365,12 +364,15 @@ def is_fully_configured(config: ConfigType) -> bool:
     return any(key in config for key in CALCULATION_STRATEGY_CONF_KEYS)
 
 
+# Home Assistant allows live properties to override its writable cached properties.
 class PowerSensor(BaseEntity):
     """Class which all power sensors should extend from."""
 
 
 class VirtualPowerSensor(PowerSensor, SensorEntity):
     """Virtual power sensor."""
+
+    device_name = DeviceName("power")
 
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -406,7 +408,9 @@ class VirtualPowerSensor(PowerSensor, SensorEntity):
         self._attr_force_update = True
         self._attr_unique_id = unique_id
         multiply_factor = sensor_config.get(CONF_MULTIPLY_FACTOR)
-        self._multiply_factor: Decimal | None = Decimal(multiply_factor) if multiply_factor else None
+        self._multiply_factor: Decimal | None = Decimal(multiply_factor) if multiply_factor is not None else None
+        if multiply_factor is None and power_profile:
+            self._multiply_factor = power_profile.multiply_factor
         self._multiply_factor_standby = bool(sensor_config.get(CONF_MULTIPLY_FACTOR_STANDBY, False))
         self._ignore_unavailable_state = bool(sensor_config.get(CONF_IGNORE_UNAVAILABLE_STATE, False))
         self._rounding_digits = int(sensor_config.get(CONF_POWER_SENSOR_PRECISION, DEFAULT_POWER_SENSOR_PRECISION))
@@ -482,7 +486,7 @@ class VirtualPowerSensor(PowerSensor, SensorEntity):
                 await self._strategy_instance.on_start(hass)
 
             entities = self._track_entities
-            if (not entities and self._source_entity.entity_id == DUMMY_ENTITY_ID) or not entities:
+            if (not entities and self._source_entity.is_dummy) or not entities:
                 entities.add(DUMMY_ENTITY_ID)
             for entity_id in entities:
                 new_state = (
@@ -558,7 +562,7 @@ class VirtualPowerSensor(PowerSensor, SensorEntity):
             )
             entities_to_track.extend(self._sub_profile_selector.get_tracking_entities())
 
-        if self._source_entity.entity_id != DUMMY_ENTITY_ID:
+        if not self._source_entity.is_dummy:
             entities_to_track.append(self._source_entity.entity_id)
 
         if self._availability_entity and self._availability_entity not in entities_to_track:
@@ -681,10 +685,7 @@ class VirtualPowerSensor(PowerSensor, SensorEntity):
         return self._apply_power_adjustments(power, standby_power)
 
     def _resolve_calculation_state(self, state: State) -> State | None:
-        if (
-            self._source_entity.entity_id == DUMMY_ENTITY_ID
-            and self._calculation_strategy != CalculationStrategy.MULTI_SWITCH
-        ):
+        if self._source_entity.is_dummy and self._calculation_strategy != CalculationStrategy.MULTI_SWITCH:
             if self._availability_entity and state.entity_id == self._availability_entity:
                 return State(DUMMY_ENTITY_ID, STATE_ON)
             return state
@@ -695,7 +696,7 @@ class VirtualPowerSensor(PowerSensor, SensorEntity):
         ):
             return state
 
-        return cast(State | None, self.hass.states.get(self._source_entity.entity_id))
+        return self.hass.states.get(self._source_entity.entity_id)
 
     async def _calculate_state_standby_power(self, entity_state: State) -> Decimal | None:
         if entity_state.state not in self._off_states and await self.is_calculation_enabled(entity_state):
@@ -725,7 +726,7 @@ class VirtualPowerSensor(PowerSensor, SensorEntity):
 
     def _apply_multiply_factor(self, power: Decimal) -> Decimal:
         """Apply the configured multiply factor to a power value."""
-        return power * self._multiply_factor if self._multiply_factor else power
+        return power * self._multiply_factor if self._multiply_factor is not None else power
 
     def _apply_standby_multiply_factor(self, power: Decimal) -> Decimal:
         """Apply the multiply factor to a standby power value, only when enabled for standby."""
@@ -806,7 +807,7 @@ class VirtualPowerSensor(PowerSensor, SensorEntity):
         return self._source_entity.entity_id
 
     @property
-    def native_value(self) -> StateType:
+    def native_value(self) -> StateType:  # ty: ignore[invalid-property-type-override]
         """Return the state of the sensor."""
         return cast(StateType, self._power)
 
@@ -917,6 +918,6 @@ class RealPowerSensor(PowerSensor):
         return self._device_id
 
     @property
-    def unique_id(self) -> str | None:
+    def unique_id(self) -> str | None:  # ty: ignore[invalid-property-type-override]
         """Return the unique_id of the sensor."""
         return self._unique_id

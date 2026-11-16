@@ -1,15 +1,16 @@
 
 
 from ...global_variables    import GlobalVariables as Gb
-from ...const               import (CONF_AUTH_CODE, )
+from ...const               import (CONF_AUTH_CODE, CONF_AUTH_METHODS, CURRENT, PUSH, HWKEY, )
 
-from ...utils.utils         import (dict_value_to_list, )
+from ...utils.utils         import (dict_value_to_list, list_del, dict_del, )
 from ...utils.messaging     import (_log, log_info_msg, log_exception, log_debug_msg,
                                     post_event, post_alert, post_greenbar_msg, update_alert_sensor,)
 
 from ..                     import utils_cf
 from ..                     import selection_lists as lists
 from ..const_form_lists     import *
+from ...apple_acct          import apple_acct_support_cf as aascf
 
 from homeassistant.helpers  import selector
 import homeassistant.helpers.config_validation as cv
@@ -30,48 +31,56 @@ import voluptuous as vol
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #            REAUTH
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def form_reauth(self, user_input=None, reauth_username=None):
+def form_reauth(self, user_input=None, reauth_username=''):
     lists.build_apple_accounts_auth_list(self)
 
     terms_of_use_update_needed = False
-    is_auth_code_needed        = False
+    is_reauth_needed           = False
     was_auth_code_requested    = False
 
-    AppleAcct, reauth_username = self.get_username_needing_reauth(reauth_username)
+    AppleAcct, reauth_username = self.get_AppleAcct_reauth_needed()
 
-    # is_auth_code_needed        = AppleAcct.is_auth_code_needed or AppleAcct.is_challenge_required
-    is_auth_code_needed        = AppleAcct.is_auth_code_needed or self.is_another_auth_code_needed()
+    is_reauth_needed           = AppleAcct.is_reauth_needed or self.is_another_auth_code_needed()
     was_auth_code_requested    = AppleAcct.was_auth_code_requested
     terms_of_use_update_needed = AppleAcct.terms_of_use_update_needed
 
+
     self.actions_list = []
+
     if terms_of_use_update_needed:
         self.actions_list.append(ACTION_LIST_OPTIONS['accept_terms_of_use'])
+        self.errors['base'] = 'apple_acct_terms_of_use_update_needed'
     self.actions_list.extend(REAUTH_ACTIONS)
 
-    if self.is_config_flow_handler:
-        self.actions_list.append(ACTION_LIST_OPTIONS['goto_ha_auth_done'])
-    else:
-        self.actions_list.append(ACTION_LIST_OPTIONS['goto_previous'])
+    if self.menu_item =='config_flow_reauth':
+        self.actions_list.append(ACTION_LIST_OPTIONS['exit_ha_reconfigure_reauth'])
+        default_action = 'exit_ha_reconfigure_reauth'
 
-    if (Gb.internet_error
-            or AppleAcct is None
-            or is_auth_code_needed is False):
-        default_action = ''
-    elif terms_of_use_update_needed:
+    elif self.menu_item == 'apple_accounts':
+        self.actions_list.append(ACTION_LIST_OPTIONS['rtn_apple_accounts'])
+        default_action = 'rtn_apple_accounts'
+
+    else:
+        self.actions_list.append(ACTION_LIST_OPTIONS['menu'])
+        default_action = 'menu'
+
+    if terms_of_use_update_needed:
         default_action = 'accept_terms_of_use'
-
-    elif was_auth_code_requested is False:
-        default_action = 'request_auth_code'
-    elif is_auth_code_needed or was_auth_code_requested:
+    elif (Gb.internet_error
+            or AppleAcct is None
+            or is_reauth_needed is False):
+        pass
+    elif was_auth_code_requested:
         default_action = 'send_auth_code'
-    else:
-        default_action = ''
-
-    if default_action == '':
-        default_action = 'goto_ha_auth_done' if self.is_config_flow_handler else 'goto_previous'
+        AppleAcct.was_auth_code_requested = False
+    elif is_reauth_needed or was_auth_code_requested is False:
+        default_action = 'request_auth_code'
 
     default_acct_selected = self.apple_acct_auth_items_by_username[reauth_username]
+
+
+    default_auth_code = user_input.get(CONF_AUTH_CODE, '') if user_input else ''
+    if default_auth_code == '': default_auth_code = ' '
 
     schema = ({
         vol.Optional('account_selected',
@@ -79,17 +88,9 @@ def form_reauth(self, user_input=None, reauth_username=None):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=dict_value_to_list(self.apple_acct_auth_items_by_username),
                         mode='dropdown')),
-            vol.Optional(CONF_AUTH_CODE, default=' '):
+            vol.Optional(CONF_AUTH_CODE, default=default_auth_code):
                     selector.TextSelector(),
     })
-
-    # if Gb.fido2_security_keys_enabled:
-    #     schema.update({
-    #         vol.Required('fido2_key_name',
-    #                 default=self.reauth_form_fido2_key_names_list[0]):
-    #                 selector.SelectSelector(selector.SelectSelectorConfig(
-    #                     options=self.reauth_form_fido2_key_names_list, mode='dropdown')),
-    #     })
 
     if terms_of_use_update_needed:
         schema.update({
@@ -141,7 +142,11 @@ def form_reauth_change_auth_method(self, account_selected=None):
 
     default_acct_selected = self.apple_acct_auth_items_by_username[account_selected]
 
-    default_auth_method = self.AppleAcct.auth_method
+    default_auth_method = self.AppleAcct.current_auth_method
+    if self.aa_auth_methods_by_auth_method.get(HWKEY):
+        default_auth_method = HWKEY
+        dict_del(self.aa_auth_methods_by_auth_method, PUSH)
+
     if default_auth_method not in self.aa_auth_methods_by_auth_method:
         default_auth_method = 'push'
 
@@ -150,7 +155,7 @@ def form_reauth_change_auth_method(self, account_selected=None):
                     default=default_acct_selected):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=[default_acct_selected],
-                        mode='dropdown')),
+                        mode='list')),
         vol.Optional('auth_method',
                     default=self.aa_auth_methods_by_auth_method[default_auth_method]):
                     selector.SelectSelector(selector.SelectSelectorConfig(
@@ -161,5 +166,6 @@ def form_reauth_change_auth_method(self, account_selected=None):
                     selector.SelectSelector(selector.SelectSelectorConfig(
                         options=self.actions_list, mode='list')),
         })
+                        # options=dict_value_to_list(self.apple_acct_auth_items_by_username),
 
     return vol.Schema(schema)

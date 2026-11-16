@@ -2,7 +2,7 @@
 from ..global_variables     import GlobalVariables as Gb
 from ..const                import (CRLF_DOT, NL3, NL4, NL3D, NL3_DATA, NL3UD, )
 from .utils                 import (instr, is_empty, isnot_empty, list_to_str, )
-from .messaging             import (log_exception, _evlog, _log, log_debug_msg,
+from .messaging             import (log_exception, _evlog, _log, log_debug_msg, log_warning_msg,
                                     log_data_unfiltered, write_ic3log_recd, )
 
 from collections            import OrderedDict
@@ -147,7 +147,9 @@ def is_valid_json_str(json_str):
     '''
     try:
         json.loads(json_str)
+
     except ValueError as err:
+        log_warning_msg(f"Invalid source data for json string, {err}")
         return False
     except Exception as err:
         log_exception(err)
@@ -403,11 +405,13 @@ async def async_get_directory_files(directory):
 
 #--------------------------------------------------------------------
 def get_directory_files(directory):
+    # get files in directory
     dir_names, files = get_directory(directory)
     return files
 
 #--------------------------------------------------------------------
 def get_directory(directory):
+    # get files in directory and sub-directories
     if directory_exists(directory) is False:
         return [], []
 
@@ -420,7 +424,7 @@ def get_directory(directory):
 
 
 #--------------------------------------------------------------------
-def get_directory_filename_list(start_dir=None,  file_extn_filter=[]):
+def get_directory_filename_list(start_dir=None, file_extn_filter=[]):
     return get_file_or_directory_list(  list_type=0,
                                         start_dir=start_dir,
                                         file_extn_filter=file_extn_filter)

@@ -1,0 +1,25 @@
+# ha_mcp_backup
+schema_version: 1
+domain: entity
+entity_id: input_number.h2d_price_start_kr_kwh
+captured: '2026-11-15T16:53:55.337704+00:00'
+tool: ha_set_entity
+config:
+  id: c8af81f2730b5e6f09e9f4e960ae71bd
+  entity_id: input_number.h2d_price_start_kr_kwh
+  name: null
+  icon: null
+  area_id: null
+  device_class: null
+  aliases:
+  - null
+  labels:
+  - 3d_printer
+  categories: {}
+  hidden_by: null
+  disabled_by: null
+  options:
+    conversation:
+      should_expose: false
+    collection:
+      hash: e2df9b6f8fa818dafb9f9d84a39922be

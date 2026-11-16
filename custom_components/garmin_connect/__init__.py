@@ -2,17 +2,33 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
+from pathlib import Path
 
 from ha_garmin import GarminAuth, GarminClient
-from homeassistant.config_entries import ConfigEntryNotReady
+from homeassistant.components.frontend import add_extra_js_url
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.typing import ConfigType
+from homeassistant.loader import async_get_integration
 
-from .const import CONF_CLIENT_ID, CONF_IS_CN, CONF_REFRESH_TOKEN, CONF_TOKEN, DOMAIN
+from .const import (
+    CONF_CLIENT_ID,
+    CONF_IS_CN,
+    CONF_REFRESH_TOKEN,
+    CONF_TOKEN,
+    DOMAIN,
+    FRONTEND_CARD_FILE,
+    FRONTEND_URL_BASE,
+)
 from .coordinator import (
+    LIFETIME_CONTEXT,
     ActivityCoordinator,
     BloodPressureCoordinator,
     BodyCoordinator,
@@ -24,12 +40,33 @@ from .coordinator import (
     MenstrualCoordinator,
     NutritionCoordinator,
     TrainingCoordinator,
+    connect_plus_issue_id,
+    lifetime_hidden_issue_id,
 )
-from .services import async_setup_services, async_unload_services
+from .services import async_setup_services
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.CALENDAR]
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register services and serve the route map card.
+
+    Runs once per Home Assistant start, not per config entry, so services
+    and the static path are never registered twice. The version query busts
+    browser caches when the integration is updated.
+    """
+    async_setup_services(hass)
+    integration = await async_get_integration(hass, DOMAIN)
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig(FRONTEND_URL_BASE, str(Path(__file__).parent / "www"))]
+    )
+    add_extra_js_url(hass, f"{FRONTEND_URL_BASE}/{FRONTEND_CARD_FILE}?v={integration.version}")
+    return True
+
 
 # Mapping of old sensor keys (v1) to new sensor keys (v2).
 # Keys present in both versions are migrated by unique_id prefix only.
@@ -150,11 +187,16 @@ def _migrate_entity_unique_ids(
 
 async def async_setup_entry(hass: HomeAssistant, entry: GarminConnectConfigEntry) -> bool:
     """Set up Garmin Connect from a config entry."""
-    if CONF_TOKEN not in entry.data:
+    if not all(entry.data.get(key) for key in (CONF_TOKEN, CONF_REFRESH_TOKEN, CONF_CLIENT_ID)):
         # Migration from v1 bumps version and starts reauth but setup still runs.
-        # Without valid DI tokens there's nothing to set up — reauth will fix it.
-        _LOGGER.debug("Skipping setup for %s — reauth pending", entry.title)
-        return False
+        # v1 kept its garth session under "token" with no DI refresh token or
+        # client id, so all three are checked. Without them there's nothing to
+        # set up; reauth will fix it.
+        raise ConfigEntryAuthFailed(
+            translation_domain=DOMAIN,
+            translation_key="reauth_required",
+            translation_placeholders={"account": entry.title},
+        )
 
     is_cn = entry.options.get(CONF_IS_CN, False)
     auth = GarminAuth(is_cn=is_cn)
@@ -162,7 +204,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: GarminConnectConfigEntry
     auth.di_refresh_token = entry.data[CONF_REFRESH_TOKEN]
     auth.di_client_id = entry.data[CONF_CLIENT_ID]
 
-    client = GarminClient(auth, is_cn=is_cn)
+    # HA's zone is the fallback for Garmin's calendar day; the process zone
+    # (often UTC in containers) must not decide when daily totals roll over.
+    # The data API runs on Home Assistant's shared aiohttp session; login and
+    # token refresh use the library's own TLS-impersonating sessions.
+    client = GarminClient(
+        auth,
+        is_cn=is_cn,
+        timezone=hass.config.time_zone,
+        session=async_get_clientsession(hass),
+    )
 
     coordinators = GarminConnectCoordinators(
         core=CoreCoordinator(hass, entry, client, auth),
@@ -174,49 +225,50 @@ async def async_setup_entry(hass: HomeAssistant, entry: GarminConnectConfigEntry
         blood_pressure=BloodPressureCoordinator(hass, entry, client, auth),
         menstrual=MenstrualCoordinator(hass, entry, client, auth),
         nutrition=NutritionCoordinator(hass, entry, client, auth),
+        is_cn=is_cn,
     )
 
-    try:
-        await coordinators.core.async_config_entry_first_refresh()
-    except asyncio.CancelledError as err:
-        raise ConfigEntryNotReady("Garmin API timed out during setup; will retry") from err
-
-    await asyncio.gather(
-        coordinators.activity.async_refresh(),
-        coordinators.training.async_refresh(),
-        coordinators.body.async_refresh(),
-        coordinators.goals.async_refresh(),
-        coordinators.gear.async_refresh(),
-        coordinators.blood_pressure.async_refresh(),
-        coordinators.menstrual.async_refresh(),
-        coordinators.nutrition.async_refresh(),
-        return_exceptions=True,
-    )
+    # Core must succeed (raises ConfigEntryNotReady/AuthFailed otherwise; a
+    # stalled fetch hits UPDATE_TIMEOUT and becomes ConfigEntryNotReady too).
+    await coordinators.core.async_config_entry_first_refresh()
 
     entry.runtime_data = coordinators
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    if not hass.services.has_service(DOMAIN, "set_active_gear"):
-        await async_setup_services(hass)
+    # Register entities and their listeners before data arrives. Entry-owned
+    # background tasks do not hold HA startup open and are cancelled on unload.
+    # A coordinator no enabled entity listens to is never fetched or polled.
+    # Core's first refresh ran before its sensors existed, so it is refreshed
+    # again once if an enabled sensor needs its opt-in data.
+    for coord in coordinators:
+        if coord is coordinators.core:
+            needs_refresh = coordinators.core.has_opt_in_listeners
+        else:
+            needs_refresh = coord.has_listeners
+        if needs_refresh:
+            entry.async_create_background_task(
+                hass, coord.async_refresh(), f"Garmin initial {coord.data_name} refresh"
+            )
 
-    entry.async_on_unload(entry.add_update_listener(async_options_update_listener))
+    # Unpolled coordinators can't clear their own repair issues.
+    if not coordinators.nutrition.has_listeners:
+        ir.async_delete_issue(hass, DOMAIN, connect_plus_issue_id(entry.entry_id))
+    if LIFETIME_CONTEXT not in set(coordinators.goals.async_contexts()):
+        ir.async_delete_issue(hass, DOMAIN, lifetime_hidden_issue_id(entry.entry_id))
 
     return True
 
 
-async def async_options_update_listener(
-    hass: HomeAssistant, entry: GarminConnectConfigEntry
-) -> None:
-    """Handle options update — reload to apply new scan_interval."""
-    hass.async_create_task(hass.config_entries.async_reload(entry.entry_id))
-
-
 async def async_unload_entry(hass: HomeAssistant, entry: GarminConnectConfigEntry) -> bool:
     """Unload a config entry."""
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
-    if unload_ok and len(hass.config_entries.async_entries(DOMAIN)) == 1:
-        await async_unload_services(hass)
 
-    return unload_ok
+async def async_remove_entry(hass: HomeAssistant, entry: GarminConnectConfigEntry) -> None:
+    """Remove the entry's repair issues along with it."""
+    for issue_id in (
+        connect_plus_issue_id(entry.entry_id),
+        lifetime_hidden_issue_id(entry.entry_id),
+    ):
+        ir.async_delete_issue(hass, DOMAIN, issue_id)

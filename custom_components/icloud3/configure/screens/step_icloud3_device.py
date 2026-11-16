@@ -3,19 +3,19 @@
 from ...global_variables    import GlobalVariables as Gb
 from ...const               import (DOMAIN,
                                     LINK,
-                                    IPHONE, MAC, ICLOUD,
-                                    DEVICE_TYPE_FNAME, DEVICE_TYPE_FNAMES,
+                                    IPHONE, MAC, ICLOUD, WATCH, IPAD, AIRPODS,
+                                    DEVICE_TYPE_DN, DEVICE_TYPE_DNS, DEVICE_TYPE_TRACKING_MODE,
                                     MOBAPP, NO_MOBAPP,
-                                    TRACK, MONITOR, INACTIVE,
+                                    TRACK, MONITOR, INACTIVE, OTHER,
                                     DEVICE_TRACKER,
-                                    CONF_APPLE_ACCOUNT,
+                                    CONF_APPLE_ACCOUNT, CONF_USERNAME,
                                     CONF_DEVICES,
                                     CONF_DATA_SOURCE,
                                     CONF_TRACK_FROM_ZONES, CONF_TRACK_FROM_BASE_ZONE, CONF_LOG_ZONES,
                                     CONF_PICTURE, CONF_DEVICE_TYPE, CONF_INZONE_INTERVALS,
-                                    CONF_RAW_MODEL, CONF_MODEL, CONF_MODEL_DISPLAY_NAME, CONF_FAMSHR_DEVICE_ID,
+                                    CONF_RAW_MODEL, CONF_MODEL, CONF_MODEL_DISPLAY_NAME, CONF_AADEV_DEVICE_ID,
                                     CONF_LOG_LEVEL_DEVICES,
-                                    CONF_IC3_DEVICENAME, CONF_FNAME, CONF_FAMSHR_DEVICENAME, CONF_MOBILE_APP_DEVICE, CONF_FMF_EMAIL, CONF_FMF_DEVICE_ID,
+                                    CONF_IC3_DEVICENAME, CONF_FNAME, CONF_AADEV_NAME, CONF_MOBILE_APP_DEVICE, CONF_FMF_EMAIL, CONF_FMF_DEVICE_ID,
                                     CONF_TRACKING_MODE, CONF_INZONE_INTERVAL, CONF_FIXED_INTERVAL,
                                     CONF_AWAY_TIME_ZONE_1_OFFSET, CONF_AWAY_TIME_ZONE_1_DEVICES,
                                     CONF_AWAY_TIME_ZONE_2_OFFSET, CONF_AWAY_TIME_ZONE_2_DEVICES,
@@ -24,7 +24,7 @@ from ...const               import (DOMAIN,
                                     CONF_PICTURE_WWW_DIRS
                                     )
 
-from ...utils.utils         import (instr, is_empty, isnot_empty, list_del, list_add, isbetween, )
+from ...utils.utils         import (instr, is_empty, isnot_empty, list_del, list_add, is_between, )
 from ...utils.messaging     import (_log, log_info_msg, log_exception, log_debug_msg,
                                     post_event, post_alert, post_greenbar_msg, update_alert_sensor,)
 
@@ -52,7 +52,7 @@ DEVICE_NON_TRACKING_FIELDS =   [CONF_FNAME, CONF_PICTURE, CONF_DEVICE_TYPE, CONF
 #           ICLOUD3 APPLE ACCOUNT CONFIG FLOW STEPS
 #
 #           - async_step_device_list
-#           - async_step_add_device
+#           - form_import_apple_devices
 #           - async_step_update_device
 #           - async_step_update_other_device_parameters
 #           - async_step_change_device_order
@@ -72,7 +72,7 @@ class OptionsFlow_iCloud3Device_Steps:
         (add, update, delete) on the selected device.
         '''
         self.step_id = 'device_list'
-        self.errors = errors or {}
+        self.errors = errors or utils_cf.set_header_msg(self) or {}
         self.errors_user_input = {}
         self.add_device_flag = self.display_rarely_updated_parms = False
         await self.async_write_icloud3_configuration_file()
@@ -83,7 +83,7 @@ class OptionsFlow_iCloud3Device_Steps:
         if user_input is None:
             await lists.build_icloud_device_selection_list(self)
             await lists.build_mobapp_entity_selection_list(self)
-            self._set_inactive_devices_header_msg()
+            self.set_inactive_devices_header_msg()
             utils_cf.set_header_msg(self)
             lists.build_devices_list(self)
             self.update_device_ha_sensor_entity = {}
@@ -97,7 +97,7 @@ class OptionsFlow_iCloud3Device_Steps:
         user_input, action_item = utils_cf.action_text_to_item(self, user_input)
         utils_cf.log_step_info(self, user_input, action_item)
 
-        if action_item == 'goto_menu':
+        if action_item == 'menu':
             self.update_device_ha_sensor_entity = {}
             return await self.async_step_menu()
 
@@ -105,37 +105,53 @@ class OptionsFlow_iCloud3Device_Steps:
             if self._is_apple_acct_setup() is False:
                 self.header_msg = 'apple_acct_not_set_up'
 
-            if self.header_msg:
-                errors = {'base': self.header_msg}
-
         device_cnt = len(Gb.conf_devices)
 
+        #............................................................
         if (action_item in ['update_device', 'delete_device']
                 and CONF_DEVICES not in user_input):
             action_item = ''
 
-        if action_item == 'goto_menu':
-            self.dev_page_no = 0
-            self.update_device_ha_sensor_entity = {}
-            return await self.async_step_menu()
+        if user_input.get('devices', '').startswith('➤ ADD'):
+            action_item = 'add_device'
+        elif user_input.get('devices', '').startswith('➤ IMPORT'):
+            action_item = 'import_apple_devices'
 
-        if action_item == 'change_device_order':
-            self.cdo_devicenames = [self._format_device_text_hdr(conf_device)
-                                        for conf_device in Gb.conf_devices]
-            self.cdo_new_order_idx = [x for x in range(0, len(Gb.conf_devices))]
-            self.actions_list_default = 'move_down'
-            return await self.async_step_change_device_order()
+        match action_item:
+            case 'menu':
+                self.dev_page_no = 0
+                self.update_device_ha_sensor_entity = {}
+                return await self.async_step_menu()
 
+            case 'rtn_device_list':
+                return await self.async_step_device_list()
+
+            case 'add_device':
+                self.update_device_ha_sensor_entity['add_device'] = True
+                self.conf_device = DEFAULT_DEVICE_CONF.copy()
+                self.add_device_flag = True
+                return await self.async_step_update_device()
+                return await self.async_step_add_device()
+
+            case 'import_apple_devices':
+                return await self.async_step_import_apple_devices()
+
+            case 'review_inactive_devices':
+                return await self.async_step_review_inactive_devices()
+
+            case 'change_device_order':
+                self.cdo_devicenames = [self._format_device_text_hdr(conf_device)
+                                            for conf_device in Gb.conf_devices]
+                self.cdo_new_order_idx = [x for x in range(0, len(Gb.conf_devices))]
+                self.actions_list_default = 'move_down'
+                return await self.async_step_change_device_order()
+
+        #............................................................
         if user_input.get('devices', '').startswith('➤ OTHER DEVICES'):
             if action_item == 'delete_device':
                 action_item = 'update_device'
             self.dev_page_no = 1 if self.dev_page_no == 0 else 0
             return await self.async_step_device_list()
-
-        if user_input.get('devices', '').startswith('➤ ADD'):
-            self.update_device_ha_sensor_entity['add_device'] = True
-            self.conf_device = DEFAULT_DEVICE_CONF.copy()
-            return await self.async_step_add_device()
 
         user_input = utils_cf.option_text_to_parm(user_input,
                                 'devices', self.device_items_by_devicename)
@@ -161,7 +177,7 @@ class OptionsFlow_iCloud3Device_Steps:
 
         await lists.build_icloud_device_selection_list(self)
         await lists.build_mobapp_entity_selection_list(self)
-        self._set_inactive_devices_header_msg()
+        self.set_inactive_devices_header_msg()
         utils_cf.set_header_msg(self)
 
         lists.build_devices_list(self)
@@ -202,14 +218,15 @@ class OptionsFlow_iCloud3Device_Steps:
             devicename = self.conf_device[CONF_IC3_DEVICENAME]
             event_msg = (f"Configuration Changed > DeleteDevice-{devicename}, "
                         f"{self.conf_device[CONF_FNAME]}/"
-                        f"{DEVICE_TYPE_FNAME(self.conf_device[CONF_DEVICE_TYPE])}")
+                        f"{DEVICE_TYPE_DN(self.conf_device[CONF_DEVICE_TYPE])}")
             post_event(event_msg)
 
             # if deleting last device, use _delete all to simplifying table resetting
             if len(Gb.conf_devices) <= 1:
                 return self._delete_all_devices()
 
-            sensors_cf.remove_device_tracker_and_sensor_entities(self, devicename)
+            if Gb.DeviceTrackers_by_devicename.get(devicename):
+                sensors_cf.remove_device_tracker_and_sensor_entities(self, devicename)
 
             self.dev_page_last_selected_devicename[self.dev_page_no] = ''
             Gb.conf_devices.pop(self.conf_device_idx)
@@ -245,7 +262,6 @@ class OptionsFlow_iCloud3Device_Steps:
                                 list_del(Gb.conf_device_sensors[CONF_EXCLUDED_SENSORS], excluded_sensor_text)
                                 break
 
-
         except Exception as err:
             log_exception(err)
 
@@ -274,129 +290,6 @@ class OptionsFlow_iCloud3Device_Steps:
 
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-#            ADD DEVICE
-#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    async def async_step_add_device(self, user_input=None, errors=None):
-        '''
-        Display the device form. Validate and update the device parameters
-        '''
-        self.step_id = 'add_device'
-        self.errors = errors or {}
-        self.errors_user_input = {}
-        self.multi_form_user_input = {}
-        self.add_device_flag = self.display_rarely_updated_parms = True
-
-        await lists.build_update_device_selection_lists(self, self.conf_device[CONF_IC3_DEVICENAME])
-
-        if Gb.internet_error:
-            self.errors['base'] = 'internet_error'
-
-        if user_input is None or isnot_empty(self.errors):
-            return self.async_show_form(step_id='add_device',
-                                        data_schema=forms.form_add_device(self),
-                                        errors=self.errors,
-                                        last_step=False)
-
-        user_input, action_item = utils_cf.action_text_to_item(self, user_input)
-
-        if (action_item == 'cancel_goto_menu'
-                or user_input[CONF_IC3_DEVICENAME] == ''):
-            return await self.async_step_device_list()
-
-        user_input = utils_cf.strip_special_text_from_user_input(user_input, CONF_IC3_DEVICENAME)
-        user_input = utils_cf.strip_special_text_from_user_input(user_input, CONF_FNAME)
-        user_input = utils_cf.strip_special_text_from_user_input(user_input, CONF_MOBILE_APP_DEVICE)
-
-        user_input = utils_cf.option_text_to_parm(user_input,
-                                CONF_MOBILE_APP_DEVICE, self.mobapp_list_text_by_entity_id)
-        user_input = utils_cf.option_text_to_parm(user_input,
-                                CONF_PICTURE, self.picture_by_filename)
-        user_input = utils_cf.option_text_to_parm(user_input,
-                                CONF_TRACKING_MODE, TRACKING_MODE_OPTIONS)
-
-        utils_cf.log_step_info(self, user_input, action_item)
-        user_input = self._validate_ic3_devicename(user_input)
-
-        user_input = self._resolve_selection_list_items(user_input)
-        user_input = self._validate_data_source_selections(user_input)
-        ui_devicename = user_input[CONF_IC3_DEVICENAME]
-
-        utils_cf.log_step_info(self, user_input, action_item)
-
-        if utils_cf.any_errors(self):
-            self.errors['base'] = 'update_aborted'
-            self.multi_form_user_input = user_input
-
-            return self.async_show_form(step_id='add_device',
-                        data_schema=forms.form_add_device(self),
-                        errors=self.errors,
-                        last_step=False)
-
-        user_input = self._set_other_device_field_values(user_input)
-
-        self.create_device_tracker_sensor_enities_on_exit = True
-        self.conf_device.update(user_input)
-        Gb.conf_devices.append(self.conf_device)
-
-        # Add the new device to the device_list form and and set it's position index
-        self.conf_device_idx = len(Gb.conf_devices) - 1
-        self.dev_page_no     = 1 if self.dev_page_no == 0 else 0
-        ui_devicename        = user_input[CONF_IC3_DEVICENAME]
-        self.device_items_by_devicename[ui_devicename] = \
-                    lists.format_device_list_item(self, self.conf_device)
-
-        return await self.async_step_update_other_device_parameters()
-
-#.....................................................
-    def _set_other_device_field_values(self, user_input):
-        '''
-        Set the device type and inZone interval fields
-        '''
-
-        # Get device_type from iCloud device info
-        device_type = ''
-        model       = IPHONE
-        if user_input[CONF_FAMSHR_DEVICENAME] != 'None':
-            icloud_dname = user_input[CONF_FAMSHR_DEVICENAME]
-            username = user_input[CONF_APPLE_ACCOUNT]
-            if username in Gb.AppleAcct_by_username:
-                AppleAcct = Gb.AppleAcct_by_username[username]
-                raw_model, model, model_display_name = \
-                                AppleAcct.device_model_info_by_fname[icloud_dname]
-                model = model.lower()
-                if model in DEVICE_TYPE_FNAMES:
-                    device_type = model
-
-        # Get device_type from mobapp info
-        if (device_type == ''
-                and user_input[CONF_MOBILE_APP_DEVICE] != 'None'):
-            mobapp_dname = user_input[CONF_MOBILE_APP_DEVICE]
-            if mobapp_dname in Gb.device_info_by_mobapp_dname:
-                _device_type = Gb.device_info_by_mobapp_dname[mobapp_dname][2].lower() # ipad6,3 --> ipad
-                for device_type, device_type_fname in DEVICE_TYPE_FNAMES.items():
-                    if _device_type.startswith(device_type):
-                        break
-
-        # Get device_type from ic3_devicename
-        if device_type == '':
-            ic3_devicename = user_input[CONF_IC3_DEVICENAME].lower()
-            ic3_fname = user_input[CONF_FNAME].lower()
-            for device_type, device_type_fname in DEVICE_TYPE_FNAMES.items():
-                if device_type == MAC:
-                    continue
-                if instr(ic3_devicename, device_type) or instr(ic3_fname.lower(), device_type):
-                    break
-
-        if device_type == '':
-            device_type = IPHONE
-
-        user_input[CONF_DEVICE_TYPE] = device_type
-        inzone_interval_item = NO_MOBAPP if user_input[CONF_MOBILE_APP_DEVICE] == 'None' else device_type
-        user_input[CONF_INZONE_INTERVAL] = DEFAULT_GENERAL_CONF[CONF_INZONE_INTERVALS][inzone_interval_item]
-        return user_input
-
-
-#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #            UPDATE DEVICE
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     async def async_step_update_device(self, user_input=None, errors=None):
@@ -404,67 +297,82 @@ class OptionsFlow_iCloud3Device_Steps:
         Display the device form. Validate and update the device parameters
         '''
         self.step_id = 'update_device'
-        self.errors = errors or {}
+        self.errors = errors or utils_cf.set_header_msg(self) or {}
         self.errors_user_input = {}
+        self.errors_info_msg = {}
+        self.multi_form_user_input = {}
+        await self.async_write_icloud3_configuration_file()
 
         await lists.build_update_device_selection_lists(self, self.conf_device[CONF_IC3_DEVICENAME])
-        log_debug_msg(f"⭐ {self.step_id.upper()} ( > UserInput-{user_input}, Errors-{errors}")
 
         if Gb.internet_error:
             self.errors['base'] = 'internet_error'
 
-        if user_input is None:
+        if user_input is None or isnot_empty(self.errors):
+            utils_cf.log_step_info(self, user_input)
             return self.async_show_form(step_id='update_device',
                                         data_schema=forms.form_update_device(self),
                                         errors=self.errors)
 
+        if user_input.get(CONF_PICTURE, '').startswith('️️➤ SET PICTURE DIRECTORY FILTER'):
+            self.multi_form_user_input = user_input
+            self.multi_form_user_input[CONF_PICTURE]   = 'None'
+            return await self.async_step_picture_dir_filter()
+
         user_input, action_item = utils_cf.action_text_to_item(self, user_input)
-        utils_cf.log_step_info(self, user_input, action_item)
-
-        if self.add_device_flag is False:
-            self.dev_page_last_selected_devicename[self.dev_page_no] = self.conf_device[CONF_IC3_DEVICENAME]
-
-        if action_item == 'cancel_goto_select_device':
-            return await self.async_step_device_list()
-        elif action_item == 'cancel_goto_menu':
-            return await self.async_step_menu()
-
         utils_cf.log_step_info(self, user_input, action_item)
 
         user_input = utils_cf.strip_special_text_from_user_input(user_input, CONF_IC3_DEVICENAME)
         user_input = utils_cf.strip_special_text_from_user_input(user_input, CONF_FNAME)
         user_input = utils_cf.strip_special_text_from_user_input(user_input, CONF_MOBILE_APP_DEVICE)
 
+        if self.add_device_flag is False:
+            self.dev_page_last_selected_devicename[self.dev_page_no] = self.conf_device[CONF_IC3_DEVICENAME]
+
+        if (action_item == 'rtn_device_list'
+                or user_input[CONF_IC3_DEVICENAME] == ''):
+            return await self.async_step_device_list()
+        elif action_item == 'menu':
+            return await self.async_step_menu()
+
+        utils_cf.log_step_info(self, user_input, action_item)
+
         user_input = utils_cf.option_text_to_parm(user_input,
                                 CONF_MOBILE_APP_DEVICE, self.mobapp_list_text_by_entity_id)
         user_input = utils_cf.option_text_to_parm(user_input,
                                 CONF_PICTURE, self.picture_by_filename)
-
         user_input = utils_cf.option_text_to_parm(user_input,
                                 CONF_TRACKING_MODE, TRACKING_MODE_OPTIONS)
         utils_cf.log_step_info(self, user_input, action_item)
 
         user_input = self._validate_ic3_devicename(user_input)
 
+        utils_cf.log_step_info(self, user_input, action_item)
+
+        change_flag = False
+
         if (CONF_IC3_DEVICENAME not in self.errors
                 and CONF_FNAME not in self.errors):
             user_input = self._resolve_selection_list_items(user_input)
             user_input = self._validate_data_source_selections(user_input)
+
             user_input = self._update_device_fields(user_input)
             change_flag = self._was_device_data_changed(user_input)
 
         if utils_cf.any_errors(self):
             self.errors['base'] = 'update_aborted'
-            self.multi_form_user_input  = user_input
+            self.multi_form_user_input = user_input
 
+            info_msg = self.errors_info_msg if self.errors_info_msg else None
             return self.async_show_form(step_id='update_device',
                             data_schema=forms.form_update_device(self),
-                            errors=self.errors)
+                            errors=self.errors,
+                            description_placeholders=info_msg)
 
-        if user_input[CONF_PICTURE] == 'setup_dir_filter':
-            self.multi_form_user_input = user_input
-            self.multi_form_user_input[CONF_PICTURE] = self.conf_device[CONF_PICTURE]
-            return await self.async_step_picture_dir_filter()
+        if self.add_device_flag:
+            user_input = self._set_other_device_field_values(user_input)
+            self._add_new_device_to_conf_devices(user_input)
+            change_flag = True
 
         if change_flag is False:
             if action_item == 'update_other_device_parameters':
@@ -480,37 +388,8 @@ class OptionsFlow_iCloud3Device_Steps:
         picture_changed_to_none = (user_input[CONF_PICTURE] == 'None' \
                                         and self.conf_device[CONF_PICTURE] != 'None')
 
-        ui_devicename = user_input[CONF_IC3_DEVICENAME]
+        await self._update_gb_dicts_and_config_file(user_input)
 
-        only_non_tracked_field_updated = self._is_only_non_tracked_field_updated(user_input)
-        self.conf_device.update(user_input)
-        Gb.conf_devices[self.conf_device_idx] = self.conf_device
-
-        # Update the configuration file
-        add_change_msg = 'Add' if self.add_device_flag else 'Change'
-        post_event( f"Configuration Changed > {add_change_msg}Device-{ui_devicename}, "
-                    f"{self.conf_device[CONF_FNAME]}/"
-                    f"{DEVICE_TYPE_FNAME(self.conf_device[CONF_DEVICE_TYPE])}")
-
-        self.dev_page_last_selected_devicename[self.dev_page_no] = ui_devicename
-        self.update_config_file_tracking(force_config_update=True)
-
-        # Rebuild this list in case anything changed
-        Gb.devicenames_by_icloud_dname = {}
-        Gb.icloud_dnames_by_devicename = {}
-        for conf_device in Gb.conf_devices:
-            devicename   = conf_device.get(CONF_IC3_DEVICENAME)
-            icloud_dname = conf_device.get(CONF_FAMSHR_DEVICENAME)
-            Gb.devicenames_by_icloud_dname[icloud_dname] = devicename
-            Gb.icloud_dnames_by_devicename[devicename]   = icloud_dname
-
-        await lists.build_icloud_device_selection_list(self)
-
-        self.header_msg = 'conf_updated'
-        if only_non_tracked_field_updated:
-            list_add(self.config_parms_update_control, ['devices', devicename])
-        else:
-            list_add(self.config_parms_update_control, ['tracking', 'restart'])
 
         # Update the device_tracker & sensor entities now that the configuration has been updated
         if self.add_device_flag is False:
@@ -526,9 +405,123 @@ class OptionsFlow_iCloud3Device_Steps:
         return await self.async_step_device_list()
 
 #-------------------------------------------------------------------------------------------
+    async def _update_gb_dicts_and_config_file(self, user_input):
+        '''
+        Update the internal dicts and the configuration file with the new device config
+        '''
+        ui_devicename = user_input[CONF_IC3_DEVICENAME]
+
+        only_non_tracked_field_updated = self._is_only_non_tracked_field_updated(user_input)
+        self.conf_device.update(user_input)
+        Gb.conf_devices[self.conf_device_idx] = self.conf_device
+
+        # Update the configuration file
+        add_change_msg = 'Add' if self.add_device_flag else 'Change'
+        post_event( f"Configuration Changed > {add_change_msg}Device-{ui_devicename}, "
+                    f"{self.conf_device[CONF_FNAME]}/"
+                    f"{DEVICE_TYPE_DN(self.conf_device[CONF_DEVICE_TYPE])}")
+
+        self.dev_page_last_selected_devicename[self.dev_page_no] = ui_devicename
+        self.update_config_file_tracking(force_config_update=True)
+
+        # Rebuild this list in case anything changed
+        Gb.devicenames_by_aadev_name = {}
+        Gb.aadev_names_by_devicename = {}
+        for conf_device in Gb.conf_devices:
+            devicename    = conf_device.get(CONF_IC3_DEVICENAME)
+            aadevice_dname = conf_device.get(CONF_AADEV_NAME)
+            Gb.devicenames_by_aadev_name[aadevice_dname] = devicename
+            Gb.aadev_names_by_devicename[devicename]     = aadevice_dname
+            #Gb.Devices_by_icloud_device_id[device_id]    =
+
+        await lists.build_icloud_device_selection_list(self)
+
+        self.header_msg = 'conf_updated'
+        if only_non_tracked_field_updated:
+            list_add(self.config_parms_update_control, ['devices', devicename])
+        else:
+            list_add(self.config_parms_update_control, ['tracking', 'restart'])
+
+#.....................................................
+    def _add_new_device_to_conf_devices(self, user_input):
+        self.create_device_tracker_sensor_enities_on_exit = True
+        self.conf_device.update(user_input)
+        Gb.conf_devices.append(self.conf_device)
+
+        # Add the new device to the device_list form and and set it's position index
+        self.conf_device_idx = len(Gb.conf_devices) - 1
+        self.dev_page_no     = 1 if self.dev_page_no == 0 else 0
+        ui_devicename        = user_input[CONF_IC3_DEVICENAME]
+        self.device_items_by_devicename[ui_devicename] = \
+                    lists.format_device_list_item(self, self.conf_device)
+
+#.....................................................
+    def _set_other_device_field_values(self, user_input):
+        '''
+        Set the device type and inZone interval fields
+        '''
+
+        # Get device_type from iCloud device info
+        device_type = ''
+        model       = IPHONE
+        if user_input[CONF_AADEV_NAME] != 'None':
+            conf_aadev_dname = user_input[CONF_AADEV_NAME]
+            username    = user_input.get(CONF_APPLE_ACCOUNT, '')
+            if username in Gb.AppleAcct_by_username:
+                AppleAcct   = Gb.AppleAcct_by_username[username]
+                device_id   = self.AppleAcct.device_id_by_aadev_dname.get(conf_aadev_dname, '')
+                AADevData   = self.AppleAcct.AADevData_by_device_id[device_id]
+                raw_model   = AADevData.raw_model
+                model       = AADevData.model
+                model_display_name = AADevData.model_display_name
+                device_type = AADevData.device_type
+                # raw_model, model, model_display_name = \
+                #                 AppleAcct.device_model_info_by_aadev_dname[aadev_dname]
+                # model = model.lower()
+                # if model in DEVICE_TYPE_DNS:
+                #     device_type = model
+
+        # Get device_type from mobapp info
+        if (device_type == ''
+                and user_input[CONF_MOBILE_APP_DEVICE] != 'None'):
+            mobapp_dname = user_input[CONF_MOBILE_APP_DEVICE]
+            if mobapp_dname in Gb.device_info_by_mobapp_dname:
+                _device_type = Gb.device_info_by_mobapp_dname[mobapp_dname][2].lower() # ipad6,3 --> ipad
+                for device_type, device_type_fname in DEVICE_TYPE_DNS.items():
+                    if _device_type.startswith(device_type):
+                        break
+
+        # Get device_type from ic3_devicename
+        if device_type == '':
+            ic3_devicename = user_input[CONF_IC3_DEVICENAME].lower()
+            ic3_fname = user_input[CONF_FNAME].lower()
+            for device_type, device_type_fname in DEVICE_TYPE_DNS.items():
+                if device_type == MAC:
+                    continue
+                if instr(ic3_devicename, device_type) or instr(ic3_fname.lower(), device_type):
+                    break
+
+        if device_type == '':
+            device_type = IPHONE
+
+        user_input[CONF_DEVICE_TYPE]   = device_type
+        if user_input[CONF_TRACKING_MODE] != INACTIVE:
+            user_input[CONF_TRACKING_MODE] = DEVICE_TYPE_TRACKING_MODE(device_type)
+
+        inzone_interval_item =  NO_MOBAPP if user_input[CONF_MOBILE_APP_DEVICE] == 'None' else \
+                                OTHER     if user_input[CONF_TRACKING_MODE] == MONITOR else \
+                                device_type
+        user_input[CONF_INZONE_INTERVAL] = \
+                Gb.conf_general[CONF_INZONE_INTERVALS].get(inzone_interval_item, 120)
+
+
+
+        return user_input
+
+#-------------------------------------------------------------------------------------------
     def _resolve_selection_list_items(self, user_input):
         '''
-        Extract the apple_acct and icloud_dname (conf_famshr_devicename) from the
+        Extract the apple_acct and icloud_dname (CONF_AADEV_NAME) from the
         user_input icloud_dname-LINK-apple_acct value
 
         Note: The value in self.icloud_list_text_by_fname ends with a '.' when the item
@@ -543,42 +536,42 @@ class OptionsFlow_iCloud3Device_Steps:
         '''
 
         # Get the dname_apple_acct key from the value description of FAMSHR_DEVICENAME field
-        if user_input[CONF_FAMSHR_DEVICENAME] == 'nodev':
-            user_input[CONF_FAMSHR_DEVICENAME] = 'None'
+        if user_input[CONF_AADEV_NAME]        == 'nodev':
+            user_input[CONF_AADEV_NAME]        = 'None'
         if user_input[CONF_MOBILE_APP_DEVICE] == 'nodev':
             user_input[CONF_MOBILE_APP_DEVICE] = 'None'
 
-        _icloud_dname_apple_acct = [icloud_dname_apple_acct
-                            for icloud_dname_apple_acct, v in self.icloud_list_text_by_fname.items()
-                            if (v == user_input[CONF_FAMSHR_DEVICENAME])]
+        aadev_dname_aausername = [_aadev_dname_aausername
+                            for _aadev_dname_aausername, v in self.icloud_list_text_by_fname.items()
+                            if (v == user_input[CONF_AADEV_NAME])]
 
-        if is_empty(_icloud_dname_apple_acct):
-            _icloud_dname_apple_acct = 'None'
+        if is_empty(aadev_dname_aausername):
+            aadev_dname_aausername = 'None'
         else:
-            _icloud_dname_apple_acct = _icloud_dname_apple_acct[0]
+            aadev_dname_aausername = aadev_dname_aausername[0]
 
         # Get the dname_apple_acct key from the value description of FAMSHR_DEVICENAME field
-        if (_icloud_dname_apple_acct.startswith('.')
-                or _icloud_dname_apple_acct.startswith('ⓧ')):
-            user_input[CONF_APPLE_ACCOUNT]      = self.conf_device[CONF_APPLE_ACCOUNT]
-            user_input[CONF_FAMSHR_DEVICENAME]  = self.conf_device[CONF_FAMSHR_DEVICENAME]
-            self.errors[CONF_FAMSHR_DEVICENAME] = 'invalid_selection'
+        if (aadev_dname_aausername.startswith('.')
+                or aadev_dname_aausername.startswith('ⓧ')):
+            user_input[CONF_APPLE_ACCOUNT] = self.conf_device[CONF_APPLE_ACCOUNT]
+            user_input[CONF_AADEV_NAME]    = self.conf_device[CONF_AADEV_NAME]
+            self.errors[CONF_AADEV_NAME]   = 'invalid_selection'
 
-        elif _icloud_dname_apple_acct == 'None':
-            user_input[CONF_APPLE_ACCOUNT]     = ''
-            user_input[CONF_FAMSHR_DEVICENAME] = 'None'
-            user_input[CONF_FAMSHR_DEVICE_ID]   = ''
+        elif aadev_dname_aausername == 'None':
+            user_input[CONF_APPLE_ACCOUNT]      = ''
+            user_input[CONF_AADEV_NAME]         = 'None'
+            user_input[CONF_AADEV_DEVICE_ID]    = ''
             user_input[CONF_RAW_MODEL]          = ''
             user_input[CONF_MODEL]              = ''
             user_input[CONF_MODEL_DISPLAY_NAME] = ''
 
-        elif instr(_icloud_dname_apple_acct, LINK):
-            icloud_dname_part, username_part   = _icloud_dname_apple_acct.split(LINK)
-            user_input[CONF_APPLE_ACCOUNT]     = username_part
-            user_input[CONF_FAMSHR_DEVICENAME] = icloud_dname_part
+        elif instr(aadev_dname_aausername, LINK):
+            _aadevice_dname, _aausername       = aadev_dname_aausername.split(LINK)
+            user_input[CONF_APPLE_ACCOUNT]     = _aausername
+            user_input[CONF_AADEV_NAME] = _aadevice_dname
         else:
             user_input[CONF_APPLE_ACCOUNT]     = self.conf_device[CONF_APPLE_ACCOUNT]
-            user_input[CONF_FAMSHR_DEVICENAME] = self.conf_device[CONF_FAMSHR_DEVICENAME]
+            user_input[CONF_AADEV_NAME] = self.conf_device[CONF_AADEV_NAME]
 
         if CONF_FMF_EMAIL in user_input:
             user_input[CONF_FMF_EMAIL]     = 'None'
@@ -594,6 +587,11 @@ class OptionsFlow_iCloud3Device_Steps:
         if user_input[CONF_PICTURE].startswith('.'):
             user_input[CONF_PICTURE] = self.conf_device[CONF_PICTURE]
             self.errors[CONF_PICTURE] = 'invalid_selection'
+
+        if (user_input[CONF_AADEV_NAME] == 'None'
+                and user_input[CONF_MOBILE_APP_DEVICE] == 'None'
+                and user_input[CONF_TRACKING_MODE] != INACTIVE):
+            self.errors[CONF_AADEV_NAME] = 'no_data_source'
 
         return user_input
 
@@ -623,11 +621,11 @@ class OptionsFlow_iCloud3Device_Steps:
 #-------------------------------------------------------------------------------------------
     def _validate_ic3_devicename(self, user_input):
         '''
-        Validate the add device parameters
+        Validate the updated device parameters
         '''
 
-        ui_devicename = user_input[CONF_IC3_DEVICENAME] = slugify(user_input[CONF_IC3_DEVICENAME]).strip()
-        ui_fname      = user_input[CONF_FNAME]          = user_input[CONF_FNAME].strip()
+        ui_devicename  = user_input[CONF_IC3_DEVICENAME] = slugify(user_input[CONF_IC3_DEVICENAME]).strip()
+        ui_fname       = user_input[CONF_FNAME]          = user_input[CONF_FNAME].strip()
 
         if ui_devicename == '':
             self.errors[CONF_IC3_DEVICENAME] = 'required_field'
@@ -637,40 +635,64 @@ class OptionsFlow_iCloud3Device_Steps:
             self.errors[CONF_FNAME] = 'required_field'
             return user_input
 
-        # ic3 devicename was changed or adding a new device
+        err_devicename = err_fname = ''
         if ui_devicename != self.conf_device[CONF_IC3_DEVICENAME]:
-            # Already used if the new ic3_devicename is in the ic3 devicename list
-            if ui_devicename in self.device_items_by_devicename:
-                self.errors[CONF_IC3_DEVICENAME] = 'duplicate_ic3_devicename'
-                self.errors_user_input[CONF_IC3_DEVICENAME] = ( f"{ui_devicename}{DATA_ENTRY_ALERT}"
-                                                                f"Assigned to another iCloud3 device")
-
-            # Already used if the new ic3_devicename is in the ha device_tracker entity list
-            device_tracker_entities, device_tracker_entity_data = \
-                    entity_io.get_entity_registry_data(domain=DEVICE_TRACKER)
-            dt_devicename = f"{DEVICE_TRACKER}.{ui_devicename}"
-
-            if (dt_devicename in device_tracker_entities
-                    and device_tracker_entity_data[dt_devicename]['platform'] != DOMAIN):
-                self.errors[CONF_IC3_DEVICENAME] = 'duplicate_other_devicename'
-                self.errors_user_input[CONF_IC3_DEVICENAME] = (
-                                    f"{ui_devicename}{DATA_ENTRY_ALERT}Used by Integration > "
-                                    f"{device_tracker_entity_data[dt_devicename]['platform']}")
+            err_devicename = self.is_devicename_used(ui_devicename)
         if ui_fname != self.conf_device[CONF_FNAME]:
-            # Get any devicenames with the same ui_fname to see if it is already used by another
-            # ic3 device. Exclude the self.conf_device instead of ui_devicename in case he ic3
-            # devicename is being changed
-            used_by_devicename = [conf_device[CONF_IC3_DEVICENAME]
-                                    for conf_device in Gb.conf_devices
-                                    if (conf_device[CONF_IC3_DEVICENAME] != self.conf_device[CONF_IC3_DEVICENAME]
-                                        and conf_device[CONF_FNAME] == ui_fname)]
+            err_fname = self.is_fname_used(ui_devicename, ui_fname)
 
-            if isnot_empty(used_by_devicename):
-                self.errors[CONF_FNAME] = 'duplicate_ic3_devicename'
-                self.errors_user_input[CONF_FNAME] = (  f"{ui_fname}{DATA_ENTRY_ALERT}Used by iCloud3 device > "
-                                                        f"{used_by_devicename[0]}")
+        if err_devicename == 'icloud3':
+            self.errors[CONF_IC3_DEVICENAME] = 'used_by_other_ic3_device'
+            self.errors_info_msg['info_msg'] = ''
+
+        elif err_devicename != '':
+            self.errors[CONF_IC3_DEVICENAME] = 'used_by_other_integration'
+            self.errors_info_msg['info_msg'] = f"({err_devicename})"
+
+        # Do not check fname if the devicename is invalid
+        if err_fname != '' and CONF_IC3_DEVICENAME not in self.errors:
+            self.errors[CONF_FNAME] = 'used_by_other_ic3_device'
+            self.errors_info_msg['info_msg'] = f"({err_fname})"
+
+        # Can not change tracking mode if device is disabled in HA
+        if (user_input[CONF_TRACKING_MODE] != self.conf_device[CONF_TRACKING_MODE]
+                and user_input[CONF_TRACKING_MODE] != INACTIVE
+                and ui_devicename in Gb.ha_disabled_by_by_devicename):
+            user_input[CONF_TRACKING_MODE] = self.conf_device[CONF_TRACKING_MODE]
 
         return user_input
+
+#-------------------------------------------------------------------------------------------
+    def is_devicename_used(self, devicename):
+
+        # Is devicename used by another iCloud3 device
+        if devicename in self.device_items_by_devicename:
+            return 'icloud3'
+
+        # Is devicename used by another ha device_tracker entity
+        device_tracker_entities, device_tracker_entity_data = \
+                        entity_io.get_entity_registry_data(domain=DEVICE_TRACKER)
+        dt_devicename = f"{DEVICE_TRACKER}.{devicename}"
+
+        if (dt_devicename in device_tracker_entities
+                and device_tracker_entity_data[dt_devicename]['platform'] != DOMAIN):
+            return device_tracker_entity_data[dt_devicename]['platform']
+
+        return ''
+
+#-------------------------------------------------------------------------------------------
+    def is_fname_used(self, devicename, fname):
+
+        # Is fname used by another iCloud3 device
+        used_by_devicename = [conf_device[CONF_IC3_DEVICENAME]
+                                for conf_device in Gb.conf_devices
+                                if (conf_device[CONF_IC3_DEVICENAME] != devicename
+                                    and conf_device[CONF_FNAME] == fname)]
+
+        if isnot_empty(used_by_devicename):
+            return used_by_devicename[0]
+
+        return ''
 
 #-------------------------------------------------------------------------------------------
     def _validate_data_source_selections(self, user_input):
@@ -685,32 +707,33 @@ class OptionsFlow_iCloud3Device_Steps:
             - self.errors[xxx] will be set if any errors are found
             - user_input
         '''
-        if user_input[CONF_FAMSHR_DEVICENAME].strip() == '':
-            user_input[CONF_FAMSHR_DEVICENAME] = 'None'
+        if user_input[CONF_AADEV_NAME].strip() == '':
+            user_input[CONF_AADEV_NAME] = 'None'
             user_input[CONF_APPLE_ACCOUNT]     = ''
 
         if (user_input[CONF_MOBILE_APP_DEVICE].strip() == ''
                 or user_input[CONF_MOBILE_APP_DEVICE] == 'scan_hdr'):
             user_input[CONF_MOBILE_APP_DEVICE] = 'None'
 
-        ui_apple_acct      = user_input[CONF_APPLE_ACCOUNT]
-        ui_icloud_dname    = user_input[CONF_FAMSHR_DEVICENAME]
+        ui_aausername      = user_input[CONF_APPLE_ACCOUNT]
+        ui_aadevice_dname  = user_input[CONF_AADEV_NAME]
         ui_mobile_app_name = user_input[CONF_MOBILE_APP_DEVICE]
-        icloud_dname_apple_acct = f"{ui_icloud_dname}{LINK}{ui_apple_acct}"
+        aadevice_dname_aausername = f"{ui_aadevice_dname}{LINK}{ui_aausername}"
 
-        if (ui_apple_acct  == ''
-                and ui_icloud_dname != 'None'):
-            self.errors[CONF_FAMSHR_DEVICENAME] = 'unknown_apple_acct'
+        if (ui_aausername  == ''
+                and ui_aadevice_dname != 'None'):
+            self.errors[CONF_AADEV_NAME] = 'unknown_apple_acct'
 
-        elif (ui_icloud_dname != 'None'
-                and icloud_dname_apple_acct not in self.icloud_list_text_by_fname
+        elif (ui_aadevice_dname != 'None'
+                and aadevice_dname_aausername not in self.icloud_list_text_by_fname
                 and instr(Gb.conf_tracking[CONF_DATA_SOURCE], ICLOUD)):
-            self.errors[CONF_FAMSHR_DEVICENAME] = 'unknown_icloud'
+            self.errors[CONF_AADEV_NAME] = 'unknown_icloud'
 
-        elif (ui_icloud_dname == 'None'
+        elif (ui_aadevice_dname == 'None'
                 and ui_mobile_app_name == 'None'
+                and self.add_device_flag is False
                 and user_input.get(CONF_TRACKING_MODE, TRACK) != INACTIVE):
-            self.errors[CONF_FAMSHR_DEVICENAME] = 'no_data_source'
+            self.errors[CONF_AADEV_NAME] = 'no_data_source'
             self.errors[CONF_TRACKING_MODE] = 'no_data_source_set_inactive'
 
         if (ui_mobile_app_name != 'None'
@@ -734,14 +757,21 @@ class OptionsFlow_iCloud3Device_Steps:
         """
 
         if self.AppleAcct:
-            _AppleDev = self.AppleAcct.AADevices
-            conf_icloud_dname = user_input[CONF_FAMSHR_DEVICENAME]
-            device_id = self.AppleAcct.device_id_by_icloud_dname.get(conf_icloud_dname, '')
-            raw_model, model, model_display_name = self.AppleAcct.device_model_info_by_fname.get(conf_icloud_dname, ['', '', ''])
-            user_input[CONF_FAMSHR_DEVICE_ID]   = device_id
-            user_input[CONF_RAW_MODEL]          = raw_model
-            user_input[CONF_MODEL]              = model
-            user_input[CONF_MODEL_DISPLAY_NAME] = model_display_name
+            # _AppleDev = self.AppleAcct.AADevices
+            conf_aadev_dname = user_input[CONF_AADEV_NAME]
+            device_id        = self.AppleAcct.device_id_by_aadev_dname.get(conf_aadev_dname, '')
+            AADevData        = self.AppleAcct.AADevData_by_device_id[device_id]
+
+            user_input[CONF_AADEV_DEVICE_ID]    = device_id
+            user_input[CONF_AADEV_NAME]          = AADevData.name
+            user_input[CONF_RAW_MODEL]          = AADevData.raw_model
+            user_input[CONF_MODEL]              = AADevData.model
+            user_input[CONF_MODEL_DISPLAY_NAME] = AADevData.model_display_name
+            # raw_model, model, model_display_name = self.AppleAcct.device_model_info_by_aadev_dname.get(conf_aadevice_dname, ['', '', ''])
+            # user_input[CONF_RAW_MODEL]          = raw_model
+            # user_input[CONF_MODEL]              = model
+            # user_input[CONF_MODEL_DISPLAY_NAME] = model_display_name
+            
 
         return user_input
 
@@ -816,9 +846,10 @@ class OptionsFlow_iCloud3Device_Steps:
         elif (tracking_mode == INACTIVE
                 and new_tracking_mode != INACTIVE
                 and Gb.DeviceTrackers_by_devicename.get(new_devicename) is None):
+            # Enable the device so it won't be reset to Inactive on a restart
             self.create_device_tracker_sensor_enities_on_exit = True
 
-        # If the device is now 'inactive' it's entity exists, delete iit
+        # If the device is now 'inactive' it's entity exists, delete it
         elif (new_tracking_mode == INACTIVE
                 and tracking_mode != INACTIVE
                 and Gb.DeviceTrackers_by_devicename.get(new_devicename)):
@@ -845,20 +876,25 @@ class OptionsFlow_iCloud3Device_Steps:
 
         utils_cf.log_step_info(self, user_input, action_item)
 
-        if action_item == 'cancel_goto_previous':
-            if self.add_device_flag:
-                return await self.async_step_device_list()
-            else:
+        if action_item == 'rtn_update_device':
                 return await self.async_step_update_device()
 
+        user_input = utils_cf.strip_special_text_from_user_input(user_input, CONF_FNAME)
         user_input = utils_cf.option_text_to_parm(user_input,
-                                CONF_DEVICE_TYPE, DEVICE_TYPE_FNAMES)
+                                CONF_DEVICE_TYPE, DEVICE_TYPE_DNS)
         user_input = utils_cf.option_text_to_parm(user_input,
                                 CONF_TRACK_FROM_BASE_ZONE, self.zone_name_key_text)
 
         user_input  = self._finalize_other_parameters_selections(user_input)
         change_flag = self.add_device_flag or self._was_device_data_changed(user_input)
         devicename  = self.conf_device[CONF_IC3_DEVICENAME]
+
+        # Device fname was changed --> change name on all of it's sensors
+        if user_input[CONF_FNAME] == '':
+            user_input[CONF_FNAME] = self.conf_device[CONF_FNAME]
+        if user_input[CONF_FNAME] != self.conf_device[CONF_FNAME]:
+            self.update_device_ha_sensor_entity[CONF_FNAME] = user_input[CONF_FNAME]
+            list_add(self.config_parms_update_control, ['tracking', 'restart'])
 
         if utils_cf.any_errors(self):
             self.errors['base'] = 'update_aborted'
@@ -928,7 +964,7 @@ class OptionsFlow_iCloud3Device_Steps:
         list_add(track_from_zones, user_input[CONF_TRACK_FROM_BASE_ZONE])
         user_input[CONF_TRACK_FROM_ZONES] = track_from_zones
 
-        if isbetween(user_input[CONF_FIXED_INTERVAL], 1, 2):
+        if is_between(user_input[CONF_FIXED_INTERVAL], 1, 2):
             user_input[CONF_FIXED_INTERVAL] = 3
             self.errors[CONF_FIXED_INTERVAL] = 'fixed_interval_invalid_range'
 
@@ -952,7 +988,7 @@ class OptionsFlow_iCloud3Device_Steps:
                                         data_schema=forms.form_change_device_order(self),
                                         errors=self.errors)
 
-        if action_item == 'cancel_goto_menu':
+        if action_item == 'rtn_device_list':
             return await self.async_step_device_list()
 
         if action_item == 'save':
@@ -1035,9 +1071,9 @@ class OptionsFlow_iCloud3Device_Steps:
         '''
         There are inactive devices. Display the list of devices and confirm they should
         remain active.
-        ACTION_LIST_OPTIONS['inactive_to_track'],
-        ACTION_LIST_OPTIONS['inactive_keep_inactive']]
+        ACTION_LIST_OPTIONS['update_tracking_mode'],
         '''
+
         self.step_id = 'review_inactive_devices'
         self.errors = errors or {}
         self.errors_user_input = {}
@@ -1051,36 +1087,48 @@ class OptionsFlow_iCloud3Device_Steps:
                         errors=self.errors,
                         last_step=False)
 
-        if action_item == 'next_page_devices':
-            return self.async_show_form(step_id='review_inactive_devices',
-                    data_schema=forms.form_review_inactive_devices(self, start_cnt=5),
-                    errors=self.errors,
-                    last_step=False)
+        # if user_input['inactive_devices'] != ['none']:
+        #     action_item = 'update_tracking_mode'
 
-        if action_item == 'inactive_to_track':
-            devicename_list = [self.inactive_devices_key_text.values()] \
-                                if   user_input['inactive_devices'] == [] \
-                                else user_input['inactive_devices']
+        if action_item == 'menu':
+            return await self.async_step_menu()
 
-            for conf_device in Gb.conf_devices:
-                devicename = conf_device[CONF_IC3_DEVICENAME]
-                if devicename in devicename_list:
+        if action_item == 'update_tracking_mode':
+            self._update_tracking_mode(user_input)
+
+            action_item = 'exit' if self.menu_item == 'exit' else 'rtn_device_list'
+
+        if action_item == 'rtn_device_list':
+            return await self.async_step_device_list()
+
+        if action_item == 'exit':
+            # This is in config_flow.py
+            return await self.exit_configure_settings_final_tasks()
+
+        return self.async_show_form(step_id='review_inactive_devices',
+                        data_schema=forms.form_review_inactive_devices(self),
+                        errors=self.errors,
+                        last_step=False)
+
+#-------------------------------------------------------------------------------------------
+    def _update_tracking_mode(self, user_input):
+
+        devicename_list = user_input['inactive_devices']
+
+        for conf_device in Gb.conf_devices:
+            devicename = conf_device[CONF_IC3_DEVICENAME]
+            if 'all' in devicename_list or devicename in devicename_list:
+                if conf_device[CONF_DEVICE_TYPE] in [IPHONE, WATCH]:
                     conf_device[CONF_TRACKING_MODE] = TRACK
+                elif conf_device[CONF_DEVICE_TYPE] in [IPAD, MAC]:
+                    conf_device[CONF_TRACKING_MODE] = MONITOR
 
-                if Gb.DeviceTrackers_by_devicename.get(devicename) is None:
-                    self.create_device_tracker_sensor_enities_on_exit = True
+            if Gb.DeviceTrackers_by_devicename.get(devicename) is None:
+                self.create_device_tracker_sensor_enities_on_exit = True
 
-            self.header_msg = 'action_completed'
-            list_add(self.config_parms_update_control, 'restart')
-            self.update_config_file_tracking(force_config_update=True)
-            action_item = 'goto_previous'
-
-        if action_item == 'goto_previous':
-            if self.return_to_step_id_1 == 'restart_icloud3':
-                return await self.async_step_restart_icloud3()
-
-        return await self.async_step_menu()
-
+        self.header_msg = 'action_completed'
+        list_add(self.config_parms_update_control, 'restart')
+        self.update_config_file_tracking(force_config_update=True)
 
 #-------------------------------------------------------------------------------------------
     def _check_inactive_devices(self):
@@ -1092,52 +1140,31 @@ class OptionsFlow_iCloud3Device_Steps:
         return inactive_list != [] or self.inactive_devices_key_text.get('keep_inactive', False)
 
 #-------------------------------------------------------------------------------------------
-    def _set_inactive_devices_header_msg(self):
+    def set_inactive_devices_header_msg(self):
         '''
         Display the All/Most/Some Devices are Inactive message by setting the header message key.
 
         Return none, few, some, most, all based on the number of inactive devices
         '''
 
-        if instr(self.data_source, ICLOUD):
-            if self._is_apple_acct_setup() is False:
-                self.header_msg = 'apple_acct_not_set_up'
+        self.header_msg     = ''
+        if self.menu_item == 'exit_no_inactive_check':
+            return ''
 
-            if self.header_msg:
-                errors = {'base': self.header_msg}
-                return 'none'
+        device_cnt, inactive_device_cnt, inactive_pct = config_file.device_cnts()
 
-        device_cnt = self._device_cnt()
-        if device_cnt == 0:
-            self.header_msg = 'inactive_no_devices'
-            return 'none'
+        if (instr(self.data_source, ICLOUD)
+                and self._is_apple_acct_setup() is False):
+            self.header_msg = 'apple_acct_not_set_up'
 
-        inactive_device_cnt = self._inactive_device_cnt()
-        if inactive_device_cnt == 0:
-            return 'none'
+        elif device_cnt == 0:
+            if self.step_id not in ['device_list', 'update_device']:
+                self.header_msg = 'inactive_no_devices'
 
-        inactive_pct = inactive_device_cnt / device_cnt
-
-        if device_cnt == inactive_device_cnt:
+        elif device_cnt == inactive_device_cnt:
             self.header_msg = f'inactive_all_devices'
-        return 'none'
 
-#-------------------------------------------------------------------------------------------
-    @staticmethod
-    def _inactive_device_cnt():
-        '''
-        Return the number of inactive Devices
-        '''
+        if self.header_msg:
+            errors = {'base': self.header_msg}
 
-        return len([conf_device[CONF_IC3_DEVICENAME]
-                        for conf_device in Gb.conf_devices
-                        if conf_device[CONF_TRACKING_MODE] == INACTIVE])
-
-#-------------------------------------------------------------------------------------------
-    @staticmethod
-    def _device_cnt():
-        '''
-        Return the number of Devices
-        '''
-
-        return len(Gb.conf_devices)
+        return self.header_msg

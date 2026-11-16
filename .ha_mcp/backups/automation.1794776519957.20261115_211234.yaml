@@ -1,0 +1,55 @@
+# ha_mcp_backup
+schema_version: 1
+domain: automation
+entity_id: '1794776519957'
+captured: '2026-11-15T21:12:34.502939+00:00'
+tool: ha_config_set_automation
+config:
+  id: '1794776519957'
+  alias: Alarmo - Nedis sirene (Alarm 7)
+  description: "Alarm 7 i 5 sekunders pulser ved Alarmo triggered, h\xF8jst 5 minutter.\
+    \ D\xF8rklokke ber\xF8res ikke. Skift data.duration fra 5 til 60 efter test; juster\
+    \ ogs\xE5 delay for 60 sekunders pulser."
+  triggers:
+  - trigger: state
+    entity_id: alarm_control_panel.alarmo
+    to: triggered
+    id: alarm
+  - trigger: state
+    entity_id: alarm_control_panel.alarmo
+    to: disarmed
+    id: stop
+  - trigger: homeassistant
+    event: start
+    id: startup
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: stop
+      sequence:
+      - action: siren.turn_off
+        target:
+          entity_id: siren.bryggers_sirene
+    - conditions:
+      - condition: state
+        entity_id: alarm_control_panel.alarmo
+        state: triggered
+      sequence:
+      - repeat:
+          count: 60
+          sequence:
+          - condition: state
+            entity_id: alarm_control_panel.alarmo
+            state: triggered
+          - action: siren.turn_on
+            target:
+              entity_id: siren.bryggers_sirene
+            data:
+              tone: Alarm 7
+              duration: 5
+          - delay: 00:00:05
+      - action: siren.turn_off
+        target:
+          entity_id: siren.bryggers_sirene
+  mode: restart

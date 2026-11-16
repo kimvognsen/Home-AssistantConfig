@@ -1,5 +1,5 @@
 from ..global_variables import GlobalVariables as Gb
-from ..const            import (VERSION, VERSION_BETA, ICLOUD3, ICLOUD3_VERSION, DOMAIN, ICLOUD3_VERSION_MSG,
+from ..const            import (ICLOUD3, DOMAIN,
                                 NOT_SET, IC3LOG_FILENAME,
                                 CRLF, CRLF_DOT, CRLF_HDOT, CRLF_LDOT, CRLF_X, CRLF_RED_ALERT,
                                 NL, NL_DOT, LINK, YELLOW_ALERT, RED_ALERT, CRLF_CHK,
@@ -16,7 +16,7 @@ from ..utils.utils      import (instr, is_empty, isnot_empty, yes_no, list_to_st
                                 username_id, is_running_in_event_loop, get_string_hash, )
 from ..utils.messaging  import (broadcast_info_msg,
                                 post_event, post_alert, post_error_msg, log_error_msg, update_alert_sensor,
-                                post_monitor_msg, post_internal_error, post_greenbar_msg,
+                                post_monitor_msg, post_internal_error, post_greenbar_msg, post_dotted_line,
                                 write_ic3log_recd,
                                 log_debug_msg, log_warning_msg, log_info_msg, log_exception, log_data,
                                 _evlog, _log, more_info, format_filename,
@@ -74,6 +74,7 @@ def stage_1_setup_variables():
 
         start_ic3.display_platform_operating_mode_msg()
         start_ic3.check_ic3_event_log_file_version()
+        start_ic3.copy_icloud3_theme_file()
 
         post_monitor_msg(f"LocationInfo-{Gb.ha_location_info}")
 
@@ -120,11 +121,10 @@ def stage_2_prepare_configuration():
             configuration_needed_msg = 'INITIAL INSTALLATION - CONFIGURATION IS REQUIRED'
 
         elif Gb.conf_profile[CONF_VERSION] == 0:
-            configuration_needed_msg = 'INITIAL CONFIGURATION PARAMETERS WERE INSTALLED - ' \
-                                        'THEY MUST BE REVIEWED BEFORE STARTING ICLOUD3'
+            configuration_needed_msg = 'THE INITIAL CONFIGURATION FILE WAS INSTALLED'
         elif ((is_empty(Gb.conf_apple_accounts) and Gb.conf_data_source_ICLOUD)
                 or is_empty(Gb.conf_devices)):
-            configuration_needed_msg = 'ICLOUD3 APPLE ACCT OR DEVICES HAVE NOT BEEN SETUP '
+            configuration_needed_msg = 'ICLOUD3 APPLE ACCT OR DEVICES NEED TO BE SETUP'
 
         if configuration_needed_msg:
             post_greenbar_msg('iCloud3 Configuration not set up')
@@ -161,7 +161,7 @@ def stage_3_setup_configured_devices():
         start_ic3.initialize_data_source_variables()
         restore_state.load_icloud3_restore_state_file()
 
-        # Make sure a full restart is done if all of the devices were not found in the iCloud data
+        # Make sure a full restart is done if all of the devices were not found in the Apple data
         Gb.startup_alerts_by_source = {}
         data_sources = f"Apple Account-{yes_no(Gb.conf_data_source_ICLOUD)}, "
         data_sources += f"Mobile App-{yes_no(Gb.conf_data_source_MOBAPP)}"
@@ -211,6 +211,7 @@ def stage_4_setup_data_sources():
     data_sources = f"Apple Account-{yes_no(Gb.conf_data_source_ICLOUD)}, "
     data_sources += f"Mobile App-{yes_no(Gb.conf_data_source_MOBAPP)}"
     post_event(f"Data Sources > {data_sources}")
+    post_dotted_line()
 
     # UPW was validated in Stage 3, Redisplay results
     post_event(Gb.ValidateAppleAcctUPW.valid_upw_results_msg)
@@ -229,7 +230,7 @@ def stage_4_setup_data_sources():
                             f"{Gb.ValidateAppleAcctUPW.valid_upw_results_msg}")
 
             start_ic3.log_into_apple_accounts()
-            start_ic3.setup_data_source_ICLOUD()
+            # start_ic3.setup_data_source_ICLOUD()
 
             for AppleAcct in Gb.AppleAcct_by_username.values():
                 if AppleAcct.account_locked:
@@ -240,12 +241,12 @@ def stage_4_setup_data_sources():
 
             # Tell HA to generate reauth needed notification that will be handled
             # handled in config_flow
-            if Gb.AppleAcct_needing_reauth_via_ha:
+            if Gb.AppleAcct_reauth_needed:
                 try:
                     Gb.hass.add_job(Gb.config_entry.async_start_reauth, Gb.hass)
 
-                    Gb.AppleAcct_needing_reauth_via_ha.was_ha_auth_code_alert_sent = True
-                    post_event( f"Apple Acct > {Gb.AppleAcct_needing_reauth_via_ha.account_owner}, "
+                    Gb.AppleAcct_reauth_needed.was_ha_auth_code_alert_sent = True
+                    post_event( f"Apple Acct > {Gb.AppleAcct_reauth_needed.account_owner}, "
                                 f"Auth request submitted() to HA")
                 except Exception as err:
                     log_exception(err)
@@ -334,9 +335,9 @@ def stage_6_initialization_complete():
             for source, msg in Gb.alerts_sensor_attrs.items():
                 alert_msg += f"{CRLF_DOT}{source} > {msg}"
 
-            Gb.EvLog.alert_message = 'Problems occured during startup up that should be reviewed'
-            post_alert( f"The following issues were detected when starting iCloud3. "
-                        f"Scroll through the Startup Log for more information: "
+            Gb.EvLog.alert_message = 'Startup Alerts and Notifications are available for review'
+            post_alert( f"STARTUP ALERTS AND NOTIFICATIONS > "
+                        f"Scroll through the Event Log Startup section for more information: "
                         f"{alert_msg}")
 
     except Exception as err:
@@ -345,14 +346,14 @@ def stage_6_initialization_complete():
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def stage_7_initial_locate():
     '''
-    The AppleAcct Authentication function updates the iCloud raw data after the account
+    The AppleAcct Authentication function updates the Apple raw data after the account
     has been authenticated. Requesting the initial data update there speeds up loading iC3
     since the Apple Acct login & authentication was started in the __init__ module.
 
-    This routine processes the new raw iCloud data and set the initial location.
+    This routine processes the new raw Apple data and set the initial location.
     '''
 
-    # The restart will be requested if using iCloud as a data source and no data was returned
+    # The restart will be requested if using Apple as a data source and no data was returned
     # from AppleAcct
     if is_empty(Gb.AppleAcct_by_username):
         return
@@ -378,9 +379,7 @@ def stage_7_initial_locate():
 
         Gb.iCloud3.process_updated_location_data(Device, ICLOUD)
 
-        post_event(Device,
-                    f"{Device.dev_data_source} Trigger > Initial Locate@"
-                    f"{Device.loc_data_time_gps}")
+        Device.display_battery_info_msg(force_display=True)
 
         if Device.no_location_data:
             post_event(Device, f"{EVLOG_ALERT}NO GPS DATA RETURNED FROM ICLOUD LOCATION SERVICE")
@@ -388,6 +387,9 @@ def stage_7_initial_locate():
                         "No GPS data was returned from iCloud Location "
                         "Service on the initial locate")
             log_warning_msg(error_msg)
+
+        # Restore other items enter the first locate
+        Device.restore_state_reset_other_items()
 
     post_greenbar_msg('')
 

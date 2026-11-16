@@ -10,9 +10,7 @@
 #
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# from homeassistant.const import (Platform)
-
-VERSION                         = '3.5.1'
+VERSION                         = '3.7.7'
 VERSION_BETA                    = ''
 #-----------------------------------------
 DOMAIN                          = 'icloud3'
@@ -24,8 +22,6 @@ PLATFORM_SENSOR                 = 'sensor'
 
 ICLOUD3                         = 'iCloud3'
 ICLOUD3LC                       = 'icloud3'
-ICLOUD3_VERSION_MSG             = f"v{VERSION}{VERSION_BETA}"
-ICLOUD3_ATTENTION_MSG           = F"^i^iCloud3 v{VERSION}{VERSION_BETA}"
 STORAGE_KEY                     = DOMAIN
 STORAGE_VERSION                 = 1
 MODE_PLATFORM                   = -1
@@ -59,6 +55,7 @@ NOTIFY                          = 'notify'
 DISTANCE_TO_DEVICES             = 'distance_to'
 DISTANCE_TO_OTHER_DEVICES       = 'distance_to_other_devices'
 DISTANCE_TO_OTHER_DEVICES_DATETIME = 'distance_to_other_devices_datetime'
+TRUST_COOKIE_NAME               = 'X-APPLE-WEBAUTH-HSA-TRUST'
 
 
 # General constants
@@ -117,15 +114,17 @@ IOSAPP                          = 'iosapp'
 NO_IOSAPP                       = 'no_iosapp'
 
 # Apple Device Types
-IPHONE_FNAME                    = 'iPhone'
-WATCH_FNAME                     = 'Watch-WiFi+Cell'
-WATCH_WIFI_FNAME                = 'Watch-WiFi'
-IPAD_FNAME                      = 'iPad-WiFi'
-IPAD_CELL_FNAME                 = 'iPad-WiFi+Cell'
-MAC_FNAME                       = 'Mac'
-IPOD_FNAME                      = 'iPod'
-AIRPODS_FNAME                   = 'AirPods'
-OTHER_FNAME                     = 'Other'
+IPHONE_DN                       = 'iPhone'
+WATCH_DN                        = 'Watch'
+WATCH_DN_WIFI_CELL              = 'Watch-WiFi+Cell'
+WATCH_DN_WIFI                   = 'Watch-WiFi'
+IPAD_DN                         = 'iPad'
+IPAD_DN_WIFI                    = 'iPad-WiFi'
+IPAD_DN_WIFI_CELL               = 'iPad-WiFi+Cell'
+MAC_DN                          = 'Mac'
+IPOD_DN                         = 'iPod'
+AIRPODS_DN                      = 'AirPods'
+OTHER_DN                        = 'Other'
 
 IPHONE                          = 'iphone'
 WATCH                           = 'watch'
@@ -138,31 +137,62 @@ IPOD                            = 'ipod'
 AIRPODS                         = 'airpods'
 OTHER                           = 'other'
 
+# Device tracking modes
+TRACK               = 'track'
+MONITOR             = 'monitor'
+INACTIVE            = 'inactive'
+TRACKING_MODES      = [TRACK, MONITOR, INACTIVE]
+TRACKING_MODE_DN    = {TRACK: 'Tracked', MONITOR: 'Monitored', INACTIVE: 'INACTIVE',}
+
 DEVICE_TYPES = [
         IPHONE, IPAD, IPAD_CELL, WATCH, WATCH_WIFI,
-        IPHONE_FNAME, IPAD_FNAME, IPAD_CELL_FNAME,
-        WATCH_FNAME, WATCH_WIFI_FNAME, APPLE_WATCH,
+        IPHONE_DN, IPAD_DN, IPAD_DN_WIFI, IPAD_DN_WIFI_CELL,
+        WATCH_DN, WATCH_DN_WIFI_CELL, WATCH_DN_WIFI, APPLE_WATCH,
         MAC, IPOD, AIRPODS,
-        MAC_FNAME, IPOD_FNAME, AIRPODS_FNAME,
+        MAC_DN, IPOD_DN, AIRPODS_DN,
         ICLOUD,
 ]
-DEVICE_TYPE_FNAMES = {
-        IPHONE: IPHONE_FNAME,
-        WATCH: WATCH_FNAME,
-        APPLE_WATCH: WATCH_FNAME,
-        WATCH_WIFI: WATCH_WIFI_FNAME,
-        IPAD: IPAD_FNAME,
-        IPAD_CELL: IPAD_CELL_FNAME,
-        AIRPODS: AIRPODS_FNAME,
-        MAC: MAC_FNAME,
-        IPOD: IPOD_FNAME,
-        OTHER: OTHER_FNAME,
+DEVICE_TYPES_TRACK_MONITOR = [
+        IPHONE, IPAD, IPAD_CELL, WATCH, WATCH_WIFI, MAC,
+]
+DEVICE_TYPE_DEFAULT_TRACKING_MODE = {
+        IPHONE: TRACK,
+        WATCH: TRACK,
+        IPAD: MONITOR,
+        MAC: MONITOR,
+}
+def DEVICE_TYPE_TRACKING_MODE(device_type):
+        device_type_base = device_type.split('_')[0]
+        return DEVICE_TYPE_DEFAULT_TRACKING_MODE.get(device_type_base, INACTIVE)
+
+DEVICE_TYPE_DNS = {
+        IPHONE: IPHONE_DN,
+        WATCH: WATCH_DN_WIFI_CELL,
+        WATCH_WIFI: WATCH_DN_WIFI,
+        IPAD: IPAD_DN_WIFI,
+        IPAD_CELL: IPAD_DN_WIFI_CELL,
+        AIRPODS: AIRPODS_DN,
+        MAC: MAC_DN,
+        IPOD: IPOD_DN,
+        OTHER: OTHER_DN,
 }
 DEVICE_TYPES_CELL_SVC = {
         IPHONE, WATCH, IPAD_CELL,
 }
-def DEVICE_TYPE_FNAME(device_type):
-        return DEVICE_TYPE_FNAMES.get(device_type, device_type)
+def DEVICE_TYPE_DN(device_type):
+        return DEVICE_TYPE_DNS.get(device_type, device_type)
+
+DEVICE_TYPE_PICTURE_FILENAMES = {
+        IPHONE: "iphone.png",
+        IPAD: "ipad-landscape.png",
+        IPAD_CELL: "ipad-landscape.png",
+        WATCH: "watch-light.png",
+        WATCH_WIFI: "watch-light.png",
+        AIRPODS: "airpods.png",
+        MAC : "",
+        IPOD: "",
+        OTHER: ""
+}
 
 DEVICE_TYPE_ICONS = {
         IPHONE: "mdi:cellphone",
@@ -183,7 +213,7 @@ DEVICE_TYPE_INZONE_INTERVALS = {
         WATCH: 15,
         WATCH_WIFI: 15,
         MAC: 120,
-        AIRPODS: 15,
+        AIRPODS: 120,
         NO_MOBAPP: 15,
         OTHER: 120,
 }
@@ -191,7 +221,9 @@ DEVICE_DISPLAY_NAMES_FILTERS = {
         'generation': 'gen',
         'nd gen': '',
         'th gen': '',
-        'Series ': '',
+        'Series ': 'S',
+        'Pro Max': 'ProMax',
+        'Apple ': '',
         'mini': 'Mini',
         '(': '',
         ')': '',
@@ -274,7 +306,7 @@ RANGE_UM = 3
 MOBAPP_DT_ENTITY = True
 ICLOUD_DT_ENTITY = False
 ICLOUD_LOCATION_DATA_ERROR   = False
-TRUST_TOKEN_EXPIRE_WARNING_DAYS = 20    #   Start warning user trust cookie will expire in x days
+TRUST_TOKEN_EXPIRE_WARNING_DAYS = 88    #   Start warning user trust cookie will expire in x days
 CMD_RESET_PYICLOUD_SESSION   = 'reset_session'
 NEAR_DEVICE_DISTANCE         = 25       # Distance between nearby devices  (det_interval)
 PASS_THRU_ZONE_INTERVAL_SECS = 60       # Delay time before moving into a non-tracked zone to see if if just passing thru
@@ -352,10 +384,10 @@ EVLOG_PINK        = '^4^'
 EVLOG_RED         = '^5^'
 EVLOG_BLUE        = '^6^'       # DO NOT USE - EventLog uses ^6^
 
-EVLOG_TIME_RECD   = '^t^'       # MobileApp State, ic3 Zone, interval, travel time, distance event
 EVLOG_UPDATE_HDR  = '^u^'       # update start-to-complete highlight and edge bar block
 EVLOG_UPDATE_START= '^s^'       # update start-to-complete highlight and edge bar block
 EVLOG_UPDATE_END  = '^c^'       # update start-to-complete highlight and edge bar block
+EVLOG_UPDATE_BARS = [EVLOG_UPDATE_HDR, EVLOG_UPDATE_START, EVLOG_UPDATE_END]
 EVLOG_ERROR       = '^e^'
 EVLOG_ALERT       = '^a^'       # Red letters on yellow background
 EVLOG_WARNING     = '^w^'
@@ -363,11 +395,11 @@ EVLOG_ATTENTION   = '^i^'       # White Letters on orchid bar
 EVLOG_HIGHLIGHT   = '^h^'       # Green highlight bar
 EVLOG_IC3_STAGE_HDR = '^g^'
 
-
 EVLOG_NOTICE      = '^6^'
 EVLOG_TRACE       = '^3^'
 EVLOG_DEBUG       = '^6^'
 EVLOG_MONITOR     = '^m^'
+
 
 # SETTINGS_INTEGRATIONS_MSG, INTEGRATIONS_IC3_CONFIG_MSG,
 SETTINGS_INTEGRATIONS_MSG   = '`Settings > Devices & Services > Integrations`'
@@ -375,20 +407,28 @@ INTEGRATIONS_IC3_CONFIG_MSG = '`iCloud3 > Configuration`'
 
 CIRCLE_LETTERS_DARK =  {'a':'🅐', 'b':'🅑', 'c':'🅒', 'd':'🅓', 'e':'🅔', 'f':'🅕', 'g':'🅖',
                         'h':'🅗', 'i':'🅘', 'j':'🅙', 'k':'🅚', 'l':'🅛', 'm':'🅜', 'n':'🅝',
-                        'q':'🅞', 'p':'🅟', 'q':'🅠', 'r':'🅡', 's':'🅢', 't':'🅣', 'u':'🅤',
+                        'o':'🅞', 'p':'🅟', 'q':'🅠', 'r':'🅡', 's':'🅢', 't':'🅣', 'u':'🅤',
                         'v':'🅥', 'w':'🅦', 'x':'🅧', 'y':'🅨', 'z':'🅩', 'other': '✪'}
 CIRCLE_LETTERS_LITE =  {'a':'Ⓐ', 'b':'Ⓑ', 'c':'Ⓒ', 'd':'Ⓓ', 'e':'Ⓔ', 'f':'Ⓕ', 'g':'Ⓖ',
                         'h':'Ⓗ', 'i':'Ⓘ', 'j':'Ⓙ', 'k':'Ⓚ', 'l':'Ⓛ', 'm':'Ⓜ', 'n':'Ⓝ',
-                        'q':'Ⓞ', 'p':'Ⓟ', 'q':'Ⓠ', 'r':'Ⓡ', 's':'Ⓢ', 't':'Ⓣ', 'u':'Ⓤ',
+                        'o':'Ⓞ', 'p':'Ⓟ', 'q':'Ⓠ', 'r':'Ⓡ', 's':'Ⓢ', 't':'Ⓣ', 'u':'Ⓤ',
                         'v':'Ⓥ', 'w':'Ⓦ', 'x':'Ⓧ', 'y':'Ⓨ', 'z':'Ⓩ', 'other': '✪'}
 '''
 lite_circled_letters = "Ⓐ Ⓑ Ⓒ Ⓓ Ⓔ Ⓕ Ⓖ Ⓗ Ⓘ Ⓙ Ⓚ Ⓛ Ⓜ Ⓝ Ⓞ Ⓟ Ⓠ Ⓡ Ⓢ Ⓣ Ⓤ Ⓥ Ⓦ Ⓧ Ⓨ Ⓩ"
 dark_circled_letters = "🅐 🅑 🅒 🅓 🅔 🅕 🅖 🅗 🅘 🅙 🅚 🅛 🅜 🅝 🅞 🅟 🅠 🅡 🅢 🅣 🅤 🅥 🅦 🅧 🅨 🅩 ✪"
+⓪ ① ② ③ ④ ⑤ ⑥ ⑦ ⑧ ⑨ ⑩ ⑪ ⑫ ⑬ ⑭ ⑮ ⑯ ⑰ ⑱ ⑲ ⑳ ㉑ ㉒ ㉓ ㉔ ㉕
+㉖ ㉗ ㉘ ㉙ ㉚ ㉛ ㉜ ㉝ ㉞ ㉟ ㊱ ㊲ ㊳ ㊴ ㊵ ㊶ ㊷ ㊸ ㊹ ㊺ ㊻ ㊼ ㊽ ㊾ ㊿
 Symbols = ±▪•●▬⮾ ⊗⊗ ⊘✓×ø¦ ▶◀ ►◄▲▼ ∙▪ »« oPhone=►▶→⟾➤➟➜➔➤🡆🡪🡺⟹🡆➔ᐅ◈🝱☒☢⦻⛒⊘Ɵ⊗ⓧⓍ⛒z🜔
+〔 〕《》᚛-᚜ ｟ ｠ 〈 〉 ◹◿ ◢◥ ⩓⩔ v^△▽▿▴▾ ↘⇗ ⩠⩢
 Important =✔️❗❌✨➰⚠️☢❓⚽⛔🛑⚡⭐◌\⭕🔶🔸ⓘ• ⍰ ‶″“”‘’‶″ 🕓 🔻🔺✔☁️🍎🔻⮽➕⚙️
-🔵🔴🟠🟡🟢🟣🟤🟦🟥🟧🟨🟩🟪🟫🔶🔷🔸🔹🔺🔻
+🔴🔵🟢🟡🟠🟣🟤⚫⚪🔘
+🟥🟦🟩🟨🟧🟪🟫⬛⬜🔲🔳
+🔶🔷🔸🔹🔺🔻🔸
+🔸🔹🔶🔷🔺🔻💠
+⚠️🚫🛑✅❌❤️🧡💛💚💙💜🤎🖤🤍
 ✅❎☑️🅰️🍏⛅☁🌤
 🔁🔄➡️🔃⬇️🔗▶️⏩⏪⏫⏬⏭⏮⏯⏰⏱⏸⏹⏺
+☖☗⌂
 
 https://www.fileformat.info/info/unicode/block/braille_patterns/utf8test.htm
 https://www.htmlsymbols.xyz/unit-symbols
@@ -415,6 +455,7 @@ LLINK             = ''
 RLINK             = ''
 LINK              = '⟢'
 CLOCK_FACE        = '🕓'
+HOME_ICON         = '☖'
 INFO              = '🛈'
 CHECK_MARK        = '✓ '
 RED_X             = '❌'
@@ -430,12 +471,19 @@ CIRCLE_BIG_X      = 'ⓧ'
 CIRCLE_SLASH      = '⊘'
 CIRCLE_X          = 'ⓧ'
 MONITOR_SYMB      = 'Ⓜ'
-INACTIVE_SYMB     = 'ⓧ'
+# INACTIVE_SYMB     = 'ⓧ'
+# INACTIVE_SYMB     = '🔺'
+INACTIVE_SYMB     = '🔸'
+# INACTIVE_SYMB     = '❗'
+SMALL_DOT         = '﹒'
+SMALL_DOT2         = '․'
 DOT               = '• '
 PDOT              = '•'
 SQUARE_DOT        = '▪'
 HDOT              = '◦ '
 PHDOT             = '◦'
+LCBRACE           = '{'
+RCBRACE           = '}'
 LT                = '&lt;'
 GT                = '&gt;'
 LTE               = '≤'
@@ -450,6 +498,7 @@ NL_DOT            = f'{NL} • '
 CRLF_X            = f'{CRLF}{NBSP2}×{NBSP}'
 CRLF_XD           = f'{CRLF}{NBSP}×{NBSP2}'
 CRLF_CIRCLE_X     = f'{CRLF}{NBSP2}⊗{NBSP}'
+CRLF_CIRCLE_X2     = f'{CRLF}{NBSP2}ⓧ{NBSP}'
 
 LDOT2             = f'•{NBSP2}'
 CRLF_LDOT         = f'{CRLF}•{NBSP}'
@@ -463,7 +512,8 @@ CRLF_LDIAMOND     = f'{CRLF}✦{NBSP}'
 
 CRLF_RED_X        = f'{CRLF}❌{NBSP}'
 CRLF_RED_ALERT    = f'{CRLF}⛔{NBSP2}'
-CRLF_LRED_ALERT    = f'{CRLF}⛔{NBSP}'
+CRLF_RED_ALERT2   = f'{CRLF}🔸{NBSP2}'
+CRLF_LRED_ALERT   = f'{CRLF}⛔{NBSP}'
 CRLF_CHK          = f'{CRLF}{NBSP2}✓{NBSP}'
 CRLF_STAR         = f'{CRLF}{NBSP}✪{NBSP}'
 CRLF_YELLOW_ALERT = f'{CRLF}⚠️{NBSP}'
@@ -481,8 +531,14 @@ CRLF_TAB          = f'{CRLF}{NBSP4}{NBSP4}{NBSP4}'
 CRLF_INDENT       = f'{CRLF}{NBSP6}{NBSP6}'
 CRLF_DASH_75      = f'{CRLF}{"-"*75}'
 
+# Greenbar message items
+GB_ALERT          = f'{CRLF}⚙️{NBSP}'
+GB_ITEM           = f'{CRLF}💠{NBSP}'
+
 NEAR_DEVICE_USEABLE_SYM = '✓'
 BLANK_SENSOR_FIELD = '———'
+ENDASH             = '–'
+EMDASH             = '—'
 RARROW            = ' → '       #U+27F6 (Long Arrow Right)  ⟹ ⟾
 RARROW2           = '→'         #U+27F6 (Long Arrow Right)  ⟹ ⟾
 LARROW            = ' <-- '     #U+27F5 (Long Arrow Left) ⟸ ⟽
@@ -496,16 +552,6 @@ DATA_ENTRY_ALERT_CHAR = '⛔'
 DATA_ENTRY_ALERT      = f"      {DATA_ENTRY_ALERT_CHAR} "
 
 OPT_NONE          = 0
-
-# Device tracking modes
-TRACK               = 'track'
-MONITOR             = 'monitor'
-INACTIVE            = 'inactive'
-TRACKING_MODE_FNAME = {
-        TRACK: 'Tracked',
-        MONITOR: 'Monitored',
-        INACTIVE: 'INACTIVE',
-}
 
 # Zone field names
 NAME              = 'name'
@@ -681,7 +727,6 @@ TIMESTAMP                  = 'timestamp'
 TIMESTAMP_SECS             = 'timestamp_secs'
 TIMESTAMP_TIME             = 'timestamp_time'
 LOCATION_TIME              = 'location_time'
-#TRACKING_METHOD            = 'data_source'
 DATA_SOURCE                = 'data_source'
 DATETIME                   = 'date_time'
 AGE                        = 'age'
@@ -731,6 +776,11 @@ DEVICE_STATUS_SET = [
         LOCATION
         ]
 DEVICE_STATUS_CODES = {
+        200:   'Online',
+        201:   'Offline',
+        203:   'Pending',
+        204:   'Unregistered',
+        0:     'Unknown',
         '200': 'Online',
         '201': 'Offline',
         '203': 'Pending',
@@ -759,9 +809,6 @@ DEVTRKR_ONLY_MONITOR = 'devtrkr_only_monitored_devices'
 STORAGE_KEY = DOMAIN
 STORAGE_VERSION = 1
 
-# Platform
-
-
 DISTANCE           = 'distance'
 CONF_SENSORS_ZONE  = 'zone'
 ZONE_INFO          = 'zone_info'
@@ -770,6 +817,8 @@ ZONE_DNAME         = "zone_dname"
 ZONE_FNAME         = "zone_fname"
 ZONE_NAME          = "zone_name"
 ZONE_DATETIME      = "zone_changed"
+ZONE_ENTER_SECS    = "zone_enter_secs"
+ZONE_EXIT_SECS     = "zone_exit_secs"
 LAST_ZONE          = "last_zone"
 LAST_ZONE_DNAME    = "last_zone_dname"
 LAST_ZONE_FNAME    = "last_zone_fname"
@@ -799,6 +848,7 @@ CONF_EVLOG_VERSION              = 'event_log_version'
 CONF_EVLOG_VERSION_RUNNING      = 'event_log_version_running'
 CONF_PICTURE_WWW_DIRS           = 'picture_www_dirs'
 CONF_SENSORS_HASH               = 'sensors_hash'
+CONF_FIRST_SEEN                 = 'first_seen'
 
 CONF_EXTERNAL_IP_ADDRESS        = 'external_ip_address'
 
@@ -807,6 +857,7 @@ DEFAULT_PROFILE_CONF = {
         CONF_IC3_VERSION: VERSION,
         CONF_VERSION_INSTALL_DATE: DATETIME_ZERO,
         CONF_UPDATE_DATE: DATETIME_ZERO,
+        CONF_FIRST_SEEN: '',
         CONF_EVLOG_VERSION: '',
         CONF_EVLOG_VERSION_RUNNING: '',
         CONF_EVLOG_CARD_DIRECTORY: EVLOG_CARD_WWW_DIRECTORY,
@@ -834,8 +885,6 @@ CONF_DEVICES                    = 'devices'
 CONF_DEVICENAME                 = 'device_name'
 
 DEFAULT_TRACKING_CONF = {
-        CONF_USERNAME: '',
-        CONF_PASSWORD: '',
         CONF_ENCODE_PASSWORD: True,
         CONF_ICLOUD_SERVER_ENDPOINT_SUFFIX: '',
         CONF_SERVER_LOCATION_NEEDED: False,
@@ -851,26 +900,31 @@ DEFAULT_TRACKING_CONF = {
 #-------------------------------------------------------------------
 # #     CONF_APPLE_ACCTS-
 #--------------------------------------------------------------------
-CONF_LOCATE_ALL                 = 'locate_all'
-CONF_AUTH_CODE                  = 'auth_code'
-CONF_SERVER_LOCATION            = 'server_location'
+CONF_LOCATE_ALL         = 'locate_all'
+CONF_AUTH_CODE          = 'auth_code'
+CONF_SERVER_LOCATION    = 'server_location'
 
-CONF_AUTH_METHODS               = 'auth_methods'
-CONF_LAST_METHOD                = 'last_method'
-PUSH                       = 'push'
-TEXT                       = 'text'
-TEXT_1                     = 'text_1'
-TEXT_2                     = 'text_2'
-HWKEY                      = 'hwkey'
-HWKEY_1                    = 'hwkey_1'
-HWKEY_2                    = 'hwkey_2'
+CONF_AUTH_METHODS       = 'auth_methods'
+CURRENT                 = 'current'
+PUSH                    = 'push'
+TEXT                    = 'text'
+TEXT_1                  = 'text_1'
+TEXT_2                  = 'text_2'
+HWKEY                   = 'hwkey'
+AUTH_METHOD_FNAME       = {
+        PUSH: 'Push',
+        TEXT_1: 'Text-1',
+        TEXT_2: 'Text-2',
+        'text_3': 'Text-3',
+        'text_4': 'Text-4',
+        HWKEY: 'SecurityKey'
+}
 
 DEFAULT_AUTH_METHODS = {
-        CONF_LAST_METHOD: PUSH,
+        CURRENT: PUSH,
         TEXT_1: '',
         TEXT_2: '',
-        HWKEY_1: '',
-        HWKEY_2: ''
+        HWKEY: '',
 }
 
 DEFAULT_APPLE_ACCOUNT_CONF = {
@@ -891,8 +945,8 @@ CONF_APPLE_ACCOUNT              = 'apple_account'
 CONF_APPLE_ACCT                 = 'apple_account'
 CONF_ICLOUD_DEVICENAME          = 'famshr_devicename'
 CONF_ICLOUD_DEVICE_ID           = 'famshr_device_id'
-CONF_FAMSHR_DEVICENAME          = 'famshr_devicename'
-CONF_FAMSHR_DEVICE_ID           = 'famshr_device_id'
+CONF_AADEV_NAME          = 'famshr_devicename'
+CONF_AADEV_DEVICE_ID           = 'famshr_device_id'
 CONF_RAW_MODEL                  = 'raw_model'
 CONF_MODEL                      = 'model'
 CONF_MODEL_DISPLAY_NAME         = 'model_display_name'
@@ -930,8 +984,8 @@ DEFAULT_DEVICE_CONF = {
         CONF_FIXED_INTERVAL: 0,
         CONF_TRACKING_MODE: TRACK,
         CONF_APPLE_ACCOUNT: '',
-        CONF_FAMSHR_DEVICENAME: 'None',
-        CONF_FAMSHR_DEVICE_ID: '',
+        CONF_AADEV_NAME: 'None',
+        CONF_AADEV_DEVICE_ID: '',
         CONF_RAW_MODEL : '',
         CONF_MODEL: '',
         CONF_MODEL_DISPLAY_NAME: '',
@@ -943,8 +997,8 @@ DEFAULT_DEVICE_CONF = {
 # Used in conf_flow to reinialize the Configuration Devices
 DEFAULT_DEVICE_APPLE_ACCT_DATA_SOURCE = {
         CONF_APPLE_ACCOUNT: '',
-        CONF_FAMSHR_DEVICENAME: 'None',
-        CONF_FAMSHR_DEVICE_ID: '',
+        CONF_AADEV_NAME: 'None',
+        CONF_AADEV_DEVICE_ID: '',
         CONF_RAW_MODEL : '',
         CONF_MODEL: '',
         CONF_MODEL_DISPLAY_NAME: '',
@@ -1013,10 +1067,13 @@ CONF_AWAY_TIME_ZONE_1_DEVICES   = 'away_time_zone_1_devices'
 CONF_AWAY_TIME_ZONE_2_OFFSET    = 'away_time_zone_2_offset'
 CONF_AWAY_TIME_ZONE_2_DEVICES   = 'away_time_zone_2_devices'
 
-
-
 # Display Text As Parameter
 CONF_DISPLAY_TEXT_AS            = 'display_text_as'
+
+# Analytics
+CONF_ANALYTICS_ENABLED          = 'analytics_enabled'
+CONF_ANALYTICS_SENT_DATE        = 'analytics_sent_date'
+CONF_ANALYTICS_COMMENT          = 'analytics_comment'
 
 DEFAULT_GENERAL_CONF = {
         CONF_LOG_LEVEL: 'debug-auto-reset',
@@ -1065,12 +1122,19 @@ DEFAULT_GENERAL_CONF = {
         CONF_STAT_ZONE_BASE_LATITUDE: 1,
         CONF_STAT_ZONE_BASE_LONGITUDE: 0,
 
+        # Analytics
+        CONF_ANALYTICS_ENABLED: None,
+        CONF_ANALYTICS_SENT_DATE: '',
+        CONF_ANALYTICS_COMMENT: '',
+
+        # DisplayText_as and AwayTimeZone lists
         CONF_DISPLAY_TEXT_AS: ['#1', '#2', '#3', '#4', '#5', '#6', '#7', '#8', '#9', '#10'],
 
         CONF_AWAY_TIME_ZONE_1_OFFSET: 0,
         CONF_AWAY_TIME_ZONE_1_DEVICES: ['none'],
         CONF_AWAY_TIME_ZONE_2_OFFSET: 0,
         CONF_AWAY_TIME_ZONE_2_DEVICES: ['none'],
+
 }
 
 RANGE_GENERAL_CONF = {
@@ -1113,6 +1177,7 @@ INFO                           = "info"
 
 CONF_SENSORS_TRACKING_UPDATE   = 'tracking_update'
 INTERVAL                       = "interval"
+INTERVAL_METHOD                = "interval_method"
 LOCATED                        = "located"
 LAST_LOCATED                   = "last_located"
 LAST_UPDATE                    = "last_update"

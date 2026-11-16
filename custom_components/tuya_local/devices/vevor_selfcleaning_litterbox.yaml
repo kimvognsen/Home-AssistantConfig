@@ -141,7 +141,7 @@ entities:
         mapping:
           - dps_val: red
             value: red
-          - dps_val: green
+          - dps_val: greed
             value: green
           - dps_val: blue
             value: blue
@@ -159,7 +159,7 @@ entities:
         type: integer
         name: sensor
   - entity: event
-    name: Notification
+    translation_key: notification
     dps:
       - id: 104
         type: integer

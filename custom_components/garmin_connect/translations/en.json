@@ -2,12 +2,15 @@
   "config": {
     "abort": {
       "already_configured": "Account is already configured",
+      "wrong_account": "The credentials belong to a different Garmin account than this entry",
       "reauth_successful": "Re-authentication was successful",
       "reconfigure_successful": "Reconfiguration was successful"
     },
     "error": {
+      "cannot_connect": "Failed to connect to Garmin Connect. Check your network and try again.",
       "invalid_auth": "Invalid credentials",
       "invalid_mfa": "Invalid verification code",
+      "profile_unavailable": "Could not verify which Garmin account these credentials belong to. Please try again.",
       "rate_limit": "Too many login attempts — Garmin is rate limiting. Please try again in a few minutes.",
       "unknown": "Unexpected error"
     },
@@ -61,7 +64,8 @@
           "username": "Your Garmin Connect email address",
           "is_cn": "Enable for accounts registered on the Chinese Garmin Connect platform"
         },
-        "description": "Enter your Garmin Connect credentials."
+        "description": "Enter your Garmin Connect credentials.",
+        "title": "Garmin Connect"
       }
     }
   },
@@ -69,12 +73,10 @@
     "step": {
       "init": {
         "data": {
-          "scan_interval": "Update interval (seconds)",
-          "is_cn": "Use Garmin Connect China (cn.garmin.com)"
+          "scan_interval": "Update interval (seconds)"
         },
         "data_description": {
-          "scan_interval": "How often to fetch data from Garmin Connect (60–3600 seconds)",
-          "is_cn": "Enable for accounts registered on the Chinese Garmin Connect platform"
+          "scan_interval": "How often to fetch data from Garmin Connect (60–3600 seconds)"
         },
         "description": "Configure your Garmin Connect integration settings.",
         "title": "Garmin Connect Options"
@@ -91,6 +93,14 @@
       "activity_stress_duration": { "name": "Activity stress duration" },
       "activity_stress_percentage": { "name": "Activity stress percentage" },
       "avg_altitude": { "name": "Average altitude" },
+      "avg_sleep_respiration": { "name": "Average sleep respiration" },
+      "skin_temp_change": { "name": "Skin temperature change" },
+      "avg_sleep_stress": { "name": "Average sleep stress" },
+      "sleep_awakenings": { "name": "Sleep awakenings" },
+      "sleep_restless_moments": { "name": "Sleep restless moments" },
+      "avg_sleep_heart_rate": { "name": "Average sleep heart rate" },
+      "sleep_body_battery_change": { "name": "Sleep body battery change" },
+      "avg_solar_intensity": { "name": "Average solar intensity" },
       "avg_spo2": { "name": "Average SpO2" },
       "avg_stress_level": { "name": "Average stress level" },
       "awake_duration": { "name": "Awake duration" },
@@ -112,12 +122,15 @@
       "bp_systolic": { "name": "Blood pressure systolic" },
       "burned_calories": { "name": "Burned calories" },
       "chronological_age": { "name": "Chronological age" },
+      "connected_sensors": { "name": "Connected sensors" },
       "consumed_calories": { "name": "Consumed calories" },
       "daily_step_goal": { "name": "Daily step goal" },
       "deep_sleep": { "name": "Deep sleep" },
       "devices": { "name": "Devices" },
       "endurance_score": { "name": "Endurance score" },
       "fitness_age": { "name": "Fitness age" },
+      "vigorous_days_avg": { "name": "Vigorous days per week" },
+      "vigorous_minutes_avg": { "name": "Vigorous minutes per week" },
       "floors_ascended": { "name": "Floors ascended" },
       "floors_ascended_distance": { "name": "Floors ascended distance" },
       "floors_ascended_goal": { "name": "Floors ascended goal" },
@@ -133,7 +146,10 @@
       "hrv_baseline": { "name": "HRV baseline" },
       "hrv_last_night_5min_high": { "name": "HRV last night 5-min high" },
       "hrv_last_night_avg": { "name": "HRV last night average" },
-      "hrv_status": { "name": "HRV status" },
+      "hrv_status": {
+        "name": "HRV status",
+        "state": { "balanced": "Balanced", "unbalanced": "Unbalanced", "low": "Low", "poor": "Poor" }
+      },
       "hrv_weekly_avg": { "name": "HRV weekly average" },
       "hydration": { "name": "Hydration" },
       "hydration_activity_intake": { "name": "Hydration activity intake" },
@@ -146,6 +162,7 @@
       "last_7_days_avg_resting_heart_rate": { "name": "7-day average resting heart rate" },
       "last_activities": { "name": "Last activities" },
       "last_activity": { "name": "Last activity" },
+      "last_activity_route": { "name": "Last activity route" },
       "last_synced": { "name": "Last synced" },
       "last_workout": { "name": "Last workout" },
       "last_workouts": { "name": "Last workouts" },
@@ -164,7 +181,10 @@
       "medium_stress_duration": { "name": "Medium stress duration" },
       "medium_stress_percentage": { "name": "Medium stress percentage" },
       "menstrual_cycle_day": { "name": "Menstrual cycle day" },
-      "menstrual_cycle_phase": { "name": "Menstrual cycle phase" },
+      "menstrual_cycle_phase": {
+        "name": "Menstrual cycle phase",
+        "state": { "menstruation": "Menstruation", "follicular": "Follicular", "ovulation": "Ovulation", "luteal": "Luteal" }
+      },
       "menstrual_cycle_start": { "name": "Menstrual cycle start" },
       "menstrual_cycle_type": { "name": "Menstrual cycle type" },
       "menstrual_days_until_next_phase": { "name": "Menstrual days until next phase" },
@@ -180,6 +200,7 @@
       "muscle_mass": { "name": "Muscle mass" },
       "nap_time": { "name": "Nap time" },
       "next_alarm": { "name": "Next alarm" },
+      "next_scheduled_workout": { "name": "Next scheduled workout" },
       "nutrition_calorie_goal": { "name": "Nutrition calorie goal" },
       "nutrition_carbs_goal": { "name": "Nutrition carbohydrates goal" },
       "nutrition_consumed_calories": { "name": "Nutrition consumed calories" },
@@ -190,6 +211,8 @@
       "nutrition_last_logged": { "name": "Nutrition last logged" },
       "nutrition_logged_entries": { "name": "Nutrition logged entries" },
       "nutrition_protein_goal": { "name": "Nutrition protein goal" },
+      "power_to_weight": { "name": "Power to Weight {sport}" },
+      "functional_threshold_power": { "name": "FTP {sport}" },
       "nutrition_remaining_calories": { "name": "Nutrition remaining calories" },
       "physique_rating": { "name": "Physique rating" },
       "previous_fitness_age": { "name": "Previous fitness age" },
@@ -198,6 +221,7 @@
       "rest_stress_duration": { "name": "Rest stress duration" },
       "rest_stress_percentage": { "name": "Rest stress percentage" },
       "resting_heart_rate": { "name": "Resting heart rate" },
+      "latest_heart_rate": { "name": "Latest heart rate" },
       "sedentary_time": { "name": "Sedentary time" },
       "sleep_need": { "name": "Sleep need" },
       "bedtime": { "name": "Bedtime" },
@@ -208,8 +232,13 @@
       "sleep_score": { "name": "Sleep score" },
       "sleeping_time": { "name": "Sleeping time" },
       "solar_intensity": { "name": "Solar intensity" },
+      "solar_time_gained": { "name": "Solar time gained" },
       "stress_percentage": { "name": "Stress percentage" },
-      "stress_qualifier": { "name": "Stress qualifier" },
+      "stress_qualifier": {
+        "name": "Stress qualifier",
+        "state": { "calm": "Calm", "balanced": "Balanced", "stressful": "Stressful", "very_stressful": "Very stressful" }
+      },
+      "today_scheduled_workout": { "name": "Today's scheduled workout" },
       "total_calories": { "name": "Calories" },
       "total_distance": { "name": "Distance" },
       "total_intensity_minutes": { "name": "Intensity minutes" },
@@ -217,16 +246,28 @@
       "total_steps": { "name": "Steps" },
       "total_stress_duration": { "name": "Stress duration" },
       "recovery_time": { "name": "Recovery time" },
+      "training_plan_goal_event": { "name": "Training plan goal event" },
+      "upcoming_events": { "name": "Upcoming events" },
       "training_readiness": { "name": "Training readiness" },
-      "training_status": { "name": "Training status" },
+      "training_status": {
+        "name": "Training status",
+        "state": { "peaking": "Peaking", "productive": "Productive", "maintaining": "Maintaining", "recovery": "Recovery", "unproductive": "Unproductive", "detraining": "Detraining", "overreaching": "Overreaching", "strained": "Strained", "paused": "Paused", "no_status": "No status" }
+      },
       "uncategorized_stress_duration": { "name": "Uncategorized stress duration" },
       "uncategorized_stress_percentage": { "name": "Uncategorized stress percentage" },
       "unmeasurable_sleep": { "name": "Unmeasurable sleep" },
       "user_level": { "name": "User level" },
+      "lifetime_steps": { "name": "Lifetime steps" },
+      "lifetime_distance": { "name": "Lifetime distance" },
+      "lifetime_calories": { "name": "Lifetime calories" },
+      "lifetime_active_days": { "name": "Lifetime active days" },
       "user_points": { "name": "User points" },
       "vigorous_intensity": { "name": "Vigorous intensity minutes" },
       "visceral_fat": { "name": "Visceral fat" },
       "vo2_max": { "name": "VO2 Max" },
+      "vo2_max_cycling": { "name": "VO2 Max cycling" },
+      "heat_acclimation": { "name": "Heat acclimation" },
+      "altitude_acclimation": { "name": "Altitude acclimation" },
       "weekly_distance_avg": { "name": "Weekly distance average" },
       "weekly_step_avg": { "name": "Weekly step average" },
       "weight": { "name": "Weight" },
@@ -236,10 +277,33 @@
       "wellness_end_time": { "name": "Wellness end time" },
       "wellness_start_time": { "name": "Wellness start time" },
       "yesterday_distance": { "name": "Yesterday distance" },
-      "yesterday_steps": { "name": "Yesterday steps" }
+      "yesterday_steps": { "name": "Yesterday steps" },
+      "yesterday_active_calories": { "name": "Yesterday active calories" },
+      "yesterday_avg_stress_level": { "name": "Yesterday average stress level" },
+      "yesterday_body_battery_charged": { "name": "Yesterday body battery charged" },
+      "yesterday_body_battery_drained": { "name": "Yesterday body battery drained" },
+      "yesterday_body_battery_highest": { "name": "Yesterday body battery highest" },
+      "yesterday_body_battery_lowest": { "name": "Yesterday body battery lowest" },
+      "yesterday_high_stress_duration": { "name": "Yesterday high stress duration" },
+      "yesterday_intensity_minutes": { "name": "Yesterday intensity minutes" },
+      "yesterday_max_stress_level": { "name": "Yesterday max stress level" },
+      "yesterday_resting_heart_rate": { "name": "Yesterday resting heart rate" },
+      "yesterday_rest_stress_duration": { "name": "Yesterday rest stress duration" },
+      "yesterday_stress_duration": { "name": "Yesterday stress duration" }
+    },
+    "calendar": {
+      "scheduled_workouts": { "name": "Scheduled workouts" }
     }
   },
   "services": {
+    "get_day_summary": {
+      "name": "Get day summary",
+      "description": "Fetch the daily summary (steps, stress, Body Battery, resting heart rate, intensity minutes) for any date from Garmin Connect and return it.",
+      "fields": {
+        "date": { "name": "Date", "description": "The day to fetch." },
+        "entity_id": { "name": "Entity", "description": "Optional Garmin Connect entity whose account to read." }
+      }
+    },
     "set_active_gear": {
       "name": "Set active gear",
       "description": "Set gear as active/default for an activity type.",
@@ -254,6 +318,7 @@
       "name": "Add hydration",
       "description": "Log a hydration intake to Garmin Connect.",
       "fields": {
+        "entity_id": { "name": "Garmin Connect entity", "description": "Optional Garmin Connect entity whose account should receive the entry." },
         "value_in_ml": { "name": "Amount (mL)", "description": "Hydration amount in millilitres. Negative values subtract from today's intake." },
         "timestamp": { "name": "Timestamp", "description": "Measurement time (ISO 8601, defaults to now)." }
       }
@@ -269,6 +334,49 @@
         "fat": { "name": "Fat (g)", "description": "Fat in grams." },
         "name": { "name": "Label", "description": "Name for the log entry (defaults to \"Quick Add\")." },
         "timestamp": { "name": "Timestamp", "description": "Log time (ISO 8601). Defaults to now." }
+      }
+    },
+    "create_workout": {
+      "name": "Create workout",
+      "description": "Create a workout in the Garmin Connect library, optionally scheduling it on a date. Returns workout_id (and schedule_id).",
+      "fields": {
+        "entity_id": { "name": "Garmin Connect entity", "description": "Optional Garmin Connect entity whose account owns the workout." },
+        "workout": { "name": "Workout", "description": "Garmin workout JSON (workoutName, sportType, workoutSegments), as an object or JSON string." },
+        "date": { "name": "Date", "description": "Optional date to put the workout on the training calendar." }
+      }
+    },
+    "update_workout": {
+      "name": "Update workout",
+      "description": "Replace an existing workout in place. Its ID and calendar schedules are kept.",
+      "fields": {
+        "entity_id": { "name": "Garmin Connect entity", "description": "Optional Garmin Connect entity whose account owns the workout." },
+        "workout_id": { "name": "Workout ID", "description": "Garmin workout ID." },
+        "workout": { "name": "Workout", "description": "Complete Garmin workout JSON, as an object or JSON string." }
+      }
+    },
+    "delete_workout": {
+      "name": "Delete workout",
+      "description": "Delete a workout from the Garmin Connect library, including its calendar entries.",
+      "fields": {
+        "entity_id": { "name": "Garmin Connect entity", "description": "Optional Garmin Connect entity whose account owns the workout." },
+        "workout_id": { "name": "Workout ID", "description": "Garmin workout ID." }
+      }
+    },
+    "schedule_workout": {
+      "name": "Schedule workout",
+      "description": "Put a library workout on the Garmin training calendar. Returns schedule_id.",
+      "fields": {
+        "entity_id": { "name": "Garmin Connect entity", "description": "Optional Garmin Connect entity whose account owns the workout." },
+        "workout_id": { "name": "Workout ID", "description": "Garmin workout ID." },
+        "date": { "name": "Date", "description": "Calendar date for the workout." }
+      }
+    },
+    "unschedule_workout": {
+      "name": "Unschedule workout",
+      "description": "Remove a workout from the Garmin training calendar without deleting it.",
+      "fields": {
+        "entity_id": { "name": "Garmin Connect entity", "description": "Optional Garmin Connect entity whose account owns the workout." },
+        "schedule_id": { "name": "Schedule ID", "description": "Calendar entry ID (schedule_id from schedule_workout, or the id of a scheduled workout)." }
       }
     },
     "add_body_composition": {
@@ -295,9 +403,10 @@
       "name": "Add blood pressure",
       "description": "Add a blood pressure measurement to Garmin Connect.",
       "fields": {
+        "entity_id": { "name": "Garmin Connect entity", "description": "Optional Garmin Connect entity whose account should receive the entry." },
         "systolic": { "name": "Systolic", "description": "Systolic blood pressure value." },
         "diastolic": { "name": "Diastolic", "description": "Diastolic blood pressure value." },
-        "pulse": { "name": "Pulse", "description": "Pulse rate." },
+        "pulse": { "name": "Pulse", "description": "Pulse rate (optional)." },
         "timestamp": { "name": "Timestamp", "description": "When the measurement was recorded (defaults to now)." },
         "notes": { "name": "Notes", "description": "Additional notes for the measurement." }
       }
@@ -306,6 +415,7 @@
       "name": "Create activity",
       "description": "Create a manual activity in Garmin Connect.",
       "fields": {
+        "entity_id": { "name": "Garmin Connect entity", "description": "Optional Garmin Connect entity whose account should receive the entry." },
         "activity_name": { "name": "Activity name", "description": "Name of the activity." },
         "activity_type": { "name": "Activity type", "description": "Type of activity (e.g. running, cycling)." },
         "start_datetime": { "name": "Start date and time", "description": "When the activity started (ISO format)." },
@@ -321,14 +431,15 @@
         "entity_id": { "name": "Garmin Connect entity", "description": "Optional Garmin Connect entity whose account owns the activity." },
         "activity_id": { "name": "Activity ID", "description": "Garmin activity ID (see last_activity sensor attributes)." },
         "file_format": { "name": "File format", "description": "fit (extracted from original zip), original (raw zip), tcx, gpx, kml or csv." },
-        "file_path": { "name": "File path", "description": "Target file or directory. Custom paths must be in allowlist_external_dirs. Defaults to [config]/garmin_activities/." }
+        "file_path": { "name": "File path", "description": "Target file or directory, inside the config directory or in allowlist_external_dirs. Relative paths are relative to the config directory. Defaults to [config]/garmin_activities/." }
       }
     },
     "upload_activity": {
       "name": "Upload activity",
       "description": "Upload an activity file (FIT, GPX, TCX) to Garmin Connect.",
       "fields": {
-        "file_path": { "name": "File path", "description": "Path to the activity file on the Home Assistant system." }
+        "entity_id": { "name": "Garmin Connect entity", "description": "Optional Garmin Connect entity whose account should receive the entry." },
+        "file_path": { "name": "File path", "description": "FIT, GPX or TCX file on the Home Assistant system, absolute or relative to the config directory. Paths outside the config directory must be in allowlist_external_dirs." }
       }
     },
     "add_gear_to_activity": {
@@ -342,13 +453,25 @@
     }
   },
   "exceptions": {
+    "auth_failed": { "message": "Authentication with Garmin Connect failed: {error}" },
+    "reauth_required": { "message": "Garmin Connect credentials for {account} need to be re-authenticated" },
+    "update_failed": { "message": "Error fetching Garmin Connect {data} data: {error}" },
+    "update_timeout": { "message": "Garmin Connect {data} refresh exceeded {seconds} seconds" },
+    "get_day_summary_failed": { "message": "Failed to fetch the day summary: {error}" },
     "add_blood_pressure_failed": { "message": "Failed to add blood pressure: {error}" },
     "add_hydration_failed": { "message": "Failed to log hydration: {error}" },
     "add_nutrition_failed": { "message": "Failed to log nutrition: {error}" },
+    "create_workout_failed": { "message": "Failed to create workout: {error}" },
+    "create_workout_schedule_failed": { "message": "Workout {workout_id} was created but could not be scheduled: {error}" },
+    "update_workout_failed": { "message": "Failed to update workout: {error}" },
+    "delete_workout_failed": { "message": "Failed to delete workout: {error}" },
+    "schedule_workout_failed": { "message": "Failed to schedule workout: {error}" },
+    "unschedule_workout_failed": { "message": "Failed to unschedule workout: {error}" },
     "add_body_composition_failed": { "message": "Failed to add body composition: {error}" },
     "add_gear_to_activity_failed": { "message": "Failed to add gear to activity: {error}" },
     "create_activity_failed": { "message": "Failed to create activity: {error}" },
     "download_activity_failed": { "message": "Failed to download activity: {error}" },
+    "download_activity_write_failed": { "message": "Could not save the activity file to {file_path}: {error}" },
     "path_not_allowed": { "message": "Path is not allowed: {file_path}. Add the directory to allowlist_external_dirs." },
     "entity_not_found": { "message": "Entity not found: {entity_id}" },
     "file_not_found": { "message": "File not found: {file_path}" },
@@ -357,7 +480,19 @@
     "login_failed": { "message": "Failed to log in to Garmin Connect." },
     "no_gear_specified": { "message": "No gear specified. Provide either a gear sensor entity or a gear_uuid." },
     "no_integration_configured": { "message": "Garmin Connect integration is not configured." },
+    "ambiguous_account": { "message": "Multiple Garmin Connect accounts are configured. Provide an entity_id to select which account to use." },
     "set_active_gear_failed": { "message": "Failed to set active gear: {error}" },
+    "unsupported_file_format": { "message": "Unsupported activity file {file_path}. Supported formats: {formats}" },
     "upload_activity_failed": { "message": "Failed to upload activity: {error}" }
+  },
+  "issues": {
+    "connect_plus_required": {
+      "title": "Nutrition data requires Garmin Connect+",
+      "description": "Nutrition sensors for {title} are unavailable because your Garmin account does not have an active Connect+ subscription. Subscribe to Connect+ in the Garmin Connect app to enable nutrition logging, or disable the nutrition sensors for this integration."
+    },
+    "lifetime_totals_hidden": {
+      "title": "Garmin hides your lifetime totals",
+      "description": "Garmin Connect refuses the lifetime totals for {title}, so the Lifetime steps, distance, calories and active days sensors are unavailable. Garmin only provides them when they are shown in your profile: in Garmin Connect on the web, open Account Settings → Public Profile, and under \"Show in profile\" enable Lifetime Totals. Your profile can stay visible to \"Only me\", so nothing becomes public. The sensors update on the next refresh. If you don't want these sensors, disable them instead."
+    }
   }
 }

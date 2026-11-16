@@ -5,7 +5,8 @@ from datetime import datetime
 
 from homeassistant.components.image import ImageEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN, LOGGER, Options
@@ -58,8 +59,33 @@ async def async_setup_entry(
         async_add_entities([chamber_image])
 
 
-class CoverImage(ImageEntity, BambuLabEntity):
+class DispatchedImageEntity:
+    """Mixin that refreshes the entity from a targeted dispatcher signal.
+
+    Image updates are pushed per-entity by the coordinator instead of through a full
+    coordinator refresh (see coordinator.image_update_signal)."""
+
+    IMAGE_SIGNAL_TYPE: str
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self.async_on_remove(
+            async_dispatcher_connect(
+                self.hass,
+                self.coordinator.image_update_signal(self.IMAGE_SIGNAL_TYPE),
+                self._handle_image_update,
+            )
+        )
+
+    @callback
+    def _handle_image_update(self) -> None:
+        self.async_write_ha_state()
+
+
+class CoverImage(DispatchedImageEntity, ImageEntity, BambuLabEntity):
     """Representation of an image entity."""
+
+    IMAGE_SIGNAL_TYPE = "cover"
 
     def __init__(
         self,
@@ -81,6 +107,14 @@ class CoverImage(ImageEntity, BambuLabEntity):
         return self.coordinator.get_model().cover_image.get_image()
 
     @property
+    def content_type(self) -> str:
+        """Return dynamic content type based on actual image bytes."""
+        data = self.image()
+        if data and data.startswith(b"\x89PNG"):
+            return "image/png"
+        return "image/jpeg"
+
+    @property
     def image_last_updated(self) -> datetime | None:
         """The time when the image was last updated."""
         return self.coordinator.get_model().cover_image.get_last_update_time()
@@ -89,8 +123,11 @@ class CoverImage(ImageEntity, BambuLabEntity):
     def available(self) -> bool:
         return self.coordinator.get_model().cover_image.get_last_update_time() != None
     
-class ChamberImage(ImageEntity, BambuLabEntity):
+class ChamberImage(DispatchedImageEntity, ImageEntity, BambuLabEntity):
     """Representation of an image entity."""
+
+    IMAGE_SIGNAL_TYPE = "chamber"
+
     def __init__(
         self,
         hass: HomeAssistant,
@@ -116,8 +153,10 @@ class ChamberImage(ImageEntity, BambuLabEntity):
         return self.coordinator.get_model().chamber_image.get_last_update_time()
 
 
-class PickImage(ImageEntity, BambuLabEntity):
+class PickImage(DispatchedImageEntity, ImageEntity, BambuLabEntity):
     """Representation of an object pick image entity."""
+
+    IMAGE_SIGNAL_TYPE = "pick"
 
     def __init__(
         self,

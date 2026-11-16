@@ -1,0 +1,911 @@
+"""Network scanner: ping sweep + ARP cache + TCP service detection + mDNS discovery.
+
+HA-adapted: pure scan logic, returns device dicts. No DB, no persistence.
+The caller (coordinator) is responsible for filtering, dedup, and storage.
+
+Phase 2 service detection runs through a pure-Python TCP connect scan. We
+previously had an nmap path too, but it proved unreliable on HA OS (nmap
+binary present but python-nmap parsed empty output) so it was removed —
+the TCP path is deterministic and works on every install without root or
+external binaries.
+"""
+from __future__ import annotations
+
+import asyncio
+import ipaddress
+import logging
+import re
+import socket
+import subprocess
+import threading
+import time
+from collections.abc import Awaitable, Callable
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
+from typing import Any
+
+from .fingerprint import fingerprint_ports, suggest_node_type
+from .fingerprint import preload as preload_fingerprints
+from .http_probe import probe_open_ports
+from .tcp_scanner import tcp_connect_scan
+
+# Coroutine the caller can pass to receive incremental scan events. Schema:
+#   {"event": "scan_phase", "phase": "discovery"|"enrichment", "total": int}
+#   {"event": "device_discovered", "device": {ip, mac?, hostname?, discovery_source}}
+#   {"event": "device_enriched",   "device": {ip, ...full enriched dict}}
+# Errors raised inside the callback are caught and logged — they never abort
+# the scan.
+ScanEventCallback = Callable[[dict[str, Any]], Awaitable[None]]
+
+
+async def _safe_emit(
+    on_event: ScanEventCallback | None, payload: dict[str, Any]
+) -> None:
+    """Invoke `on_event` swallowing any error so subscribers can't kill a scan."""
+    if on_event is None:
+        return
+    try:
+        await on_event(payload)
+    except Exception as exc:  # noqa: BLE001
+        _LOGGER.warning("scan event subscriber raised %s: %s", type(exc).__name__, exc)
+
+_LOGGER = logging.getLogger(__name__)
+
+# Run IDs requested to cancel (thread-safe)
+_cancelled_runs: set[str] = set()
+_cancelled_lock = threading.Lock()
+
+_EXTRA_PORTS = (
+    "80,443,22,21,23,25,53,110,143,161,162,179,389,445,548,"
+    "554,636,873,1883,1880,1935,2020,2375,2376,3000,3001,3306,"
+    "3389,4711,4915,5000,5001,5432,5601,5683,5684,5900,5984,"
+    "6052,6379,6432,6443,6767,6789,6800,7878,8000,8006,8080,"
+    "8081,8086,8088,8090,8096,8112,8123,8200,8291,8428,8443,"
+    "8554,8686,8789,8843,8880,8883,8971,8989,9000,9001,9090,"
+    "9091,9092,9093,9100,9117,9200,9300,9411,9443,9696,10051,"
+    "16686,34567,37777,51413,64738"
+)
+
+_PORT_LIST: tuple[int, ...] = tuple(int(p) for p in _EXTRA_PORTS.split(","))
+
+# ─── Fan-out caps (issue #73) ────────────────────────────────────────────────
+# A scan used to peak at 50 concurrent `ping` processes and 10 hosts x 50 ports
+# = 500 simultaneous sockets. On a small host (RPi / HA Green) that starves the
+# event loop long enough for the Supervisor watchdog to restart Core. These
+# caps trade a slower scan for a machine that stays responsive.
+_PING_CONCURRENCY = 25
+_HOST_CONCURRENCY = 5
+# Shared across every host in a phase, so the host x port product can no longer
+# multiply: this is the hard ceiling on open sockets for the whole scan.
+_SOCKET_CONCURRENCY = 100
+
+# ─── Off-loop work (issue #88) ───────────────────────────────────────────────
+# Blocking scan work used to ride HA's shared default executor through
+# `asyncio.to_thread`. Parking workers there costs every other integration:
+# `gethostbyaddr` on a host with no PTR record sits for as long as the system
+# resolver takes, and that latency lands on unrelated executor jobs. Ours now
+# runs on a pool we own, so the worst case stays inside the integration.
+_EXECUTOR_WORKERS = 4
+_executor: ThreadPoolExecutor | None = None
+_executor_lock = threading.Lock()
+
+# `gethostbyaddr` accepts no timeout and the system resolver's own can be tens
+# of seconds. Cap how long a scan waits on one. The worker may still be parked
+# when we give up — which is exactly why the pool above is ours and not HA's.
+_DNS_TIMEOUT = 2.0
+
+
+def _get_executor() -> ThreadPoolExecutor:
+    """The integration's own thread pool, created on first use."""
+    global _executor
+    with _executor_lock:
+        if _executor is None:
+            _executor = ThreadPoolExecutor(
+                max_workers=_EXECUTOR_WORKERS, thread_name_prefix="homelable_scan"
+            )
+        return _executor
+
+
+async def _run_offloop(func: Callable[..., Any], *args: Any) -> Any:
+    """Run blocking `func` on our pool. Replaces `asyncio.to_thread`."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(_get_executor(), func, *args)
+
+
+def shutdown_executor() -> None:
+    """Drop the scan thread pool. Called when the last config entry unloads."""
+    global _executor
+    with _executor_lock:
+        executor, _executor = _executor, None
+    if executor is not None:
+        executor.shutdown(wait=False)
+
+# Ping/ARP finding nothing means a full TCP sweep of the range — the common case
+# in a container without CAP_NET_RAW, or on an ICMP-blocked LAN. Sweeping all 87
+# ports across a /24 is ~22k connects; probe this subset first and only spend the
+# full port list on the IPs that answer. Covers the usual homelab surface
+# (SSH/HTTP(S)/SMB/RDP/Proxmox/*arr/media/DB/MQTT/HA).
+_FALLBACK_PROBE_PORTS: tuple[int, ...] = (
+    22, 23, 25, 53, 80, 139, 443, 445, 548, 1883, 3000, 3306, 3389, 5000,
+    5432, 5900, 6379, 8000, 8006, 8080, 8081, 8096, 8123, 8443, 9000, 9090,
+)
+
+# Deep scan (opt-in): extra TCP ports + an HTTP probe that identifies services on
+# custom ports. Off by default → identical to the standard scan.
+_PORT_RANGE_RE = re.compile(r"^\d{1,5}(-\d{1,5})?$")
+# Safety cap so a wide user range can't explode the per-host TCP connect fan-out.
+_MAX_EXTRA_PORTS = 2048
+
+
+@dataclass
+class DeepScanOptions:
+    """Per-scan deep-scan settings (empty/False → standard scan, today's behaviour)."""
+
+    http_ranges: list[str] = field(default_factory=list)
+    http_probe_enabled: bool = False
+    verify_tls: bool = False
+
+
+def _valid_port_range(spec: str) -> bool:
+    """True for a single port ('N') or an inclusive range ('N-M') within 1..65535."""
+    if not _PORT_RANGE_RE.match(spec):
+        return False
+    parts = [int(p) for p in spec.split("-")]
+    if any(p < 1 or p > 65535 for p in parts):
+        return False
+    return len(parts) == 1 or parts[0] <= parts[1]
+
+
+def _expand_port_ranges(http_ranges: list[str] | None) -> tuple[int, ...]:
+    """Expand validated 'N'/'N-M' specs into a de-duplicated extra-port tuple.
+
+    Ports already in the base ``_PORT_LIST`` are skipped; the total is capped at
+    ``_MAX_EXTRA_PORTS``. Invalid specs are silently dropped (the API layer
+    validates and rejects earlier — this is defence in depth).
+    """
+    if not http_ranges:
+        return ()
+    base = set(_PORT_LIST)
+    seen: set[int] = set()
+    extra: list[int] = []
+    for spec in http_ranges:
+        spec = spec.strip()
+        if not _valid_port_range(spec):
+            continue
+        parts = [int(p) for p in spec.split("-")]
+        lo, hi = (parts[0], parts[0]) if len(parts) == 1 else (parts[0], parts[1])
+        for port in range(lo, hi + 1):
+            if port in base or port in seen:
+                continue
+            seen.add(port)
+            extra.append(port)
+            if len(extra) >= _MAX_EXTRA_PORTS:
+                _LOGGER.warning(
+                    "Deep-scan extra port ranges exceed %d ports; truncating",
+                    _MAX_EXTRA_PORTS,
+                )
+                return tuple(extra)
+    return tuple(extra)
+
+
+def _build_port_list(http_ranges: list[str] | None) -> tuple[int, ...]:
+    """Combine the default port list with validated user ranges for the TCP scan."""
+    return _PORT_LIST + _expand_port_ranges(http_ranges)
+
+
+# Every TCP port. The per-device deep scan's default: a device added before the
+# scanner knew a service, or listening on a port no curated list covers.
+FULL_PORTS = "1-65535"
+
+# The deep scan sweeps its range in slices, unioning what they find. A slice is
+# where a stop request lands and where the time budget is checked, so a spent
+# budget keeps the ports already found instead of abandoning them.
+_DEEP_CHUNK_SIZE = 8192
+
+
+def parse_port_spec(spec: str) -> list[tuple[int, int]]:
+    """Parse a port spec into sorted, merged ``(start, end)`` ranges.
+
+    Accepts what the user can type in the deep-scan dialog: ``80``,
+    ``8000-9000``, or a comma list of both. Returns ``[]`` for anything invalid,
+    an empty spec included — a scan of nothing is never what was meant.
+    """
+    ranges: list[tuple[int, int]] = []
+    for token in (t.strip() for t in spec.split(",")):
+        if not token or not _valid_port_range(token):
+            return []
+        parts = [int(p) for p in token.split("-")]
+        ranges.append((parts[0], parts[-1]))
+    ranges.sort()
+    merged = [ranges[0]]
+    for start, end in ranges[1:]:
+        last_start, last_end = merged[-1]
+        if start <= last_end + 1:
+            merged[-1] = (last_start, max(last_end, end))
+        else:
+            merged.append((start, end))
+    return merged
+
+
+def _port_chunks(spec: str, size: int = _DEEP_CHUNK_SIZE) -> list[tuple[int, ...]]:
+    """Slice a port spec into port tuples of at most ``size`` ports each.
+
+    Ranges are packed, not scanned one slice per range: ``80,443`` is one
+    slice, while ``1-65535`` becomes eight.
+    """
+    chunks: list[tuple[int, ...]] = []
+    current: list[int] = []
+    for start, end in parse_port_spec(spec):
+        for port in range(start, end + 1):
+            current.append(port)
+            if len(current) == size:
+                chunks.append(tuple(current))
+                current = []
+    if current:
+        chunks.append(tuple(current))
+    return chunks
+
+_MDNS_SERVICE_TYPES = [
+    "_http._tcp.local.",
+    "_shelly._tcp.local.",
+    "_esphomelib._tcp.local.",
+    "_hap._tcp.local.",
+    "_mqtt._tcp.local.",
+    "_device-info._tcp.local.",
+]
+
+try:
+    from zeroconf import ServiceStateChange
+    from zeroconf.asyncio import AsyncServiceBrowser, AsyncServiceInfo, AsyncZeroconf
+
+    _ZEROCONF_AVAILABLE = True
+except ImportError:
+    _ZEROCONF_AVAILABLE = False
+    _LOGGER.warning("zeroconf not available — mDNS discovery disabled")
+
+
+def request_cancel(run_id: str) -> None:
+    """Signal a running scan to stop early."""
+    with _cancelled_lock:
+        _cancelled_runs.add(run_id)
+
+
+def _is_cancelled(run_id: str | None) -> bool:
+    if run_id is None:
+        return False
+    with _cancelled_lock:
+        return run_id in _cancelled_runs
+
+
+def _resolve_hostname(ip: str) -> str | None:
+    try:
+        return socket.gethostbyaddr(ip)[0]
+    except Exception:
+        return None
+
+
+async def _resolve_hostname_async(ip: str) -> str | None:
+    """Reverse-DNS `ip`, giving up after `_DNS_TIMEOUT`.
+
+    A host with no PTR record is the common case on a homelab LAN, and waiting
+    out the resolver for every one of them is what makes a sweep last minutes.
+    """
+    try:
+        return await asyncio.wait_for(
+            _run_offloop(_resolve_hostname, ip), timeout=_DNS_TIMEOUT
+        )
+    except TimeoutError:
+        return None
+
+
+def _arp_table_hosts(network: str) -> dict[str, dict[str, Any]]:
+    """Read OS ARP cache for hosts in the target network. Linux + macOS."""
+    try:
+        net = ipaddress.ip_network(network, strict=False)
+        found: dict[str, dict[str, Any]] = {}
+
+        proc_arp = "/proc/net/arp"
+        try:
+            with open(proc_arp) as f:
+                for line in f.readlines()[1:]:
+                    parts = line.split()
+                    if len(parts) >= 4:
+                        ip, mac = parts[0], parts[3]
+                        if mac == "00:00:00:00:00:00":
+                            continue
+                        try:
+                            if ipaddress.ip_address(ip) in net:
+                                found[ip] = {
+                                    "ip": ip,
+                                    "mac": mac,
+                                    "hostname": _resolve_hostname(ip),
+                                    "os": None,
+                                    "open_ports": [],
+                                }
+                        except ValueError:
+                            pass
+            return found
+        except FileNotFoundError:
+            pass
+
+        # macOS fallback
+        result = subprocess.run(
+            ["arp", "-a"], capture_output=True, text=True, timeout=5
+        )
+        for line in result.stdout.splitlines():
+            m = re.search(r"\((\d+\.\d+\.\d+\.\d+)\)\s+at\s+([0-9a-f:]+)", line)
+            if not m:
+                continue
+            ip, mac = m.group(1), m.group(2)
+            if mac in ("(incomplete)", "ff:ff:ff:ff:ff:ff"):
+                continue
+            try:
+                if ipaddress.ip_address(ip) in net:
+                    found[ip] = {
+                        "ip": ip,
+                        "mac": mac,
+                        "hostname": _resolve_hostname(ip),
+                        "os": None,
+                        "open_ports": [],
+                    }
+            except ValueError:
+                pass
+        return found
+    except Exception as exc:
+        _LOGGER.warning("[Phase 1] ARP cache lookup failed: %s", exc)
+        return {}
+
+
+async def _ping_sweep(
+    target: str,
+    *,
+    on_host: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
+) -> dict[str, dict[str, Any]]:
+    """Phase 1: Concurrent ICMP ping sweep + ARP cache.
+
+    `on_host` (if provided) is awaited per alive host with its bare host_dict
+    once ping + hostname + ARP have settled. Used to stream `device_discovered`
+    events before phase 2 starts.
+    """
+    net = ipaddress.ip_network(target, strict=False)
+    all_ips = [str(ip) for ip in net.hosts()]
+    _LOGGER.info("[Phase 1] Pinging %d hosts in %s", len(all_ips), target)
+
+    sem = asyncio.Semaphore(_PING_CONCURRENCY)
+
+    async def _ping(ip: str) -> str | None:
+        async with sem:
+            try:
+                proc = await asyncio.create_subprocess_exec(
+                    "ping", "-c", "1", "-W", "1", ip,
+                    stdout=asyncio.subprocess.DEVNULL,
+                    stderr=asyncio.subprocess.DEVNULL,
+                )
+                await proc.wait()
+                return ip if proc.returncode == 0 else None
+            except Exception:
+                return None
+
+    ping_results = await asyncio.gather(*[_ping(ip) for ip in all_ips])
+    alive_ips: set[str] = {ip for ip in ping_results if ip is not None}
+    _LOGGER.info("[Phase 1] %d/%d hosts responded", len(alive_ips), len(all_ips))
+
+    arp_cache = await _run_offloop(_arp_table_hosts, target)
+
+    alive: dict[str, dict[str, Any]] = {}
+    for ip in alive_ips:
+        mac = arp_cache.get(ip, {}).get("mac")
+        hostname = await _resolve_hostname_async(ip)
+        host_dict = {
+            "ip": ip,
+            "mac": mac,
+            "hostname": hostname,
+            "os": None,
+            "open_ports": [],
+        }
+        alive[ip] = host_dict
+        if on_host is not None:
+            try:
+                await on_host(host_dict)
+            except Exception as exc:  # noqa: BLE001
+                _LOGGER.warning("[Phase 1] on_host raised: %s", exc)
+
+    for ip, host in arp_cache.items():
+        if ip not in alive:
+            alive[ip] = host
+            if on_host is not None:
+                try:
+                    await on_host(host)
+                except Exception as exc:  # noqa: BLE001
+                    _LOGGER.warning("[Phase 1] on_host raised: %s", exc)
+
+    return alive
+
+
+async def _phase2_port_scan(
+    alive: dict[str, dict[str, Any]],
+    *,
+    on_host_done: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
+    port_list: tuple[int, ...] = _PORT_LIST,
+) -> list[dict[str, Any]]:
+    """Phase 2: per-IP TCP connect scan with bounded concurrency.
+
+    `on_host_done` (if provided) is awaited per host as soon as that host's
+    scan completes — the caller uses this to stream `device_enriched` events.
+    `port_list` defaults to the standard set; deep scan passes an extended list.
+    """
+    if not alive:
+        return []
+
+    semaphore = asyncio.Semaphore(_HOST_CONCURRENCY)
+    # One socket budget for the whole phase — see _SOCKET_CONCURRENCY.
+    socket_sem = asyncio.Semaphore(_SOCKET_CONCURRENCY)
+
+    async def _scan_and_notify(host_dict: dict[str, Any]) -> dict[str, Any]:
+        async with semaphore:
+            result = await tcp_connect_scan(
+                host_dict, port_list, socket_sem=socket_sem
+            )
+        if on_host_done is not None:
+            try:
+                await on_host_done(result)
+            except Exception as exc:  # noqa: BLE001
+                _LOGGER.warning("[Phase 2] on_host_done raised: %s", exc)
+        return result
+
+    raw = await asyncio.gather(
+        *[_scan_and_notify(h) for h in alive.values()],
+        return_exceptions=True,
+    )
+    results: list[dict[str, Any]] = []
+    for item in raw:
+        if isinstance(item, BaseException):
+            _LOGGER.warning("[Phase 2] gather error: %s", item)
+        else:
+            results.append(item)
+    return results
+
+
+def _merge_ports(
+    host: dict[str, Any], extra: list[dict[str, Any]]
+) -> None:
+    """Add `extra` port entries to host['open_ports'], keeping existing ones.
+
+    A port already present wins — it carries the richer banner from the pass
+    that scanned it with the full port list.
+    """
+    if not extra:
+        return
+    open_ports = host.setdefault("open_ports", [])
+    known = {p.get("port") for p in open_ports}
+    open_ports.extend(p for p in extra if p.get("port") not in known)
+    open_ports.sort(key=lambda p: p.get("port") or 0)
+
+
+async def _scan_target(
+    target: str,
+    *,
+    on_phase1_host: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
+    on_phase2_host: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
+    port_list: tuple[int, ...] = _PORT_LIST,
+) -> list[dict[str, Any]]:
+    """Two-phase scan for a CIDR range (ping → TCP port scan).
+
+    If ping + ARP yield zero hosts (foreign subnet, unprivileged container with
+    no CAP_NET_RAW, ICMP-blocked LAN), fall back to a TCP sweep across every IP
+    in the CIDR. Slower but catches cases where ping is the blocker. The sweep
+    is two-stage: a small probe port set over the whole range, then the full
+    port list only on the addresses that answered.
+    """
+    alive = await _ping_sweep(target, on_host=on_phase1_host)
+    if alive:
+        return await _phase2_port_scan(
+            alive, on_host_done=on_phase2_host, port_list=port_list
+        )
+
+    _LOGGER.info(
+        "[Phase 1] no hosts via ping/ARP for %s — TCP sweep fallback", target
+    )
+    net = ipaddress.ip_network(target, strict=False)
+    sweep_hosts: dict[str, dict[str, Any]] = {
+        str(ip): {
+            "ip": str(ip),
+            "mac": None,
+            "hostname": None,
+            "os": None,
+            "open_ports": [],
+        }
+        for ip in net.hosts()
+    }
+
+    # Stage A: cheap probe across the whole range to find what is even there.
+    # Sweeping the full port list over every address is ~87 connects per host
+    # for a range that is mostly empty; the probe set costs a third of that.
+    probed = await _phase2_port_scan(
+        sweep_hosts, port_list=_FALLBACK_PROBE_PORTS
+    )
+    # Stage A's findings are kept and merged back after stage B: the probe set
+    # is not a subset of `port_list`, so a host whose only open port is a
+    # probe-only one (139) would otherwise be found and then dropped.
+    probe_ports = {
+        h["ip"]: h["open_ports"] for h in probed if h.get("open_ports")
+    }
+    full_alive = {
+        h["ip"]: {**h, "open_ports": []} for h in probed if h.get("open_ports")
+    }
+    _LOGGER.info(
+        "[Phase 1] TCP sweep found %d/%d hosts in %s",
+        len(full_alive),
+        len(sweep_hosts),
+        target,
+    )
+    if not full_alive:
+        return []
+
+    async def _filtered_phase2(host: dict[str, Any]) -> None:
+        # Runs before the host lands in the result list and holds the same dict,
+        # so merging here covers both the streamed event and the return value.
+        _merge_ports(host, probe_ports.get(host["ip"], []))
+        if not host.get("open_ports"):
+            return
+        if host.get("hostname") is None:
+            host["hostname"] = await _resolve_hostname_async(host["ip"])
+        if on_phase1_host is not None:
+            await on_phase1_host(host)
+        if on_phase2_host is not None:
+            await on_phase2_host(host)
+
+    results = await _phase2_port_scan(
+        full_alive, on_host_done=_filtered_phase2, port_list=port_list
+    )
+    return [h for h in results if h.get("open_ports")]
+
+
+async def _mdns_discover(
+    hass: Any | None = None, timeout: float = 4.0
+) -> list[dict[str, Any]]:
+    """Passive mDNS sweep for IoT device types.
+
+    Uses Home Assistant's shared Zeroconf instance when `hass` is provided —
+    HA logs a warning otherwise, and creating a second Zeroconf binds another
+    UDP listener on 5353 which can interfere with HA's own discovery.
+    """
+    if not _ZEROCONF_AVAILABLE:
+        return []
+
+    found_services: list[tuple[str, str]] = []
+
+    def _on_change(
+        zeroconf: Any,
+        service_type: str,
+        name: str,
+        state_change: Any,
+    ) -> None:
+        if state_change == ServiceStateChange.Added:
+            found_services.append((service_type, name))
+
+    discovered: dict[str, dict[str, Any]] = {}
+
+    # Acquire a Zeroconf instance: prefer HA's shared one, fall back to a
+    # fresh one when called outside HA (tests / standalone smoke).
+    azc: Any = None
+    owned = False
+    try:
+        if hass is not None:
+            try:
+                from homeassistant.components import zeroconf as ha_zeroconf
+
+                azc = await ha_zeroconf.async_get_async_instance(hass)
+            except Exception as exc:  # noqa: BLE001
+                _LOGGER.debug("Shared zeroconf unavailable, creating own: %s", exc)
+        if azc is None:
+            azc = AsyncZeroconf()
+            owned = True
+
+        browser = AsyncServiceBrowser(
+            azc.zeroconf, _MDNS_SERVICE_TYPES, handlers=[_on_change]
+        )
+        try:
+            await asyncio.sleep(timeout)
+        finally:
+            await browser.async_cancel()
+
+        for service_type, name in found_services:
+            try:
+                info = AsyncServiceInfo(service_type, name)
+                await info.async_request(azc.zeroconf, 3000)
+                if not info.addresses:
+                    continue
+                ip = str(ipaddress.IPv4Address(info.addresses[0]))
+                if ip in discovered:
+                    continue
+                discovered[ip] = {
+                    "ip": ip,
+                    "hostname": info.server,
+                    "mac": None,
+                    "os": None,
+                    "open_ports": (
+                        [{"port": info.port, "protocol": "tcp", "banner": ""}]
+                        if info.port
+                        else []
+                    ),
+                }
+            except Exception as exc:
+                _LOGGER.debug("mDNS resolve failed for %s: %s", name, exc)
+    except Exception as exc:
+        _LOGGER.warning("mDNS discovery error: %s", exc)
+    finally:
+        if owned and azc is not None:
+            try:
+                await azc.async_close()
+            except Exception as exc:  # noqa: BLE001
+                _LOGGER.debug("AsyncZeroconf close failed: %s", exc)
+
+    return list(discovered.values())
+
+
+async def _enrich(
+    host: dict[str, Any],
+    discovery_source: str,
+    deep_scan: DeepScanOptions | None = None,
+) -> dict[str, Any]:
+    """Add fingerprint + suggested_type + discovery_source to a host dict.
+
+    With deep scan's HTTP probe enabled, open ports are first probed for
+    title/header signals so fingerprint can confirm services on custom ports.
+    The probe is idempotent per host: it only runs on ports that don't yet
+    carry an ``http_signals`` key, so the two enrichment passes (streamed
+    phase-2 event + the final device list) probe each host at most once.
+    """
+    open_ports = host.get("open_ports", [])
+    if (
+        deep_scan is not None
+        and deep_scan.http_probe_enabled
+        and open_ports
+        and discovery_source == "tcp"
+        and any("http_signals" not in p for p in open_ports)
+    ):
+        probed = await probe_open_ports(
+            host["ip"], open_ports, verify_tls=deep_scan.verify_tls
+        )
+        host["open_ports"] = probed
+        open_ports = probed
+
+    services = fingerprint_ports(open_ports)
+    suggested_type = suggest_node_type(open_ports, host.get("mac"))
+    return {
+        **host,
+        "services": services,
+        "suggested_type": suggested_type,
+        "discovery_source": discovery_source,
+    }
+
+
+async def run_scan(
+    ranges: list[str],
+    run_id: str | None = None,
+    *,
+    exclude_ips: set[str] | None = None,
+    on_event: ScanEventCallback | None = None,
+    hass: Any | None = None,
+    deep_scan: DeepScanOptions | None = None,
+) -> list[dict[str, Any]]:
+    """Execute a scan for the given CIDR ranges.
+
+    Returns enriched device dicts:
+        {ip, mac, hostname, os, open_ports, services, suggested_type, discovery_source}
+
+    Caller is responsible for persisting/filtering further (e.g., dedup against
+    pending store, broadcasting updates).
+
+    Args:
+        ranges: list of CIDR strings (e.g., ["192.168.1.0/24"]).
+        run_id: optional cancellation token; pair with `request_cancel(run_id)`.
+        exclude_ips: IPs to skip (e.g., already on canvas or hidden by user).
+        on_event: optional async callback invoked with progressive scan events
+            (`device_discovered`, `device_enriched`, `scan_phase`). Subscribers
+            crashing won't abort the scan.
+
+    Raises:
+        ValueError: if any range is not a valid CIDR.
+    """
+    exclude_ips = exclude_ips or set()
+    deep_scan = deep_scan or DeepScanOptions()
+    port_list = _build_port_list(deep_scan.http_ranges)
+    for r in ranges:
+        try:
+            ipaddress.ip_network(r, strict=False)
+        except ValueError as err:
+            raise ValueError(f"Invalid CIDR range: {r!r}") from err
+
+    # Warm the fingerprint signature cache off the event loop. _enrich() runs
+    # synchronously inside the async scan loop, so the first (blocking) file
+    # read otherwise trips HA's blocking-call detector.
+    await _run_offloop(preload_fingerprints)
+
+    devices: list[dict[str, Any]] = []
+    seen_ips: set[str] = set()
+
+    async def _emit_phase1(host: dict[str, Any]) -> None:
+        ip = host.get("ip")
+        if not ip or ip in exclude_ips or ip in seen_ips:
+            return
+        seen_ips.add(ip)
+        await _safe_emit(
+            on_event,
+            {
+                "event": "device_discovered",
+                "device": {
+                    "ip": ip,
+                    "mac": host.get("mac"),
+                    "hostname": host.get("hostname"),
+                    "discovery_source": "tcp",
+                },
+            },
+        )
+
+    async def _emit_phase2(host: dict[str, Any]) -> None:
+        ip = host.get("ip")
+        if not ip:
+            return
+        # Honor exclude_ips even on the enrichment side (defensive — phase 1
+        # already gated, but a host could enter via the ARP-only path).
+        if ip in exclude_ips:
+            return
+        enriched = await _enrich(host, discovery_source="tcp", deep_scan=deep_scan)
+        await _safe_emit(
+            on_event,
+            {"event": "device_enriched", "device": enriched},
+        )
+
+    mdns_task: asyncio.Task[list[dict[str, Any]]] | None = None
+    try:
+        mdns_task = asyncio.create_task(_mdns_discover(hass))
+
+        await _safe_emit(on_event, {"event": "scan_phase", "phase": "discovery"})
+
+        for cidr in ranges:
+            if _is_cancelled(run_id):
+                break
+            hosts = await _scan_target(
+                cidr,
+                on_phase1_host=_emit_phase1,
+                on_phase2_host=_emit_phase2,
+                port_list=port_list,
+            )
+            for host in hosts:
+                if _is_cancelled(run_id):
+                    break
+                ip = host["ip"]
+                if ip in exclude_ips:
+                    continue
+                # seen_ips was populated by _emit_phase1 above; for hosts that
+                # only came through the ARP fallback (no ping), add now.
+                seen_ips.add(ip)
+                devices.append(
+                    await _enrich(host, discovery_source="tcp", deep_scan=deep_scan)
+                )
+
+        if not _is_cancelled(run_id):
+            mdns_hosts = await mdns_task
+            for host in mdns_hosts:
+                if _is_cancelled(run_id):
+                    break
+                ip = host["ip"]
+                if ip in exclude_ips or ip in seen_ips:
+                    continue
+                seen_ips.add(ip)
+                enriched = await _enrich(host, discovery_source="mdns")
+                devices.append(enriched)
+                # mDNS is single-shot: emit discovery + enrichment together so
+                # the UI gets a fully populated card in one frame.
+                await _safe_emit(
+                    on_event,
+                    {
+                        "event": "device_discovered",
+                        "device": {
+                            "ip": ip,
+                            "mac": host.get("mac"),
+                            "hostname": host.get("hostname"),
+                            "discovery_source": "mdns",
+                        },
+                    },
+                )
+                await _safe_emit(
+                    on_event, {"event": "device_enriched", "device": enriched}
+                )
+        elif mdns_task and not mdns_task.done():
+            mdns_task.cancel()
+
+        await _safe_emit(
+            on_event,
+            {
+                "event": "scan_finished",
+                "devices_found": len(devices),
+                "cancelled": _is_cancelled(run_id),
+            },
+        )
+
+        return devices
+    finally:
+        if run_id is not None:
+            with _cancelled_lock:
+                _cancelled_runs.discard(run_id)
+        if mdns_task is not None and not mdns_task.done():
+            mdns_task.cancel()
+
+
+async def run_device_scan(
+    ip: str,
+    *,
+    run_id: str | None = None,
+    ports: str = FULL_PORTS,
+    budget: float,
+    discovery_source: str,
+    mac: str | None = None,
+    hostname: str | None = None,
+    deep_scan: DeepScanOptions | None = None,
+) -> dict[str, Any]:
+    """Deep-scan one known device over ``ports`` and fingerprint what answers.
+
+    No ping sweep and no mDNS: the device is already known, so its IP goes
+    straight to the TCP connect pass, one slice of ports at a time. ``budget``
+    is a total in seconds, checked between slices — the first slice always
+    runs, and a spent budget keeps what was found rather than discarding it.
+
+    Returns ``{device, scanned, total, cancelled}``: the enriched host (same
+    shape as a ``run_scan`` entry), and how many of the ``total`` slices ran.
+    ``discovery_source`` is the row's own: a rescan re-observes a device, it is
+    not a network discovery, so a Proxmox guest stays a Proxmox guest.
+
+    Raises:
+        ValueError: if ``ports`` is not a usable port spec.
+    """
+    chunks = _port_chunks(ports)
+    if not chunks:
+        raise ValueError(f"Invalid port range: {ports!r}")
+    deep_scan = deep_scan or DeepScanOptions()
+    await _run_offloop(preload_fingerprints)
+
+    deadline = time.monotonic() + budget
+    found: dict[int, dict[str, Any]] = {}
+    scanned = 0
+    for i, chunk in enumerate(chunks):
+        if _is_cancelled(run_id):
+            break
+        if i and time.monotonic() > deadline:
+            _LOGGER.warning(
+                "[Deep scan] %s — budget of %ds spent, %d/%d port range(s) scanned",
+                ip, budget, scanned, len(chunks),
+            )
+            break
+        result = await tcp_connect_scan(
+            {"ip": ip, "open_ports": []}, chunk, port_concurrency=_SOCKET_CONCURRENCY
+        )
+        for port in result["open_ports"]:
+            found.setdefault(port["port"], port)
+        scanned += 1
+
+    cancelled = _is_cancelled(run_id)
+    if run_id is not None:
+        with _cancelled_lock:
+            _cancelled_runs.discard(run_id)
+
+    open_ports = [found[p] for p in sorted(found)]
+    if deep_scan.http_probe_enabled and open_ports:
+        open_ports = await probe_open_ports(
+            ip, open_ports, verify_tls=deep_scan.verify_tls
+        )
+    host = {
+        "ip": ip,
+        "mac": mac,
+        "hostname": hostname,
+        "os": None,
+        "open_ports": open_ports,
+    }
+    return {
+        "device": await _enrich(host, discovery_source=discovery_source),
+        "scanned": scanned,
+        "total": len(chunks),
+        "cancelled": cancelled,
+    }

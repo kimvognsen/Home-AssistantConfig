@@ -8,12 +8,14 @@ from homeassistant.components.fan import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN, LOGGER
 from .coordinator import BambuDataUpdateCoordinator
+from .definitions import X2D_TRANSLATION_KEYS
 from .models import BambuLabEntity
-from .pybambu.const import Features, FansEnum
+from .pybambu.const import Features, FansEnum, Printers
 
 
 @dataclass
@@ -87,6 +89,8 @@ class BambuLabFan(BambuLabEntity, FanEntity):
         """Initialize the fan."""
         self.entity_description = description
         self._attr_unique_id = f"{config_entry.data['serial']}_{description.key}"
+        if coordinator.get_model().info.device_type == Printers.X2D:
+            self._attr_translation_key = X2D_TRANSLATION_KEYS[description.key]
         self._attr_supported_features = (
             FanEntityFeature.SET_SPEED  
             | FanEntityFeature.TURN_ON  
@@ -108,14 +112,14 @@ class BambuLabFan(BambuLabEntity, FanEntity):
 
     def _set_percentage(self, percentage: int) -> None:
         """Set the speed percentage of the fan."""
-        if self.entity_description.key == "cooling_fan":
-            self.coordinator.get_model().fans.set_fan_speed(FansEnum.PART_COOLING, percentage)
-        elif self.entity_description.key == "aux_fan":
-            self.coordinator.get_model().fans.set_fan_speed(FansEnum.AUXILIARY, percentage)
-        elif self.entity_description.key == "chamber_fan":
-            self.coordinator.get_model().fans.set_fan_speed(FansEnum.CHAMBER, percentage)
-        elif self.entity_description.key == "secondary_aux_fan":
-            self.coordinator.get_model().fans.set_fan_speed(FansEnum.SECONDARY_AUXILIARY, percentage)
+        fan = {
+            "cooling_fan": FansEnum.PART_COOLING,
+            "aux_fan": FansEnum.AUXILIARY,
+            "chamber_fan": FansEnum.CHAMBER,
+            "secondary_aux_fan": FansEnum.SECONDARY_AUXILIARY,
+        }[self.entity_description.key]
+        if not self.coordinator.get_model().fans.set_fan_speed(fan, percentage):
+            raise HomeAssistantError("Fan command could not be published")
 
     def set_percentage(self, percentage: int) -> None:
         """Set the speed percentage of the fan."""
@@ -123,7 +127,7 @@ class BambuLabFan(BambuLabEntity, FanEntity):
 
     def turn_on(self, speed: str = None, percentage: int = None, preset_mode: str = None, **kwargs: any) -> None:
         """Turn the fan on."""
-        self._set_percentage(100)
+        self._set_percentage(100 if percentage is None else percentage)
 
     def turn_off(self, **kwargs) -> None:
         """Turn the fan off."""

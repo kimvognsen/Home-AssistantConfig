@@ -1,0 +1,25 @@
+# ha_mcp_backup
+schema_version: 1
+domain: entity
+entity_id: input_number.h2d_filament_kr_per_kg
+captured: '2026-11-15T16:53:54.485922+00:00'
+tool: ha_set_entity
+config:
+  id: 3246d371c92e3e560717bbf1c93c0935
+  entity_id: input_number.h2d_filament_kr_per_kg
+  name: null
+  icon: null
+  area_id: null
+  device_class: null
+  aliases:
+  - null
+  labels:
+  - 3d_printer
+  categories: {}
+  hidden_by: null
+  disabled_by: null
+  options:
+    conversation:
+      should_expose: false
+    collection:
+      hash: ec0ca47e57b6a7c4fbf4892688aaba0f

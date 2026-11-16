@@ -8,7 +8,8 @@
       "event_print_error": "Druckfehler",
       "event_print_error_cleared": "Druckfehler behoben",
       "event_printer_error": "HMS-Fehler",
-      "event_printer_error_cleared": "HMS-Fehler behoben"
+      "event_printer_error_cleared": "HMS-Fehler behoben",
+      "event_printer_missing_sdcard": "SD-Karte fehlt"
     }
   },
   "config": {
@@ -37,7 +38,8 @@
       "cannot_connect_cloud_connection_refused": "Verbindung wurde von der Bambu Lab-Cloud abgelehnt.",
       "cannot_connect_cloud_address_unreachable": "Bambu Lab-Cloud-Adresse nicht erreichbar.",
       "cannot_connect_cloud_unknown": "Unbekannter Fehler beim Herstellen der Verbindung zur Bambu Lab-Cloud.",
-      "cannot_connect_local_unknown": "Verbindung konnte nicht hergestellt werden. Überprüfen Sie die bereitgestellten Einstellungen."
+      "cannot_connect_local_unknown": "Verbindung konnte nicht hergestellt werden. Überprüfen Sie die bereitgestellten Einstellungen.",
+      "tfa_csrf_fallback": "Der Zwei-Faktor-Authentifizierungsendpunkt von Bambu Lab lehnt derzeit Anfragen ab. Stattdessen wurde ein Bestätigungscode an Ihre E-Mail-Adresse oder Ihr Telefon gesendet. Geben Sie ihn bitte unten ein."
     },
     "step": {
       "user": {
@@ -135,7 +137,8 @@
       "cannot_connect_cloud_connection_refused": "Verbindung wurde von der Bambu Lab-Cloud abgelehnt.",
       "cannot_connect_cloud_address_unreachable": "Bambu Lab-Cloud-Adresse nicht erreichbar.",
       "cannot_connect_cloud_unknown": "Unbekannter Fehler beim Herstellen der Verbindung zur Bambu Lab-Cloud.",
-      "cannot_connect_local_unknown": "Verbindung konnte nicht hergestellt werden. Überprüfen Sie die bereitgestellten Einstellungen."
+      "cannot_connect_local_unknown": "Verbindung konnte nicht hergestellt werden. Überprüfen Sie die bereitgestellten Einstellungen.",
+      "tfa_csrf_fallback": "Der Zwei-Faktor-Authentifizierungsendpunkt von Bambu Lab lehnt derzeit Anfragen ab. Stattdessen wurde ein Bestätigungscode an Ihre E-Mail-Adresse oder Ihr Telefon gesendet. Geben Sie ihn bitte unten ein."
     },
     "step": {
       "init": {
@@ -241,6 +244,12 @@
       },
       "hybrid_mode_blocks_control": {
         "name": "Hybrides MQTT blockiert die Kontrolle"
+      },
+      "left_extruder_filament_state": {
+        "name": "Linkes Extruderfilament"
+      },
+      "right_extruder_filament_state": {
+        "name": "Rechtes Extruderfilament"
       }
     },
     "button": {
@@ -281,6 +290,18 @@
       },
       "secondary_aux_fan": {
         "name": "Sekundärer Aux-Lüfter"
+      },
+      "part_fan": {
+        "name": "Teilweise Fan"
+      },
+      "left_aux_fan": {
+        "name": "Linker Aux-Lüfter"
+      },
+      "right_aux_fan": {
+        "name": "Rechter Aux-Lüfter"
+      },
+      "exhaust_fan": {
+        "name": "Abluftventilator"
       }
     },
     "image": {
@@ -335,6 +356,66 @@
       }
     },
     "sensor": {
+      "makerworld_boosts_received": {
+        "name": "Erhaltene Boosts"
+      },
+      "makerworld_prints_total": {
+        "name": "Drucke inkl. Druckprofile"
+      },
+      "makerworld_downloads_total": {
+        "name": "Downloads inkl. Druckprofile"
+      },
+      "makerworld_points": {
+        "name": "Punkte"
+      },
+      "makerworld_points_earned": {
+        "name": "Punkte verdient"
+      },
+      "makerworld_points_spent": {
+        "name": "Punkte ausgegeben"
+      },
+      "makerworld_points_exclusive": {
+        "name": "Exklusive Punkte"
+      },
+      "makerworld_boost_tokens": {
+        "name": "Boost-Tokens"
+      },
+      "makerworld_boosts_used": {
+        "name": "Boosts verwendet"
+      },
+      "makerworld_boosts_expired": {
+        "name": "Boosts verfallen"
+      },
+      "makerworld_downloads": {
+        "name": "Downloads"
+      },
+      "makerworld_instance_downloads": {
+        "name": "Druckprofil-Downloads"
+      },
+      "makerworld_prints": {
+        "name": "Drucke"
+      },
+      "makerworld_instance_prints": {
+        "name": "Druckprofil-Drucke"
+      },
+      "makerworld_designs": {
+        "name": "Veröffentlichte Modelle"
+      },
+      "makerworld_likes": {
+        "name": "Likes"
+      },
+      "makerworld_collections": {
+        "name": "Sammlungen"
+      },
+      "makerworld_followers": {
+        "name": "Follower"
+      },
+      "makerworld_following": {
+        "name": "Folgt"
+      },
+      "makerworld_level": {
+        "name": "Level"
+      },
       "tool_module": {
         "name": "Werkzeugmodul",
         "state": {
@@ -398,6 +479,7 @@
           "printing": "Drucken",
           "auto_bed_leveling": "Automatische Bettnivellierung",
           "heatbed_preheating": "Heizbettvorwärmung",
+          "heatbed_stabilizing": "Heizbett stabilisieren",
           "sweeping_xy_mech_mode": "Fegen im XY-Mechanik-Modus",
           "changing_filament": "Filament wechseln",
           "m400_pause": "M400 Pause",
@@ -569,7 +651,8 @@
           "high_flow_hardened_steel": "hartem Stahl mit großem Fluss",
           "high_flow_stainless_steel": "Edelstahl mit großem Fluss",
           "high_flow_tungsten_carbide": "Wolframkarbid mit großem Fluss",
-          "unknown": "Unbekannt"
+          "unknown": "Unbekannt",
+          "tpu_high_flow": "TPU-High-Flow"
         }
       },
       "humidity_index": {
@@ -729,13 +812,30 @@
       "right_target_nozzle_temp": {
         "name": "Rechte Düsenzieltemperatur"
       },
+      "external_storage_connection": {
+        "name": "Externer Speicher Verbindung",
+        "state": {
+          "connected": "Verbunden",
+          "disconnected": "Getrennt"
+        }
+      },
+      "external_storage_total": {
+        "name": "Externer Speicher gesamt"
+      },
+      "external_storage_used": {
+        "name": "Externer Speicher belegt"
+      },
+      "external_storage_free": {
+        "name": "Externer Speicher frei"
+      },
       "sdcard_status": {
         "name": "SD -Kartenstatus",
         "state": {
           "missing": "Fehlen",
           "normal": "Normal",
           "abnormal": "Abnormal",
-          "readonly": "Nur lesen"
+          "readonly": "Nur lesen",
+          "not_applicable": "Nicht zutreffend"
         }
       },
       "left_nozzle_diameter": {
@@ -861,6 +961,127 @@
           "heating": "Heizung",
           "laser": "Laser"
         }
+      },
+      "secondary_aux_fan_speed": {
+        "name": "Geschwindigkeit des sekundären Hilfslüfters"
+      },
+      "drying_temperature": {
+        "name": "Trocknungstemperatur"
+      },
+      "drying_duration": {
+        "name": "Trocknungsdauer"
+      },
+      "drying_filament": {
+        "name": "Trocknendes Filament"
+      },
+      "hotend_rack_hotend_used_time": {
+        "name": "Hotend {hotend_id} verwendete Zeit"
+      },
+      "active_nozzle": {
+        "name": "Aktive Düse",
+        "state": {
+          "left": "Links",
+          "right": "Rechts"
+        }
+      },
+      "ams_status": {
+        "name": "Status",
+        "state": {
+          "idle": "Leerlauf",
+          "changing_filament": "Filament wechseln",
+          "heating_nozzle": "Heizdüse",
+          "cutting_filament": "Filament schneiden",
+          "pulling_back_filament": "Zurückziehen des aktuellen Filaments",
+          "pushing_new_filament": "Neues Filament einschieben",
+          "purging_old_filament": "Altes Filament entfernen",
+          "checking_position": "Überprüfung der Filamentposition",
+          "rfid_identifying": "RFID identifizieren",
+          "filament_loaded": "Filament geladen",
+          "calibration": "Kalibrierung",
+          "cold_pull": "Kaltzug",
+          "self_check": "Selbstkontrolle",
+          "debug": "Debuggen",
+          "unknown": "Unbekannt"
+        }
+      },
+      "track_switch_input": {
+        "name": "Gleisschalter-Eingabe {input_number}",
+        "state": {
+          "left": "Linke Düse",
+          "right": "Rechte Düse",
+          "empty": "Leer"
+        }
+      },
+      "connected_nozzle": {
+        "name": "Verbundene Düse",
+        "state": {
+          "left": "Links",
+          "right": "Rechts",
+          "track_switch": "Gleisweiche"
+        }
+      },
+      "part_fan_speed": {
+        "name": "Teilweise Lüftergeschwindigkeit"
+      },
+      "left_aux_fan_speed": {
+        "name": "Geschwindigkeit des linken Zusatzlüfters"
+      },
+      "right_aux_fan_speed": {
+        "name": "Rechte Aux-Lüftergeschwindigkeit"
+      },
+      "exhaust_fan_speed": {
+        "name": "Geschwindigkeit des Abluftventilators"
+      },
+      "zone_temperature": {
+        "name": "Temperatur der Zone {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Zone"
+          },
+          "zone_id": {
+            "name": "Zonen-ID"
+          },
+          "slots": {
+            "name": "Spielautomaten"
+          },
+          "dry_setting": {
+            "name": "Trocknungseinstellung"
+          }
+        }
+      },
+      "zone_humidity": {
+        "name": "Luftfeuchtigkeit der Zone {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Zone"
+          },
+          "zone_id": {
+            "name": "Zonen-ID"
+          },
+          "slots": {
+            "name": "Spielautomaten"
+          },
+          "dry_setting": {
+            "name": "Trocknungseinstellung"
+          }
+        }
+      },
+      "zone_remaining_drying_time": {
+        "name": "Verbleibende Trocknungszeit der Zone {zone_number}",
+        "state_attributes": {
+          "zone": {
+            "name": "Zone"
+          },
+          "zone_id": {
+            "name": "Zonen-ID"
+          },
+          "slots": {
+            "name": "Spielautomaten"
+          },
+          "dry_setting": {
+            "name": "Trocknungseinstellung"
+          }
+        }
       }
     },
     "camera": {
@@ -911,11 +1132,15 @@
     },
     "mqtt_encryption_enabled": {
       "title": "MQTT-Verschlüsselung aktiviert",
-      "description": "{device} ist mit der Cloud verbunden und die MQTT-Verschlüsselung ist aktiviert. Durch diese Integration kann lediglich das Licht gesteuert werden. Alle anderen Steuerelemente sind nicht verfügbar. Der Drucker muss auf den Entwickler-LAN-Modus eingestellt sein, um die Steuerung über den Heimassistenten zu ermöglichen."
+      "description": "{device} ist mit der Cloud verbunden und die MQTT-Verschlüsselung ist aktiviert. Durch diese Integration kann lediglich das Licht gesteuert werden. Alle anderen Steuerelemente sind nicht verfügbar. Der Drucker muss auf den Entwickler-LAN-Modus eingestellt sein, um die Steuerung über Home Assistant zu ermöglichen."
     },
     "hybrid_mode_blocking": {
       "title": "Steuerung der Hybridverbindungsblöcke",
       "description": "{device} ist mit der Cloud verbunden, verfügt jedoch über eine lokale MQTT-Verbindung durch die Integration. Dadurch werden das Einstellen von Temperaturen und das Nachdrucken des Verlaufs blockiert. Stellen Sie die Verbindung auf reine Cloud um, um die vollständige Kontrolle zu ermöglichen."
+    },
+    "access_code_rejected": {
+      "title": "Zugangscode abgelehnt",
+      "description": "Der Drucker hat den konfigurierten Zugriffscode für {device} abgelehnt. Dies bedeutet normalerweise, dass der Code neu generiert wurde, beispielsweise durch einen Werksreset. Lesen Sie den neuen Zugangscode auf dem Bildschirm mit den Netzwerkeinstellungen des Druckers ab und konfigurieren Sie die Integration damit neu."
     }
   }
 }

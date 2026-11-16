@@ -1,0 +1,6 @@
+{
+  "read_only_mode": false,
+  "redact_secrets": true,
+  "enable_history_query_guardrails": true,
+  "environment": "production"
+}

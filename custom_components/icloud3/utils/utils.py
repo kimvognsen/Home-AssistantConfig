@@ -79,6 +79,10 @@ def list_keys(list_value):
     return list(list_value.keys())
 
 #--------------------------------------------------------------------
+def list_sort(list_value):
+    return list_value.sort()
+
+#--------------------------------------------------------------------
 def str_to_list(str_value):
     '''
     Create a list of a comma separated strings
@@ -106,7 +110,28 @@ def delete_from_list(list_value, item):
     return list_value
 
 #--------------------------------------------------------------------
-def sort_dict_by_values(dict_value):
+def dict_reverse_sort(dict_items):
+    return dict_sort(dict_items, reverse=True)
+
+#--------------------------------------------------------------------
+def dict_sort(dict_items, reverse=False):
+    '''
+    Return a dictionary sorted by the item keys/values
+    '''
+    if (type(dict_items) is not dict
+            or dict_items == {}):
+        return {}
+
+    sorted_dict = dict(sorted(dict_items.items(), reverse=reverse))
+
+    return sorted_dict
+
+#--------------------------------------------------------------------
+def dict_reverse_sort_values(dict_items):
+    return dict_sort_values(dict_items, reverse=True)
+
+#--------------------------------------------------------------------
+def dict_sort_values(dict_value, reverse=False):
     '''
     Return a dictionary sorted by the item values
     '''
@@ -115,7 +140,7 @@ def sort_dict_by_values(dict_value):
         return {}
 
     dict_value_lower        = {k: v.lower() for k, v in dict_value.items()}
-    sorted_dict_value_lower = sorted(dict_value_lower.items(), key=lambda x:x[1])
+    sorted_dict_value_lower = sorted(dict_value_lower.items(), reverse=reverse, key=lambda x:x[1])
     keys_sorted_dict_value_lower = dict(sorted_dict_value_lower).keys()
     sorted_dict_value       = {k: dict_value[k] for k in keys_sorted_dict_value_lower}
 
@@ -161,6 +186,9 @@ def instr(string, substring):
     '''
     if type(substring) is str:
         try:
+            if string == '' or string is None or substring == '' or substring is None:
+                return False
+
             return substring in string
         except:
             return False
@@ -203,7 +231,7 @@ def yes_no(true_false):
         return 'No'
 
 #--------------------------------------------------------------------
-def isbetween(number, min_value, max_value):
+def is_between(number, min_value, max_value):
     '''
     Return True if the the number is between the other two numbers
     including the min_value and max_value number)
@@ -386,18 +414,12 @@ def username_id(username):
     if username == '':
         return ''
 
-    _username_base = f"{username}@".split('@')[0]
-    _username_base = username_base(username)
-
-    if _username_base in Gb.upw_filter_items:
-        return Gb.upw_filter_items[_username_base]
-    else:
-        return f"{_username_base}@"
+    _username_base = username.split('@')[0]
+    return _username_base.rstrip("@") + "@"
 
 #--------------------------------------------------------------------
 def username_base(username):
-    _username_base = f"{username}@".split('@')[0]
-    return f"{_username_base}@"
+    return username_id(username)
 
 #--------------------------------------------------------------------
 def format_cnt(desc, n):
@@ -461,8 +483,6 @@ def decode_password(password):
                 and (password.startswith('««') is False
                     or password.endswith('»»') is False)):
             password = password.replace('«', '').replace('»', '')
-            Gb.conf_tracking[CONF_PASSWORD] = password
-            #write_icloud3_configuration_file()
 
         # Decode password if it is encoded and has the '««password»»' format
         if (password.startswith('««') or password.endswith('»»')):

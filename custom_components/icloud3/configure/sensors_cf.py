@@ -8,7 +8,7 @@ from ..const             import (PLATFORM_DEVICE_TRACKER, PLATFORM_SENSOR,
                                 HOME, NONE_FNAME, FROM_ZONE, ZONE, SENSORS,
                                 TRACK, MONITOR, INACTIVE,
                                 BATTERY, BATTERY_STATUS,
-                                CONF_IC3_DEVICENAME, CONF_FAMSHR_DEVICENAME, CONF_MOBILE_APP_DEVICE,
+                                CONF_IC3_DEVICENAME, CONF_AADEV_NAME, CONF_MOBILE_APP_DEVICE,
                                 )
 from ..const_sensor     import (SENSOR_DEFINITION, SENSOR_GROUPS, SENSOR_LIST_DISTANCE,
                                 SENSOR_FNAME, SENSOR_TYPE, SENSOR_ICON,
@@ -26,8 +26,6 @@ from ..utils             import entity_reg_util as er_util
 from ..                  import sensor as ic3_sensor
 from ..                  import device_tracker as ic3_device_tracker
 
-from .const_form_lists   import (MENU_KEY_TEXT, ACTION_LIST_ITEMS_KEY_BY_TEXT, ACTION_LIST_OPTIONS,
-                                    )
 
 from homeassistant.helpers  import (entity_registry as er,
                                     device_registry as dr, )
@@ -118,17 +116,13 @@ def remove_device_tracker_and_sensor_entities(self, devicename, rebuild_ic3db_da
     self.is_deleting_device = True
 
     # Inactive devices were not created so they are not in Gb.DeviceTrackers_by_devicename
-    er_util.update_ha_device_id_by_devicename()
-    if Gb.DeviceTrackers_by_devicename.get(devicename) is None:
-        return
+    # er_util.update_ha_device_id_x_devicename()
+    er_util.set_ha_device_id_x_devicename()
 
     if devicename in Gb.Sensors_by_devicename:
         for sensor, Sensor in Gb.Sensors_by_devicename[devicename].copy().items():
             er_util.remove_from_active_and_deleted_entity_registry(Sensor.entity_id)
             er_util.clear_sensor_gb_dicts(Sensor.entity_id)
-        #     er_util.remove_sensor(Sensor.entity_id)
-        #     del Sensor
-        # del Gb.Sensors_by_devicename[devicename]
 
     if devicename in Gb.Sensors_by_devicename_from_zone:
         for sensor, Sensor in Gb.Sensors_by_devicename_from_zone[devicename].copy().items():
@@ -139,10 +133,18 @@ def remove_device_tracker_and_sensor_entities(self, devicename, rebuild_ic3db_da
         DeviceTracker = Gb.DeviceTrackers_by_devicename[devicename]
         device_id = DeviceTracker.ha_device_id
         DeviceTracker.remove_device_tracker()
-        er_util.remove_from_active_and_deleted_device_registry(device_id)
+
+        # remove_device_tracker only removes the device_tracker's state, it's entity registry
+        # item is not touched. HA moves that item to the entity registry deleted items list
+        # when the device is removed below, where it is left as a deleted sensor that has to
+        # be cleaned up on another pass. Delete it now with the device's other sensors.
+        er_util.remove_from_active_and_deleted_entity_registry(DeviceTracker.ha_entity_id)
+
+        er_util.remove_device(device_id)
         er_util.clear_device_gb_dicts(device_id)
 
-    er_util.update_ha_device_id_by_devicename()
+    # er_util.update_ha_device_id_x_devicename()
+    er_util.set_ha_device_id_x_devicename()
     self.is_deleting_device = False
     ic3_sensor.log_sensors_added_deleted('REMOVED', devicename)
 
@@ -262,7 +264,7 @@ def remove_sensor_entities(sensors_to_remove, select_devicename=None):
 
         Sensors_list = [v for k, v in devicename_sensors.items() if k in device_sensors_list]
         for Sensor in Sensors_list:
-            er_util.remove_Sensor_and_clear_dicts(Sensor.entity_name)
+            er_util.remove_Sensor_and_clear_dicts(Sensor.entity_id)
 
         ic3_sensor.log_sensors_added_deleted('REMOVED', devicename)
 
@@ -280,7 +282,7 @@ def remove_sensor_entities(sensors_to_remove, select_devicename=None):
 
         Sensors_list = [v for k, v in devicename_sensors.items() if k in tfz_sensors_list]
         for Sensor in Sensors_list:
-            er_util.remove_remove_Sensor_and_clear_dicts(Sensor.entity_id)
+            er_util.remove_Sensor_and_clear_dicts(Sensor.entity_id)
 
 #--------------------------------------------------------------------------------
 def build_all_sensors_list():

@@ -4,7 +4,7 @@ from ...global_variables    import GlobalVariables as Gb
 from ...const               import (MONITOR, INACTIVE,
                                     CONF_PICTURE_WWW_DIRS,
                                     CONF_DISPLAY_TEXT_AS,
-                                    CONF_IC3_DEVICENAME, CONF_FNAME,
+                                    CONF_IC3_DEVICENAME, CONF_FNAME, CONF_DATA_SOURCE,
                                     CONF_TRACKING_MODE,
                                     CONF_AWAY_TIME_ZONE_1_OFFSET, CONF_AWAY_TIME_ZONE_1_DEVICES,
                                     CONF_AWAY_TIME_ZONE_2_OFFSET, CONF_AWAY_TIME_ZONE_2_DEVICES,
@@ -22,12 +22,12 @@ from ...const               import (MONITOR, INACTIVE,
                                     CONF_STAT_ZONE_STILL_TIME,
                                     CONF_PARAMETER_TIME_STR, CONF_PARAMETER_FLOAT,
                                     DEFAULT_GENERAL_CONF,
-                                    CF_GENERAL,
+                                    CF_GENERAL, CF_TRACKING,
                                     )
 
 from ...utils.utils         import (instr, is_number, is_empty, isnot_empty, list_to_str, str_to_list,
-                                    is_running_in_event_loop, isbetween, list_del, list_add,
-                                    sort_dict_by_values, username_id,
+                                    is_running_in_event_loop, is_between, list_del, list_add,
+                                    dict_sort_values, username_id,
                                     encode_password, decode_password, )
 from ...utils.messaging     import (log_exception, log_debug_msg, log_info_msg, add_log_file_filter,
                                     _log, _evlog, more_info, write_config_file_to_ic3log, close_ic3log_file,
@@ -65,8 +65,6 @@ class OptionsFlow_Parameters_Steps:
     async def async_step_away_time_zone(self, user_input=None, errors=None):
         user_input = self._unpack_ui_away_time_zone(user_input)
         user_input, action_item = self.initialize_step('away_time_zone', user_input, errors)
-        # self.step_id = 'away_time_zone'
-        # user_input, action_item = utils_cf.action_text_to_item(self, user_input)
 
         lists.build_away_time_zone_devices_list(self)
         lists.build_away_time_zone_hours_list(self)
@@ -175,6 +173,10 @@ class OptionsFlow_Parameters_Steps:
             return await self.async_step_menu()
 
         if utils_cf.no_errors(self):
+            user_input = utils_cf.option_text_to_parm(user_input,
+                                                                CONF_DATA_SOURCE,
+                                                                DATA_SOURCE_OPTIONS)
+
             self.update_config_file(CF_GENERAL, user_input, action_item)
             return await self.async_step_menu()
 
@@ -184,7 +186,7 @@ class OptionsFlow_Parameters_Steps:
 
 #-------------------------------------------------------------------------------------------
     def _unpack_ui_tracking_parameters(self, user_input):
-        if user_input is None: return
+        if user_input is None: return None
 
         user_input = utils_cf.option_text_to_parm( user_input,
                                                 CONF_TRAVEL_TIME_FACTOR,
@@ -213,11 +215,12 @@ class OptionsFlow_Parameters_Steps:
             Gb.picture_www_dirs = Gb.conf_profile[CONF_PICTURE_WWW_DIRS].copy()
             self.picture_by_filename = {}
             await lists.build_picture_filename_selection_list(self)
+
             self.update_config_file(CF_GENERAL, user_input, action_item)
             return await self.async_step_menu()
 
         return self.async_show_form(step_id='format_settings',
-                            data_schema=fotms.form_format_settings(self),
+                            data_schema=forms.form_format_settings(self),
                             errors=self.errors)
 
 
@@ -449,11 +452,11 @@ class OptionsFlow_Parameters_Steps:
         user_input, action_item = self.initialize_step('display_text_as', user_input, errors)
 
         if user_input is None:
-            if (self.dta_selected_idx == UNSELECTED):
+            if (self.dta_selected_idx == UNSELECTED_IDX):
                 self.dta_selected_idx = 0
                 self.dta_selected_idx_page = [0, 5]
                 self.dta_page_no = 0
-                idx = UNSELECTED
+                idx = UNSELECTED_IDX
                 for dta_text in Gb.conf_general[CONF_DISPLAY_TEXT_AS]:
                     idx += 1
                     self.dta_working_copy[idx] = dta_text
@@ -475,12 +478,12 @@ class OptionsFlow_Parameters_Steps:
         elif action_item == 'select_text_as':
             return await self.async_step_display_text_as_update(user_input)
 
-        elif action_item == 'cancel_goto_menu':
-            self.dta_selected_idx = UNSELECTED
+        elif action_item == 'menu':
+            self.dta_selected_idx = UNSELECTED_IDX
             return await self.async_step_menu()
 
         if action_item == 'save' and utils_cf.no_errors(self):
-            idx = self.dta_selected_idx = UNSELECTED
+            idx = self.dta_selected_idx = UNSELECTED_IDX
             dta_working_copy_list = DEFAULT_GENERAL_CONF[CONF_DISPLAY_TEXT_AS].copy()
             for temp_dta_text in self.dta_working_copy.values():
                 if instr(temp_dta_text,'>'):
@@ -509,13 +512,10 @@ class OptionsFlow_Parameters_Steps:
                             data_schema=forms.form_tracking_parameters(self),
                             errors=self.errors)
 
-        if action_item == 'cancel_goto_menu':
-            return await self.async_step_display_text_as()
-
-        if action_item == 'save' and utils_cf.no_errors(self):
+        if action_item == 'update_text_as':
             text_from = user_input['text_from'].strip()
             text_to   = user_input['text_to'].strip()
-            if  text_from and text_to:
+            if text_from and text_to:
                 self.dta_working_copy[self.dta_selected_idx] = f"{text_from} > {text_to}"
             else:
                 self.dta_working_copy[self.dta_selected_idx] = f"#{self.dta_selected_idx + 1}"

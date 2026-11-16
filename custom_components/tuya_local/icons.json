@@ -43,6 +43,12 @@
             },
             "salt": {
                 "default": "mdi:salt"
+            },
+            "water_flow": {
+                "default": "mdi:water-pump",
+                "state": {
+                    "off": "mdi:water-pump-off"
+                }
             }
         },
         "button": {
@@ -360,6 +366,9 @@
         "event": {
             "alarm": {
                 "default": "mdi:alarm-bell"
+            },
+            "notification": {
+                "default": "mdi:message-alert"
             }
         },
         "humidifier": {
@@ -792,6 +801,12 @@
             "ambient_temperature": {
                 "default": "mdi:sun-thermometer"
             },
+            "inlet_temperature": {
+                "default": "mdi:water-thermometer"
+            },
+            "outlet_temperature": {
+                "default": "mdi:water-thermometer"
+            },
             "cleanliness": {
                 "default": "mdi:biohazard",
                 "state": {
@@ -826,6 +841,16 @@
                     "empty": "mdi:gauge-empty",
                     "low": "mdi:gauge-low",
                     "full": "mdi:gauge-full"
+                }
+            },
+            "sd_status": {
+                "default": "mdi:micro-sd",
+                "state": {
+                    "fault": "mdi:content-save-alert",
+                    "missing": "mdi:content-save-off",
+                    "formatting": "mdi:content-save-cog",
+                    "unformatted": "mdi:content-save-alert",
+                    "full": "mdi:content-save-all"
                 }
             },
             "status": {
@@ -979,6 +1004,9 @@
                     "on": "mdi:fuse",
                     "off": "mdi:fuse-off"
                 }
+            },
+            "camera_record": {
+                "default": "mdi:record-rec"
             },
             "do_not_disturb": {
                 "default": "mdi:bell-sleep",
